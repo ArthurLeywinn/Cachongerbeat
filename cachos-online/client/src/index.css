@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Outfit', system-ui, sans-serif;
+  color: #f3ecdf;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(244, 184, 64, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 85% 110%, rgba(27, 77, 56, 0.6), transparent 60%),
+    linear-gradient(160deg, #0c1f17 0%, #0f2a1e 45%, #0c1f17 100%);
+  background-attachment: fixed;
+}
+
+/* Textura sutil de fieltro */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='40' height='40' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(244, 184, 64, 0.3);
+  border-radius: 8px;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
