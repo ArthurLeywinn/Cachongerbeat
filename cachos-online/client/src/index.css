@@ -46,3 +46,291 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
 }
+
+/* ═══════════════════════════════════════════
+   ESCENA DE MESA INMERSIVA
+═══════════════════════════════════════════ */
+
+/* Contenedor raíz: columna flex, pantalla completa */
+.table-scene {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Barra superior */
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+/* Área de juego: crece para llenar el espacio entre header y my-zone */
+.play-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Mesa oval — centrada en el área de juego */
+.oval-table {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -44%);
+  width: 52%;
+  height: 54%;
+  background: radial-gradient(ellipse at 50% 40%, #1b4d38 0%, #143a2a 60%, #0f2a1e 100%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 40px rgba(0, 0, 0, 0.3),
+    0 0 0 8px rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
+}
+
+/* Panel de historial — esquina inferior derecha */
+.log-panel {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  width: 260px;
+  max-height: 220px;
+  overflow: hidden;
+  z-index: 5;
+}
+
+/* ═══════════════════════════════════════════
+   ZONA INFERIOR — MIS DADOS + HUD
+═══════════════════════════════════════════ */
+
+.my-zone {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
+  z-index: 10;
+}
+
+/* Fila de mis dados */
+.my-dice-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════
+   HUD — PANEL DE APUESTA
+═══════════════════════════════════════════ */
+
+.hud-panel {
+  width: 100%;
+  max-width: 700px;
+}
+
+.hud-waiting {
+  width: 100%;
+  max-width: 700px;
+  text-align: center;
+  padding: 8px 0 2px;
+}
+
+.hud-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hud-divider {
+  width: 1px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* Selector de cantidad */
+.hud-qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-qty__value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 2.5rem;
+}
+
+.hud-btn-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3ecdf;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: grid;
+  place-items: center;
+}
+.hud-btn-circle:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Selector de pintas */
+.hud-faces {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.hud-face-btn {
+  padding: 5px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.1s;
+}
+.hud-face-btn:hover {
+  background: rgba(0, 0, 0, 0.4);
+  transform: scale(1.08);
+}
+.hud-face-btn--active {
+  background: rgba(244, 184, 64, 0.15);
+  border-color: #f4b840;
+  transform: scale(1.1);
+}
+
+/* Botones de acción */
+.hud-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.hud-action {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+  border: none;
+}
+.hud-action:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.hud-action--bid {
+  background: #f4b840;
+  color: #0c1f17;
+}
+.hud-action--bid:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+.hud-action--doubt {
+  background: rgba(239, 68, 68, 0.85);
+  color: white;
+}
+.hud-action--doubt:not(:disabled):hover {
+  filter: brightness(1.15);
+}
+.hud-action--calzar {
+  background: rgba(16, 185, 129, 0.85);
+  color: white;
+}
+.hud-action--calzar:not(:disabled):hover {
+  filter: brightness(1.15);
+}
+
+/* ═══════════════════════════════════════════
+   ASIENTO COMPACTO (jugadores ajenos)
+═══════════════════════════════════════════ */
+
+.compact-seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(8px);
+  min-width: 90px;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.compact-seat--turn {
+  border-color: #f4b840;
+  box-shadow: 0 0 16px rgba(244, 184, 64, 0.25);
+}
+
+.compact-seat__name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(243, 236, 223, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.compact-seat__dc {
+  color: rgba(243, 236, 223, 0.3);
+  font-size: 0.65rem;
+}
+
+.compact-seat__dice {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════
+   BADGES
+═══════════════════════════════════════════ */
+
+.badge {
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.badge--turn {
+  background: #f4b840;
+  color: #0c1f17;
+}
+
+.badge--obligado {
+  background: rgba(52, 211, 153, 0.2);
+  color: #6ee7b7;
+}

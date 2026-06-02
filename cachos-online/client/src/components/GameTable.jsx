@@ -7,6 +7,22 @@ import RoundResult from './RoundResult.jsx';
 import { formatBid } from '../lib/rules.js';
 import Die from './Die.jsx';
 
+// Posiciones en arco para los otros jugadores alrededor de la mesa.
+// Devuelve clases de posición absoluta según índice y total.
+function getArcPosition(index, total) {
+  // Distribuimos los jugadores en la mitad superior del óvalo (180°)
+  // index 0..total-1, de izquierda a derecha
+  const positions = {
+    1: ['top-[6%] left-1/2 -translate-x-1/2'],
+    2: ['top-[10%] left-[18%]', 'top-[10%] right-[18%]'],
+    3: ['top-[6%] left-1/2 -translate-x-1/2', 'top-[22%] left-[6%]', 'top-[22%] right-[6%]'],
+    4: ['top-[6%] left-[30%]', 'top-[6%] right-[30%]', 'top-[22%] left-[6%]', 'top-[22%] right-[6%]'],
+    5: ['top-[4%] left-1/2 -translate-x-1/2', 'top-[8%] left-[22%]', 'top-[8%] right-[22%]', 'top-[24%] left-[5%]', 'top-[24%] right-[5%]'],
+  };
+  const clamped = Math.min(Math.max(total, 1), 5);
+  return (positions[clamped] || positions[5])[index] || 'top-[6%] left-1/2 -translate-x-1/2';
+}
+
 export default function GameTable() {
   const { state, playerId, leave } = useGame();
   if (!state) return null;
@@ -15,81 +31,109 @@ export default function GameTable() {
   const others = state.players.filter((p) => p.id !== playerId);
   const finished = state.status === 'finished';
   const winner = finished ? state.players.find((p) => p.id === state.winnerId) : null;
+  const totalDice = state.players.reduce((sum, p) => sum + (p.eliminated ? 0 : p.diceCount), 0);
 
   return (
-    <div className="min-h-screen px-4 py-4 sm:py-6 max-w-6xl mx-auto">
-      {/* Barra superior */}
-      <header className="flex items-center justify-between mb-4">
+    <div className="table-scene">
+      {/* ── Barra superior ── */}
+      <header className="table-header">
         <div className="flex items-center gap-3">
-          <Die value={3} size={28} />
+          <Die value={3} size={24} />
           <div>
-            <h1 className="font-display text-2xl font-black leading-none">Cachos</h1>
-            <p className="text-xs text-bone/40">
-              Sala <span className="text-amber-glow font-semibold tracking-widest">{state.code}</span> · Ronda{' '}
-              {state.round}
+            <h1 className="font-display text-xl font-black leading-none tracking-tight">Cachos</h1>
+            <p className="text-[11px] text-bone/40">
+              Sala <span className="text-amber-glow font-semibold tracking-widest">{state.code}</span>
+              {' · '}Ronda {state.round}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-right">
-          <div>
-            <p className="text-xs text-bone/40">Descarte central</p>
-            <p className="font-display text-xl font-bold text-amber-glow">{state.centerPool}</p>
+
+        {/* Apuesta vigente — centro */}
+        <div className="absolute left-1/2 -translate-x-1/2 text-center">
+          {state.currentBid ? (
+            <p className="text-bone/70 text-sm">
+              Apuesta actual:{' '}
+              <span className="font-display text-lg font-bold text-amber-glow">
+                {formatBid(state.currentBid)}
+              </span>
+            </p>
+          ) : (
+            <p className="text-bone/30 text-sm">Esperando la primera apuesta de la ronda…</p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-[10px] text-bone/30 uppercase tracking-widest">Dados en juego</p>
+            <p className="font-display text-2xl font-black text-amber-glow leading-none">{totalDice}</p>
           </div>
-          <button onClick={leave} className="text-sm text-bone/40 hover:text-bone/70 transition">
+          <button onClick={leave} className="text-xs text-bone/30 hover:text-bone/60 transition px-2 py-1 rounded border border-white/10 hover:border-white/20">
             Salir
           </button>
         </div>
       </header>
 
-      {/* Apuesta vigente */}
-      <div className="text-center mb-4">
-        {state.currentBid ? (
-          <p className="text-bone/70">
-            Apuesta actual:{' '}
-            <span className="font-display text-2xl font-bold text-amber-glow">
-              {formatBid(state.currentBid)}
-            </span>
-          </p>
-        ) : (
-          <p className="text-bone/40">Esperando la primera apuesta de la ronda…</p>
-        )}
-      </div>
-
       <RoundResult />
 
-      {/* Disposición principal */}
-      <div className="grid lg:grid-cols-[1fr_320px] gap-4">
-        <div className="space-y-4">
-          {/* Otros jugadores */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {others.map((p) => (
-              <PlayerSeat key={p.id} player={p} />
-            ))}
-          </div>
+      {/* ── Área de juego — posicionamiento absoluto ── */}
+      <div className="play-area">
 
-          {/* Mi asiento, destacado */}
-          {me && (
-            <div className="border-t border-white/10 pt-4">
-              <PlayerSeat player={me} />
-            </div>
-          )}
-
-          {/* Panel de acciones */}
-          {!finished && !me?.eliminated && <BidPanel />}
-          {me?.eliminated && !finished && (
-            <div className="glass rounded-2xl p-5 text-center text-bone/60">
-              Quedaste eliminado. Puedes seguir observando la partida.
+        {/* Mesa oval */}
+        <div className="oval-table">
+          {/* Descarte central */}
+          {state.centerPool > 0 && (
+            <div className="text-center">
+              <p className="text-[10px] text-bone/30 uppercase tracking-widest">Descarte</p>
+              <p className="font-display text-3xl font-black text-amber-glow">{state.centerPool}</p>
             </div>
           )}
         </div>
 
-        {/* Historial lateral */}
-        <div className="h-[300px] lg:h-auto">
+        {/* Otros jugadores posicionados en arco */}
+        {others.map((p, i) => (
+          <div
+            key={p.id}
+            className={`absolute ${getArcPosition(i, others.length)}`}
+          >
+            <PlayerSeat player={p} compact />
+          </div>
+        ))}
+
+        {/* Historial — esquina inferior derecha del área de juego */}
+        <div className="log-panel">
           <ActionLog />
         </div>
       </div>
 
-      {/* Pantalla de victoria */}
+      {/* ── Zona inferior: mis dados + panel de acción ── */}
+      <div className="my-zone">
+        {/* Mis dados */}
+        {me && !me.eliminated && (
+          <div className="my-dice-row">
+            {me.dice
+              ? me.dice.map((v, i) => <Die key={i} value={v} size={44} rolling={state.phase === 'reveal'} highlight={
+                  state.phase === 'reveal' && state.lastResult
+                    ? (v === state.lastResult.bid?.face || (state.lastResult.bid?.face !== 1 && v === 1))
+                    : false
+                } />)
+              : Array.from({ length: me.diceCount }).map((_, i) => <Die key={i} value={null} size={44} />)
+            }
+          </div>
+        )}
+
+        {/* Panel de acción */}
+        {!finished && (
+          me?.eliminated ? (
+            <div className="text-center text-bone/40 text-sm py-2">
+              Eliminado — observando la partida
+            </div>
+          ) : (
+            <BidPanel />
+          )
+        )}
+      </div>
+
+      {/* ── Pantalla de victoria ── */}
       {finished && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm px-4">
           <div className="glass rounded-3xl p-10 text-center shadow-cup animate-pop max-w-md">

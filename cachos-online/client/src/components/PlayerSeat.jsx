@@ -2,17 +2,62 @@ import React from 'react';
 import Die from './Die.jsx';
 import { useGame } from '../context/GameContext.jsx';
 
-// Asiento de un jugador en la mesa.
-export default function PlayerSeat({ player }) {
+export default function PlayerSeat({ player, compact = false }) {
   const { state } = useGame();
   const isTurn = state.currentTurnId === player.id && state.phase === 'bidding';
   const isObligado = state.special?.obligadoId === player.id;
   const reveal = state.phase === 'reveal' || state.phase === 'finished';
-
-  // Dados a mostrar: si vienen valores los pintamos; si no, mostramos ocultos.
-  const dice = player.dice; // null si están ocultos para mí
+  const dice = player.dice;
   const highlightFace = reveal && state.lastResult ? state.lastResult.bid?.face : null;
 
+  // ── Modo compacto: jugadores ajenos alrededor de la mesa ──
+  if (compact) {
+    return (
+      <div className={['compact-seat', isTurn ? 'compact-seat--turn' : '', player.eliminated ? 'opacity-30' : ''].join(' ')}>
+        {/* Nombre */}
+        <p className="compact-seat__name">
+          {player.name}
+          {!player.connected && <span className="compact-seat__dc"> ·✕</span>}
+        </p>
+
+        {/* Dados */}
+        <div className="compact-seat__dice">
+          {player.eliminated ? (
+            <span className="text-bone/30 text-[10px]">sin dados</span>
+          ) : dice ? (
+            dice.map((v, i) => (
+              <Die
+                key={i}
+                value={v}
+                size={28}
+                rolling={state.phase === 'reveal'}
+                highlight={
+                  reveal && highlightFace != null &&
+                  (v === highlightFace || (highlightFace !== 1 && v === 1))
+                }
+              />
+            ))
+          ) : (
+            Array.from({ length: player.diceCount }).map((_, i) => (
+              <Die key={i} value={null} size={28} />
+            ))
+          )}
+        </div>
+
+        {/* Badges */}
+        <div className="flex gap-1 justify-center mt-1 flex-wrap">
+          {isTurn && (
+            <span className="badge badge--turn">TURNO</span>
+          )}
+          {isObligado && (
+            <span className="badge badge--obligado">último dado</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Modo normal: mi asiento (no se usa directamente, los dados van en GameTable) ──
   return (
     <div
       className={[
@@ -38,20 +83,10 @@ export default function PlayerSeat({ player }) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          {isTurn && (
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-glow text-felt-900 font-bold">
-              TURNO
-            </span>
-          )}
-          {isObligado && (
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-400/20 text-emerald-300 font-semibold">
-              Último dado
-            </span>
-          )}
+          {isTurn && <span className="badge badge--turn">TURNO</span>}
+          {isObligado && <span className="badge badge--obligado">Último dado</span>}
         </div>
       </div>
-
-      {/* Dados */}
       <div className="flex flex-wrap gap-1.5 min-h-[40px] items-center">
         {player.eliminated ? (
           <span className="text-bone/30 text-sm">Sin dados</span>
@@ -63,14 +98,15 @@ export default function PlayerSeat({ player }) {
               size={36}
               rolling={state.phase === 'reveal'}
               highlight={
-                reveal &&
-                highlightFace != null &&
+                reveal && highlightFace != null &&
                 (v === highlightFace || (highlightFace !== 1 && v === 1))
               }
             />
           ))
         ) : (
-          Array.from({ length: player.diceCount }).map((_, i) => <Die key={i} value={null} size={36} />)
+          Array.from({ length: player.diceCount }).map((_, i) => (
+            <Die key={i} value={null} size={36} />
+          ))
         )}
       </div>
     </div>
