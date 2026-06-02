@@ -1,0 +1,27 @@
+# =============================================================================
+# render.yaml — Despliegue de Cachos Online en Render como UN solo Web Service.
+# -----------------------------------------------------------------------------
+# El servidor compila el cliente (client/dist) y lo sirve junto con los
+# WebSockets. Una sola URL pública, sin problemas de CORS.
+#
+# Cómo usarlo:
+#   1. Sube este repo a GitHub.
+#   2. En Render: New + → Blueprint → conecta el repo → Apply.
+#   (O créalo manualmente como Web Service usando los comandos de abajo.)
+# =============================================================================
+services:
+  - type: web
+    name: cachos-online
+    runtime: node
+    plan: free
+    # Compila cliente + instala dependencias del servidor.
+    buildCommand: npm install && npm run build
+    # Inicia el servidor (que también sirve client/dist).
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      # En producción el cliente usa el mismo origen, así que CORS abierto está bien.
+      - key: CLIENT_ORIGIN
+        value: "*"
