@@ -129,12 +129,22 @@ body::before {
   z-index: 10;
 }
 
-/* Fila de mis dados */
+/* Fila de mis dados — posicionada al pie de la mesa oval, dentro del
+   área de juego, centrada horizontalmente (mis dados "sobre la mesa"). */
 .my-dice-row {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
   display: flex;
   gap: 10px;
   align-items: center;
   justify-content: center;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 24px -10px rgba(0, 0, 0, 0.6);
+  z-index: 6;
 }
 
 /* ═══════════════════════════════════════════

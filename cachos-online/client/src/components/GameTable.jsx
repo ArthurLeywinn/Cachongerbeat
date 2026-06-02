@@ -99,15 +99,8 @@ export default function GameTable() {
           </div>
         ))}
 
-        {/* Historial — esquina inferior derecha del área de juego */}
-        <div className="log-panel">
-          <ActionLog />
-        </div>
-      </div>
-
-      {/* ── Zona inferior: mis dados + panel de acción ── */}
-      <div className="my-zone">
-        {/* Mis dados */}
+        {/* Mis dados — dentro del área de juego, centrados al pie de la mesa
+            oval, como si estuvieran puestos sobre la mesa frente a mí. */}
         {me && !me.eliminated && (
           <div className="my-dice-row">
             {me.dice
@@ -121,6 +114,14 @@ export default function GameTable() {
           </div>
         )}
 
+        {/* Historial — esquina inferior derecha del área de juego */}
+        <div className="log-panel">
+          <ActionLog />
+        </div>
+      </div>
+
+      {/* ── Zona inferior: SOLO el panel de acción (HUD) ── */}
+      <div className="my-zone">
         {/* Panel de acción */}
         {!finished && (
           me?.eliminated ? (

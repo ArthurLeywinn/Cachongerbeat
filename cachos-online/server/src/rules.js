@@ -153,8 +153,8 @@ function validateRaise(prev, next) {
 
 /**
  * ¿Se permite "Calzar" en este momento?
- * El PDF: solo se puede calzar cuando esté la mitad de los dados en juego,
- * o cuando el participante tenga un solo dado.
+ * Regla usada: solo se puede calzar cuando hay MÁS de la mitad de los dados
+ * totales en juego, o cuando el participante tenga un solo dado.
  *
  * @param {number} totalDiceInPlay  Dados actualmente en manos de los jugadores.
  * @param {number} initialTotalDice Dados al inicio de la partida.
@@ -162,7 +162,8 @@ function validateRaise(prev, next) {
  */
 function canCalzar(totalDiceInPlay, initialTotalDice, playerDiceCount) {
   if (playerDiceCount === 1) return true;
-  return totalDiceInPlay <= initialTotalDice / 2;
+  // Solo se puede calzar cuando hay MÁS de la mitad de los dados totales en juego.
+  return totalDiceInPlay > initialTotalDice / 2;
 }
 
 /**

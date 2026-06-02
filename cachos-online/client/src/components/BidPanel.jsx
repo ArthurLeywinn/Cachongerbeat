@@ -98,7 +98,7 @@ export default function BidPanel() {
             onClick={calzar}
             disabled={!prev || !state.canCalzarNow}
             className="hud-action hud-action--calzar"
-            title={state.canCalzarNow ? 'Calzar exacto' : 'Solo con mitad de dados o teniendo 1 dado'}
+            title={state.canCalzarNow ? 'Calzar exacto' : 'Solo con más de la mitad de los dados o teniendo 1 dado'}
           >
             Calzar
           </button>
