@@ -1,23 +1,24 @@
 {
-  "name": "cachos-client",
+  "name": "cachos-online",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+  "description": "Juego web multijugador en tiempo real de Cachos / Liar's Dice (React + Socket.io)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
   },
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "socket.io-client": "^4.7.5"
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n SERVER,CLIENT -c green,cyan "npm run dev -w server" "npm run dev -w client"",
+    "dev:server": "npm run dev -w server",
+    "dev:client": "npm run dev -w client",
+    "build": "npm run build -w client",
+    "start": "npm run start -w server"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.6",
-    "vite": "^5.4.0"
+    "concurrently": "^8.2.2"
   }
 }
