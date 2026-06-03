@@ -133,6 +133,19 @@ io.on('connection', (socket) => {
     if (!result.finished) scheduleNextRound(ctx.game, result.nextStarterId);
   });
 
+  // Elegir modalidad de Obliga --------------------------------------------
+  socket.on('game:obliga', ({ mode, face }, cb) => {
+    const ctx = locate(socket.id);
+    if (!ctx) return cb?.({ ok: false, error: 'No estás en una sala.' });
+    const result = ctx.game.chooseObliga(ctx.player.id, mode, face);
+    if (result.error) return cb?.({ ok: false, error: result.error });
+    cb?.({ ok: true });
+    broadcastState(ctx.game);
+    // Kamikaze se resuelve al instante: si no terminó la partida, programa la
+    // próxima ronda (igual que dudar/calzar).
+    if (result.resolved && !result.finished) scheduleNextRound(ctx.game, result.nextStarterId);
+  });
+
   // Desconexión ------------------------------------------------------------
   socket.on('disconnect', () => {
     const ctx = locate(socket.id);
