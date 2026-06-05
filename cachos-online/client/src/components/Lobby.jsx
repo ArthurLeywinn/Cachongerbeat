@@ -34,6 +34,24 @@ export default function Lobby() {
           </p>
         </div>
 
+        {/* Resumen de reglas activas */}
+        {state.settings && (
+          <div className="flex flex-wrap gap-2 justify-center mb-6">
+            <span className="px-3 py-1 rounded-full bg-black/25 text-xs text-bone/70">
+              🎲 {state.settings.dicePerPlayer} dados
+            </span>
+            <span className="px-3 py-1 rounded-full bg-black/25 text-xs text-bone/70">
+              ⏱ {state.settings.turnSeconds ? `${state.settings.turnSeconds}s/turno` : 'Sin límite'}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-black/25 text-xs text-bone/70">
+              Calzo {state.settings.calzoMode}
+            </span>
+            {state.settings.pasarEnabled && (
+              <span className="px-3 py-1 rounded-full bg-sky-500/20 text-xs text-sky-200">Pasar activado</span>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2 mb-6">
           <p className="text-xs uppercase tracking-wide text-bone/50 mb-1">
             Jugadores ({state.players.length}/4)
