@@ -24,9 +24,9 @@ class GameManager {
     return code;
   }
 
-  createRoom(hostName, hostSocketId) {
+  createRoom(hostName, hostSocketId, settings) {
     const code = this._generateCode();
-    const game = new Game(code, hostName, hostSocketId);
+    const game = new Game(code, hostName, hostSocketId, settings);
     this.rooms.set(code, game);
     return game;
   }
