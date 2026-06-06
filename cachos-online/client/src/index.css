@@ -313,6 +313,7 @@ body::before {
 ═══════════════════════════════════════════ */
 
 .seat {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -533,4 +534,77 @@ body::before {
 .obliga-confirm:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════
+   CHAT lateral (izquierda)
+═══════════════════════════════════════════ */
+.chat-panel {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  width: 250px;
+  max-height: 46vh;
+  display: flex;
+  z-index: 5;
+}
+.chat-panel > .glass {
+  width: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .chat-panel { width: 200px; max-height: 38vh; }
+}
+
+/* ═══════════════════════════════════════════
+   BURBUJAS DE DIÁLOGO (chat sobre el avatar)
+═══════════════════════════════════════════ */
+.speech-bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  max-width: 200px;
+  width: max-content;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #f3ecdf;
+  color: #143a2a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
+  box-shadow: 0 8px 18px -6px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  animation: pop 0.2s ease-out;
+  word-break: break-word;
+}
+/* Colita de la burbuja */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: #f3ecdf;
+}
+/* Mi burbuja (sobre mis dados) */
+.speech-bubble--mine {
+  margin-bottom: 10px;
+}
+
+/* Burbuja de oponente: aparece DEBAJO del asiento (no se recorta en el borde
+   superior del área de juego). La colita apunta hacia arriba. */
+.speech-bubble--down {
+  bottom: auto;
+  top: 64%;
+  margin-bottom: 0;
+}
+.speech-bubble--down::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #f3ecdf;
 }
