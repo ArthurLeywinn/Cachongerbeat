@@ -34,7 +34,7 @@ function normalizeSettings(s = {}) {
   return {
     dicePerPlayer: Number.isFinite(dice) ? Math.min(6, Math.max(1, Math.round(dice))) : DICE_PER_PLAYER,
     turnSeconds: [15, 30, 60].includes(Number(s.turnSeconds)) ? Number(s.turnSeconds) : null, // null = sin límite
-    calzoMode: s.calzoMode === 'infinito' ? 'infinito' : 'limitado',
+    calzoInfinito: !!s.calzoInfinito, // por defecto OFF (regla normal: al menos la mitad)
     pasarEnabled: !!s.pasarEnabled,
   };
 }
@@ -90,6 +90,8 @@ class Game {
       isHost,
       obligaUsed: false, // Obliga es un beneficio único por jugador durante toda la partida
       passedThisRound: false, // "Pasar" se permite una vez por ronda por persona
+      chatCount: 0, // mensajes enviados en el turno actual (límite anti-spam)
+      chatToken: null, // token del turno para el que cuenta chatCount
     };
   }
 
@@ -98,12 +100,30 @@ class Game {
     if (this.log.length > 60) this.log.shift();
   }
 
+  // Token que identifica el "turno" actual (cambia al avanzar turno o ronda).
+  _chatToken() {
+    return `${this.round}:${this.currentTurnId || 'none'}`;
+  }
+
   // Agrega un mensaje de chat de un jugador (separado del historial de juego).
+  // Límite: máximo 10 mensajes por turno; al cambiar el turno se reinicia.
   addChat(playerId, text) {
     const player = this.getPlayer(playerId);
     if (!player) return { error: 'Jugador no encontrado.' };
+
+    const token = this._chatToken();
+    if (player.chatToken !== token) {
+      player.chatToken = token;
+      player.chatCount = 0;
+    }
+    if (player.chatCount >= 10) {
+      return { error: 'Límite de 10 mensajes por turno alcanzado.' };
+    }
+
     const clean = String(text || '').slice(0, 200).trim();
     if (!clean) return { error: 'Mensaje vacío.' };
+
+    player.chatCount += 1;
     const msg = { id: nextId('c'), playerId, name: player.name, text: clean, ts: Date.now() };
     this.chat.push(msg);
     if (this.chat.length > 50) this.chat.shift();
@@ -409,12 +429,8 @@ class Game {
 
     const player = this.getPlayer(playerId);
     const totalInPlay = this.activePlayers().reduce((s, p) => s + p.diceCount, 0);
-    if (!canCalzar(totalInPlay, this.initialTotalDice, player.diceCount, this.settings.calzoMode)) {
-      const msg =
-        this.settings.calzoMode === 'limitado'
-          ? 'Calzo limitado: solo con menos de la mitad de los dados o teniendo 1 dado.'
-          : 'No puedes calzar en este momento.';
-      return { error: msg };
+    if (!canCalzar(totalInPlay, this.initialTotalDice, this.settings.calzoInfinito)) {
+      return { error: 'Calzo solo disponible con al menos la mitad de los dados en juego.' };
     }
 
     const bid = this.currentBid;
@@ -447,6 +463,7 @@ class Game {
     if (this.currentTurnId !== playerId) return { error: 'No es tu turno.' };
     if (this.pendingPass) return { error: 'Tras un paso solo puedes apostar o dudar el paso.' };
     if (this.obliga) return { error: 'No se puede pasar durante una ronda de Obliga.' };
+    if (!this.currentBid) return { error: 'No puedes pasar antes de la primera apuesta de la ronda.' };
 
     const player = this.getPlayer(playerId);
     if (player.passedThisRound) return { error: 'Ya pasaste en esta ronda.' };
@@ -744,6 +761,7 @@ class Game {
       this.settings.pasarEnabled &&
       this.phase === 'bidding' &&
       this.currentTurnId === forPlayerId &&
+      !!this.currentBid &&
       !this.pendingPass &&
       !this.obliga &&
       me && !me.eliminated &&
@@ -764,7 +782,7 @@ class Game {
       totalDiceInPlay: totalInPlay,
       canCalzarNow:
         me && !me.eliminated && !calzarBlocked
-          ? canCalzar(totalInPlay, this.initialTotalDice, me.diceCount, this.settings.calzoMode)
+          ? canCalzar(totalInPlay, this.initialTotalDice, this.settings.calzoInfinito)
           : false,
       obliga: obligaOut,
       youMustChooseObliga: this.phase === 'obliga-choose' && this.obliga?.playerId === forPlayerId,
@@ -778,6 +796,7 @@ class Game {
       players,
       log: this.log.slice(-25),
       chat: this.chat.slice(-30),
+      chatRemaining: me ? Math.max(0, 10 - (me.chatToken === this._chatToken() ? me.chatCount : 0)) : 10,
       yourId: forPlayerId,
     };
   }

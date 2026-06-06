@@ -160,13 +160,11 @@ function validateRaise(prev, next) {
  * @param {number} initialTotalDice Dados al inicio de la partida.
  * @param {number} playerDiceCount  Dados del jugador que quiere calzar.
  */
-function canCalzar(totalDiceInPlay, initialTotalDice, playerDiceCount, calzoMode = 'limitado') {
-  if (playerDiceCount === 1) return true;
-  // Modo configurable al crear la sala:
-  //  - 'infinito': se puede calzar siempre (mientras haya apuesta).
-  //  - 'limitado': solo cuando quedan MENOS de la mitad de los dados iniciales.
-  if (calzoMode === 'infinito') return true;
-  return totalDiceInPlay < initialTotalDice / 2;
+function canCalzar(totalDiceInPlay, initialTotalDice, calzoInfinito = false) {
+  // Calzo infinito: siempre disponible.
+  if (calzoInfinito) return true;
+  // Regla normal (baseline): solo si quedan AL MENOS la mitad de los dados iniciales.
+  return totalDiceInPlay >= initialTotalDice / 2;
 }
 
 // --- Acción "Pasar" -------------------------------------------------------
