@@ -14,7 +14,7 @@ export default function RoundResult() {
   // ── Paso dudado ──
   if (r.type === 'pass-doubt') {
     return (
-      <div className="fixed inset-x-0 top-4 z-40 flex justify-center px-4 pointer-events-none">
+      <div className="fixed inset-0 z-40 flex items-center justify-center px-4 pointer-events-none">
         <div className="glass rounded-2xl px-6 py-4 shadow-cup animate-pop text-center max-w-lg border border-sky-400/30">
           <p className="text-sm text-bone/50 mb-1">
             <span className="text-sky-300">{nameOf(r.challengerId)}</span> dudó el paso de{' '}
@@ -34,7 +34,7 @@ export default function RoundResult() {
   if (r.type === 'kamikaze') {
     const total = (r.losses || []).reduce((s, l) => s + l.lost, 0);
     return (
-      <div className="fixed inset-x-0 top-4 z-40 flex justify-center px-4 pointer-events-none">
+      <div className="fixed inset-0 z-40 flex items-center justify-center px-4 pointer-events-none">
         <div className="glass rounded-2xl px-6 py-4 shadow-cup animate-pop text-center max-w-lg border border-red-400/30">
           <p className="text-sm text-bone/50 mb-1">
             Kamikaze de <span className="text-amber-glow">{nameOf(r.obligadoId)}</span> ·{' '}
@@ -87,7 +87,7 @@ export default function RoundResult() {
   }
 
   return (
-    <div className="fixed inset-x-0 top-4 z-40 flex justify-center px-4 pointer-events-none">
+    <div className="fixed inset-0 z-40 flex items-center justify-center px-4 pointer-events-none">
       <div className="glass rounded-2xl px-6 py-4 shadow-cup animate-pop text-center max-w-lg">
         <p className="text-sm text-bone/50 mb-1">Apuesta: {bidLabel}</p>
         <p className="font-display text-lg font-bold leading-snug">{headline}</p>

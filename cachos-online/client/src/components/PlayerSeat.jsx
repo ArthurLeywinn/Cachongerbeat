@@ -18,7 +18,7 @@ function variantFor(id) {
   return h;
 }
 
-export default function PlayerSeat({ player, compact = false }) {
+export default function PlayerSeat({ player, compact = false, bubble = null }) {
   const { state } = useGame();
   const isTurn = state.currentTurnId === player.id && state.phase === 'bidding';
   const isObligado = state.obliga?.playerId === player.id;
@@ -53,6 +53,9 @@ export default function PlayerSeat({ player, compact = false }) {
   if (compact) {
     return (
       <div className={['seat', isTurn ? 'seat--turn' : '', player.eliminated ? 'opacity-40' : ''].join(' ')}>
+        {/* Burbuja de chat (debajo del avatar para no recortarse arriba) */}
+        {bubble && <div className="speech-bubble speech-bubble--down">{bubble}</div>}
+
         {/* Dados sobre la mesa, frente al personaje */}
         <div className="seat__dice">{renderDice(26)}</div>
 

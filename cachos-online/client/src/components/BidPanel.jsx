@@ -129,7 +129,7 @@ export default function BidPanel() {
             className="hud-action hud-action--bid"
             title={!check.ok ? check.reason : 'Apostar'}
           >
-            {isEsta ? `${quantity} de esta` : 'Apostar'}
+            Apostar
           </button>
 
           {/* Si hay un paso pendiente: solo Apostar + Dudar el paso */}
@@ -158,11 +158,7 @@ export default function BidPanel() {
                   onClick={pasar}
                   disabled={!state.canPasarNow}
                   className="hud-action hud-action--pasar"
-                  title={
-                    state.canPasarNow
-                      ? 'Pasar (mano especial)'
-                      : 'Solo con 5 dados: todos distintos, todos iguales, o full (3+2)'
-                  }
+                  title="Pasar (farol): declaras mano especial. Si te dudan y no la tienes, pierdes un dado."
                 >
                   Pasar
                 </button>
