@@ -5,7 +5,7 @@ import Die from './Die.jsx';
 const DEFAULT_SETTINGS = {
   dicePerPlayer: 5,
   turnSeconds: null, // null = sin límite
-  calzoMode: 'limitado',
+  calzoInfinito: false, // OFF = regla normal (al menos la mitad de los dados)
   pasarEnabled: false,
 };
 
@@ -144,29 +144,28 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Modo de Calzo */}
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-bone/50 mb-2">Calzo</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { v: 'limitado', l: 'Limitado', d: 'menos de ½ dados' },
-                      { v: 'infinito', l: 'Infinito', d: 'siempre' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.v}
-                        onClick={() => set({ calzoMode: opt.v })}
-                        className={[
-                          'py-2 px-2 rounded-lg text-xs font-semibold transition flex flex-col',
-                          settings.calzoMode === opt.v
-                            ? 'bg-amber-glow text-felt-900'
-                            : 'bg-black/20 text-bone/60 hover:text-bone',
-                        ].join(' ')}
-                      >
-                        {opt.l}
-                        <span className="text-[10px] font-normal opacity-70">{opt.d}</span>
-                      </button>
-                    ))}
+                {/* Calzo infinito (checkbox; OFF = regla normal) */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-bone/50">Calzo infinito</p>
+                    <p className="text-[10px] text-bone/30">
+                      OFF: solo con la mitad o más de los dados
+                    </p>
                   </div>
+                  <button
+                    onClick={() => set({ calzoInfinito: !settings.calzoInfinito })}
+                    className={[
+                      'w-12 h-7 rounded-full transition relative',
+                      settings.calzoInfinito ? 'bg-amber-glow' : 'bg-black/40',
+                    ].join(' ')}
+                  >
+                    <span
+                      className={[
+                        'absolute top-1 w-5 h-5 rounded-full bg-bone transition-all',
+                        settings.calzoInfinito ? 'left-6' : 'left-1',
+                      ].join(' ')}
+                    />
+                  </button>
                 </div>
 
                 {/* Pasar */}

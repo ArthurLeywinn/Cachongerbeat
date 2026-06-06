@@ -20,7 +20,7 @@ export default function ActionLog() {
         <span className="text-bone/40">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
-        <div ref={ref} className="space-y-1.5 overflow-y-auto flex-1 pr-1 text-sm mt-2">
+        <div ref={ref} className="space-y-1.5 overflow-y-auto pr-1 text-sm mt-2" style={{ maxHeight: 260 }}>
           {(state.log || []).length === 0 ? (
             <p className="text-bone/30 italic">Nueva ronda…</p>
           ) : (

@@ -112,11 +112,19 @@ export default function GameTable() {
       <div className="play-area">
         <div className="big-table" aria-hidden="true" />
 
-        {/* Descarte central */}
+        {/* Descarte: dados pequeños y apagados, agrupados de a 5 (sin número) */}
         {state.centerPool > 0 && (
-          <div className="discard">
-            <p className="text-[10px] text-bone/40 uppercase tracking-widest">Descarte</p>
-            <p className="font-display text-3xl font-black text-amber-glow leading-none">{state.centerPool}</p>
+          <div className="discard" aria-label="dados descartados">
+            {Array.from({ length: Math.ceil(state.centerPool / 5) }).map((_, g) => {
+              const n = Math.min(5, state.centerPool - g * 5);
+              return (
+                <div className="discard-stack" key={g}>
+                  {Array.from({ length: n }).map((__, i) => (
+                    <span className="discard-die" key={i} />
+                  ))}
+                </div>
+              );
+            })}
           </div>
         )}
 

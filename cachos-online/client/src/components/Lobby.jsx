@@ -44,7 +44,7 @@ export default function Lobby() {
               ⏱ {state.settings.turnSeconds ? `${state.settings.turnSeconds}s/turno` : 'Sin límite'}
             </span>
             <span className="px-3 py-1 rounded-full bg-black/25 text-xs text-bone/70">
-              Calzo {state.settings.calzoMode}
+              Calzo {state.settings.calzoInfinito ? 'infinito' : 'normal'}
             </span>
             {state.settings.pasarEnabled && (
               <span className="px-3 py-1 rounded-full bg-sky-500/20 text-xs text-sky-200">Pasar activado</span>
