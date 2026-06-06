@@ -174,6 +174,16 @@ io.on('connection', (socket) => {
     if (result.resolved && !result.finished) scheduleNextRound(ctx.game, result.nextStarterId);
   });
 
+  // Chat -------------------------------------------------------------------
+  socket.on('game:chat', ({ text }, cb) => {
+    const ctx = locate(socket.id);
+    if (!ctx) return cb?.({ ok: false, error: 'No estás en una sala.' });
+    const result = ctx.game.addChat(ctx.player.id, text);
+    if (result.error) return cb?.({ ok: false, error: result.error });
+    cb?.({ ok: true });
+    broadcastState(ctx.game);
+  });
+
   // Desconexión ------------------------------------------------------------
   socket.on('disconnect', () => {
     const ctx = locate(socket.id);

@@ -70,6 +70,7 @@ class Game {
     this.lastResult = null;
     this.winnerId = null;
     this.log = [];
+    this.chat = []; // mensajes de chat (separado del historial de juego)
 
     const host = this._makePlayer(hostName, hostSocketId, true);
     this.players.push(host);
@@ -95,6 +96,18 @@ class Game {
   _addLog(message) {
     this.log.push({ id: nextId('l'), message, ts: Date.now() });
     if (this.log.length > 60) this.log.shift();
+  }
+
+  // Agrega un mensaje de chat de un jugador (separado del historial de juego).
+  addChat(playerId, text) {
+    const player = this.getPlayer(playerId);
+    if (!player) return { error: 'Jugador no encontrado.' };
+    const clean = String(text || '').slice(0, 200).trim();
+    if (!clean) return { error: 'Mensaje vacío.' };
+    const msg = { id: nextId('c'), playerId, name: player.name, text: clean, ts: Date.now() };
+    this.chat.push(msg);
+    if (this.chat.length > 50) this.chat.shift();
+    return { ok: true, msg };
   }
 
   getPlayer(playerId) {
@@ -198,6 +211,7 @@ class Game {
     this.lastResult = null;
     this.obliga = null;
     this.pendingPass = null;
+    this.log = []; // el historial se reinicia en cada ronda (no se acumula)
     this.players.forEach((p) => { p.passedThisRound = false; });
 
     // ¿Esta ronda puede ser de Obliga? No, si la anterior ya lo fue (no encadenar).
@@ -436,12 +450,10 @@ class Game {
 
     const player = this.getPlayer(playerId);
     if (player.passedThisRound) return { error: 'Ya pasaste en esta ronda.' };
-    if (player.diceCount !== 5) return { error: 'Solo puedes pasar con exactamente 5 dados.' };
-    if (!canPasarHand(player.dice)) {
-      return { error: 'Tu mano no permite pasar (necesitas 5 distintos, 5 iguales, o full 3+2).' };
-    }
 
-    // El paso NO cambia la apuesta: sigue vigente la del jugador anterior.
+    // Se permite pasar SIEMPRE (es un farol): el jugador declara tener una mano
+    // especial sin que se valide aquí. Si el siguiente duda el paso y la mano NO
+    // era válida, el que pasó pierde un dado (ver doubtPass).
     player.passedThisRound = true;
     this.pendingPass = { passerId: playerId };
     this._addLog(`${player.name} PASA. La apuesta sigue en ${this.currentBid ? formatBid(this.currentBid) : '—'}.`);
@@ -726,7 +738,8 @@ class Game {
 
     const calzarBlocked = this.obliga?.mode === 'cerradoA' || !!this.pendingPass;
 
-    // ¿Puedo pasar AHORA? (regla activa, mi turno, sin paso pendiente, 5 dados válidos)
+    // ¿Puedo pasar AHORA? El paso es un farol: disponible siempre en mi turno
+    // (sin importar los dados), si la regla está activa y no hay paso pendiente.
     const canPasarNow =
       this.settings.pasarEnabled &&
       this.phase === 'bidding' &&
@@ -734,9 +747,7 @@ class Game {
       !this.pendingPass &&
       !this.obliga &&
       me && !me.eliminated &&
-      me.diceCount === 5 &&
-      !me.passedThisRound &&
-      canPasarHand(me.dice);
+      !me.passedThisRound;
 
     return {
       code: this.code,
@@ -766,6 +777,7 @@ class Game {
       winnerId: this.winnerId,
       players,
       log: this.log.slice(-25),
+      chat: this.chat.slice(-30),
       yourId: forPlayerId,
     };
   }
