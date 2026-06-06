@@ -29,6 +29,14 @@ export function formatBid(bid) {
   return `${bid.quantity} ${FACE_NAMES_PLURAL[bid.face]}`;
 }
 
+// Etiqueta de apuesta segura: en modo "de esta" la pinta está oculta, así que
+// se muestra "N de esta" en vez de intentar nombrar la pinta (evita "undefined").
+export function bidText(bid) {
+  if (!bid) return '—';
+  if (bid.esta) return `${bid.quantity} de esta`;
+  return formatBid(bid);
+}
+
 // Misma lógica que el servidor (ver server/src/rules.js).
 export function validateRaise(prev, next) {
   if (!next) return { ok: false, reason: 'Apuesta vacía.' };
