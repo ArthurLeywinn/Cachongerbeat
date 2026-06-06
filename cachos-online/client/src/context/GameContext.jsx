@@ -136,6 +136,12 @@ export function GameProvider({ children }) {
     return res;
   }
 
+  async function sendChat(text) {
+    const res = await emitAck('game:chat', { text });
+    if (!res.ok) setError(res.error);
+    return res;
+  }
+
   function leave() {
     clearSession();
     setState(null);
@@ -160,6 +166,7 @@ export function GameProvider({ children }) {
     chooseObliga,
     pasar,
     doubtPass,
+    sendChat,
     leave,
   };
 
