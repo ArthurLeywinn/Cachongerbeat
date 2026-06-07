@@ -4,8 +4,8 @@ import Die from './Die.jsx';
 // Pantalla de Reglas: explicación completa + ejemplo de partida.
 export default function Rules({ onBack }) {
   return (
-    <div className="rules-screen">
-      <div className="rules-card">
+    <div className="themed-bg themed-bg--scroll">
+      <div className="themed-card rules-card">
         <div className="rules-head">
           <h2 className="font-display text-3xl font-black text-amber-glow">Reglas de Cachos</h2>
           <button onClick={onBack} className="rules-back">← Volver</button>

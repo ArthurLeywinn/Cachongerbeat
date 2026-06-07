@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext.jsx';
-import Die from './Die.jsx';
 import Rules from './Rules.jsx';
 
 const DEFAULT_SETTINGS = {
@@ -10,7 +9,6 @@ const DEFAULT_SETTINGS = {
   pasarEnabled: false,
 };
 
-// Iconos simples (SVG) para los botones del menú.
 const IconUsers = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 );
@@ -23,8 +21,8 @@ const IconBook = () => (
 
 export default function Home() {
   const { createRoom, joinRoom, connected } = useGame();
-  const [view, setView] = useState('menu'); // 'menu' | 'form' | 'rules'
-  const [mode, setMode] = useState('create'); // 'create' | 'join'
+  const [view, setView] = useState('menu');
+  const [mode, setMode] = useState('create');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,77 +38,54 @@ export default function Home() {
     setBusy(false);
   };
 
-  // ── Vista REGLAS ──
   if (view === 'rules') return <Rules onBack={() => setView('menu')} />;
 
-  // ── Vista MENÚ (imagen de fondo + 3 botones) ──
+  // ── MENÚ: imagen a pantalla completa + 3 botones cartón ──
   if (view === 'menu') {
     return (
-      <div className="menu-screen">
-        <div className="menu-stage">
-          <div className="menu-buttons">
-            <button
-              className="menu-btn menu-btn--primary"
-              onClick={() => { setMode('create'); setView('form'); }}
-            >
-              <IconUsers /> <span>Crear sala</span>
-            </button>
-            <button
-              className="menu-btn"
-              onClick={() => { setMode('join'); setView('form'); }}
-            >
-              <IconEnter /> <span>Unirse a sala</span>
-            </button>
-            <button className="menu-btn" onClick={() => setView('rules')}>
-              <IconBook /> <span>Reglas</span>
-            </button>
-          </div>
+      <div className="themed-bg">
+        <div className="menu-buttons">
+          <button className="menu-btn menu-btn--primary" onClick={() => { setMode('create'); setView('form'); }}>
+            <IconUsers /> <span>Crear sala</span>
+          </button>
+          <button className="menu-btn" onClick={() => { setMode('join'); setView('form'); }}>
+            <IconEnter /> <span>Unirse a sala</span>
+          </button>
+          <button className="menu-btn" onClick={() => setView('rules')}>
+            <IconBook /> <span>Reglas</span>
+          </button>
         </div>
         {!connected && <p className="menu-conn">Conectando al servidor…</p>}
       </div>
     );
   }
 
-  // ── Vista FORMULARIO (tras elegir Crear/Unirse) ──
+  // ── FORMULARIO: mismo fondo temático + tarjeta cartón ──
   return (
-    <div className="menu-screen menu-screen--form">
-      <div className="glass rounded-2xl p-6 w-full max-w-md shadow-cup relative z-10">
-        <button onClick={() => setView('menu')} className="text-sm text-bone/50 hover:text-bone/80 transition mb-3">
-          ← Volver
-        </button>
+    <div className="themed-bg themed-bg--scroll">
+      <div className="themed-card">
+        <button onClick={() => setView('menu')} className="themed-back">← Volver</button>
 
         <h2 className="font-display text-2xl font-black text-amber-glow mb-4">
           {mode === 'create' ? 'Crear sala' : 'Unirse a una sala'}
         </h2>
 
         <label className="block text-xs uppercase tracking-wide text-bone/50 mb-1">Tu nombre</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={20}
-          placeholder="Ej: Pancho"
-          className="w-full mb-4 px-4 py-3 rounded-xl bg-black/30 border border-white/10 focus:border-amber-glow/60 outline-none text-bone placeholder:text-bone/30"
-        />
+        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="Ej: Pancho"
+          className="themed-input w-full mb-4" />
 
         {mode === 'join' && (
           <>
             <label className="block text-xs uppercase tracking-wide text-bone/50 mb-1">Código de sala</label>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              maxLength={4}
-              placeholder="ABCD"
-              className="w-full mb-4 px-4 py-3 rounded-xl bg-black/30 border border-white/10 focus:border-amber-glow/60 outline-none text-bone tracking-[0.4em] text-center font-display text-2xl placeholder:tracking-normal placeholder:text-bone/30"
-            />
+            <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={4} placeholder="ABCD"
+              className="themed-input w-full mb-4 tracking-[0.4em] text-center font-display text-2xl placeholder:tracking-normal" />
           </>
         )}
 
         {mode === 'create' && (
-          <div className="mb-4 rounded-xl border border-white/10 overflow-hidden">
-            <button
-              onClick={() => setShowRules((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-bone/80 hover:bg-white/5 transition"
-            >
+          <div className="mb-4 rounded-xl border border-bone/15 overflow-hidden">
+            <button onClick={() => setShowRules((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-bone/80 hover:bg-white/5 transition">
               <span>Reglas personalizadas</span>
               <span className="text-bone/40">{showRules ? '▲' : '▼'}</span>
             </button>
@@ -152,7 +127,7 @@ export default function Home() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-bone/50">Acción “Pasar”</p>
+                    <p className="text-xs uppercase tracking-wide text-bone/50">Acción "Pasar"</p>
                     <p className="text-[10px] text-bone/30">Farol: declara mano especial</p>
                   </div>
                   <button onClick={() => set({ pasarEnabled: !settings.pasarEnabled })}
@@ -165,11 +140,9 @@ export default function Home() {
           </div>
         )}
 
-        <button
-          onClick={handleSubmit}
+        <button onClick={handleSubmit}
           disabled={busy || !connected || !name.trim() || (mode === 'join' && code.length < 4)}
-          className="w-full py-3 rounded-xl bg-amber-glow text-felt-900 font-bold hover:brightness-105 active:scale-[0.99] transition disabled:opacity-40 disabled:cursor-not-allowed"
-        >
+          className="menu-btn menu-btn--primary w-full" style={{ marginTop: 4 }}>
           {busy ? 'Conectando…' : mode === 'create' ? 'Crear partida' : 'Entrar a la sala'}
         </button>
 
