@@ -2,21 +2,23 @@ import React, { useState } from 'react';
 import { useGame } from '../context/GameContext.jsx';
 import Rules from './Rules.jsx';
 
-const DEFAULT_SETTINGS = {
-  dicePerPlayer: 5,
-  turnSeconds: null,
-  calzoInfinito: false,
-  pasarEnabled: false,
-};
+// ─────────────────────────────────────────────────────────────
+// Cambia esta línea para elegir el estilo del menú:
+//   'clean'        → minimalista limpio estilo plataforma (verde/negro)
+//   'illustrated'  → la imagen ilustrada de los encapuchados
+const MENU_THEME = 'clean';
+// ─────────────────────────────────────────────────────────────
+
+const DEFAULT_SETTINGS = { dicePerPlayer: 5, turnSeconds: null, calzoInfinito: false, pasarEnabled: false };
 
 const IconUsers = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 );
 const IconEnter = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
 );
 const IconBook = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
 );
 
 export default function Home() {
@@ -30,6 +32,8 @@ export default function Home() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const set = (patch) => setSettings((s) => ({ ...s, ...patch }));
 
+  const clean = MENU_THEME === 'clean';
+
   const handleSubmit = async () => {
     if (!name.trim()) return;
     setBusy(true);
@@ -38,33 +42,62 @@ export default function Home() {
     setBusy(false);
   };
 
-  if (view === 'rules') return <Rules onBack={() => setView('menu')} />;
+  if (view === 'rules') return <Rules onBack={() => setView('menu')} theme={MENU_THEME} />;
 
-  // ── MENÚ: imagen a pantalla completa + 3 botones cartón ──
+  // ════════════════ MENÚ ════════════════
   if (view === 'menu') {
+    if (clean) {
+      return (
+        <div className="clean-bg">
+          <div className="clean-hero">
+            <div className="clean-dice">
+              {[1, 5, 3].map((n, i) => (
+                <span className="die-mini" key={i}><span /></span>
+              ))}
+            </div>
+            <h1 className="clean-logo">CACHOS</h1>
+            <p className="clean-tagline">Bluffea · <strong>Duda</strong> · Calza</p>
+            <div className="clean-actions">
+              <button className="clean-btn clean-btn--primary" onClick={() => { setMode('create'); setView('form'); }}>
+                <IconUsers /> Crear sala
+              </button>
+              <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
+                <IconEnter /> Unirse a sala
+              </button>
+              <button className="clean-btn" onClick={() => setView('rules')}>
+                <IconBook /> Reglas
+              </button>
+            </div>
+            <p className="clean-foot">2 a 4 jugadores · multijugador en tiempo real</p>
+            {!connected && <p className="clean-foot" style={{ color: '#f87171' }}>Conectando al servidor…</p>}
+          </div>
+        </div>
+      );
+    }
+    // Versión ilustrada (imagen de fondo)
     return (
       <div className="themed-bg">
         <div className="menu-buttons">
-          <button className="menu-btn menu-btn--primary" onClick={() => { setMode('create'); setView('form'); }}>
-            <IconUsers /> <span>Crear sala</span>
-          </button>
-          <button className="menu-btn" onClick={() => { setMode('join'); setView('form'); }}>
-            <IconEnter /> <span>Unirse a sala</span>
-          </button>
-          <button className="menu-btn" onClick={() => setView('rules')}>
-            <IconBook /> <span>Reglas</span>
-          </button>
+          <button className="menu-btn menu-btn--primary" onClick={() => { setMode('create'); setView('form'); }}><IconUsers /> <span>Crear sala</span></button>
+          <button className="menu-btn" onClick={() => { setMode('join'); setView('form'); }}><IconEnter /> <span>Unirse a sala</span></button>
+          <button className="menu-btn" onClick={() => setView('rules')}><IconBook /> <span>Reglas</span></button>
         </div>
         {!connected && <p className="menu-conn">Conectando al servidor…</p>}
       </div>
     );
   }
 
-  // ── FORMULARIO: mismo fondo temático + tarjeta cartón ──
+  // ════════════════ FORMULARIO ════════════════
+  const wrapClass = clean ? 'clean-bg' : 'themed-bg themed-bg--scroll';
+  const cardClass = clean ? 'clean-card' : 'themed-card';
+  const backClass = clean ? 'clean-back' : 'themed-back';
+  const inputClass = clean ? 'clean-input' : 'themed-input';
+  const submitClass = clean ? 'clean-btn clean-btn--primary w-full' : 'menu-btn menu-btn--primary w-full';
+
   return (
-    <div className="themed-bg themed-bg--scroll">
-      <div className="themed-card">
-        <button onClick={() => setView('menu')} className="themed-back">← Volver</button>
+    <div className={wrapClass}>
+      <div className={cardClass}>
+        <button onClick={() => setView('menu')} className={backClass}>← Volver</button>
 
         <h2 className="font-display text-2xl font-black text-amber-glow mb-4">
           {mode === 'create' ? 'Crear sala' : 'Unirse a una sala'}
@@ -72,13 +105,13 @@ export default function Home() {
 
         <label className="block text-xs uppercase tracking-wide text-bone/50 mb-1">Tu nombre</label>
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="Ej: Pancho"
-          className="themed-input w-full mb-4" />
+          className={`${inputClass} w-full mb-4`} />
 
         {mode === 'join' && (
           <>
             <label className="block text-xs uppercase tracking-wide text-bone/50 mb-1">Código de sala</label>
             <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={4} placeholder="ABCD"
-              className="themed-input w-full mb-4 tracking-[0.4em] text-center font-display text-2xl placeholder:tracking-normal" />
+              className={`${inputClass} w-full mb-4 tracking-[0.4em] text-center font-display text-2xl placeholder:tracking-normal`} />
           </>
         )}
 
@@ -86,10 +119,8 @@ export default function Home() {
           <div className="mb-4 rounded-xl border border-bone/15 overflow-hidden">
             <button onClick={() => setShowRules((v) => !v)}
               className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-bone/80 hover:bg-white/5 transition">
-              <span>Reglas personalizadas</span>
-              <span className="text-bone/40">{showRules ? '▲' : '▼'}</span>
+              <span>Reglas personalizadas</span><span className="text-bone/40">{showRules ? '▲' : '▼'}</span>
             </button>
-
             {showRules && (
               <div className="px-4 pb-4 pt-1 space-y-4">
                 <div>
@@ -101,37 +132,24 @@ export default function Home() {
                     <span className="text-xs text-bone/30">(1–6, por defecto 5)</span>
                   </div>
                 </div>
-
                 <div>
                   <p className="text-xs uppercase tracking-wide text-bone/50 mb-2">Tiempo por turno</p>
                   <div className="grid grid-cols-4 gap-2">
                     {[{ v: null, l: 'Sin límite' }, { v: 15, l: '15s' }, { v: 30, l: '30s' }, { v: 60, l: '60s' }].map((opt) => (
                       <button key={String(opt.v)} onClick={() => set({ turnSeconds: opt.v })}
-                        className={['py-2 rounded-lg text-xs font-semibold transition', settings.turnSeconds === opt.v ? 'bg-amber-glow text-felt-900' : 'bg-black/20 text-bone/60 hover:text-bone'].join(' ')}>
-                        {opt.l}
-                      </button>
+                        className={['py-2 rounded-lg text-xs font-semibold transition', settings.turnSeconds === opt.v ? 'bg-amber-glow text-felt-900' : 'bg-black/20 text-bone/60 hover:text-bone'].join(' ')}>{opt.l}</button>
                     ))}
                   </div>
                 </div>
-
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-bone/50">Calzo infinito</p>
-                    <p className="text-[10px] text-bone/30">OFF: solo con la mitad o más de los dados</p>
-                  </div>
-                  <button onClick={() => set({ calzoInfinito: !settings.calzoInfinito })}
-                    className={['w-12 h-7 rounded-full transition relative', settings.calzoInfinito ? 'bg-amber-glow' : 'bg-black/40'].join(' ')}>
+                  <div><p className="text-xs uppercase tracking-wide text-bone/50">Calzo infinito</p><p className="text-[10px] text-bone/30">OFF: solo con la mitad o más de los dados</p></div>
+                  <button onClick={() => set({ calzoInfinito: !settings.calzoInfinito })} className={['w-12 h-7 rounded-full transition relative', settings.calzoInfinito ? 'bg-amber-glow' : 'bg-black/40'].join(' ')}>
                     <span className={['absolute top-1 w-5 h-5 rounded-full bg-bone transition-all', settings.calzoInfinito ? 'left-6' : 'left-1'].join(' ')} />
                   </button>
                 </div>
-
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-bone/50">Acción "Pasar"</p>
-                    <p className="text-[10px] text-bone/30">Farol: declara mano especial</p>
-                  </div>
-                  <button onClick={() => set({ pasarEnabled: !settings.pasarEnabled })}
-                    className={['w-12 h-7 rounded-full transition relative', settings.pasarEnabled ? 'bg-amber-glow' : 'bg-black/40'].join(' ')}>
+                  <div><p className="text-xs uppercase tracking-wide text-bone/50">Acción "Pasar"</p><p className="text-[10px] text-bone/30">Farol: declara mano especial</p></div>
+                  <button onClick={() => set({ pasarEnabled: !settings.pasarEnabled })} className={['w-12 h-7 rounded-full transition relative', settings.pasarEnabled ? 'bg-amber-glow' : 'bg-black/40'].join(' ')}>
                     <span className={['absolute top-1 w-5 h-5 rounded-full bg-bone transition-all', settings.pasarEnabled ? 'left-6' : 'left-1'].join(' ')} />
                   </button>
                 </div>
@@ -142,7 +160,7 @@ export default function Home() {
 
         <button onClick={handleSubmit}
           disabled={busy || !connected || !name.trim() || (mode === 'join' && code.length < 4)}
-          className="menu-btn menu-btn--primary w-full" style={{ marginTop: 4 }}>
+          className={submitClass} style={{ marginTop: 4 }}>
           {busy ? 'Conectando…' : mode === 'create' ? 'Crear partida' : 'Entrar a la sala'}
         </button>
 

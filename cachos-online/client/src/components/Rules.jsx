@@ -2,10 +2,13 @@ import React from 'react';
 import Die from './Die.jsx';
 
 // Pantalla de Reglas: explicación completa + ejemplo de partida.
-export default function Rules({ onBack }) {
+export default function Rules({ onBack, theme = 'clean' }) {
+  const clean = theme === 'clean';
+  const wrapClass = clean ? 'clean-bg' : 'themed-bg themed-bg--scroll';
+  const cardClass = clean ? 'clean-card clean-card--wide rules-card' : 'themed-card rules-card';
   return (
-    <div className="themed-bg themed-bg--scroll">
-      <div className="themed-card rules-card">
+    <div className={wrapClass}>
+      <div className={cardClass}>
         <div className="rules-head">
           <h2 className="font-display text-3xl font-black text-amber-glow">Reglas de Cachos</h2>
           <button onClick={onBack} className="rules-back">← Volver</button>
