@@ -644,38 +644,32 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════
-   MENÚ PRINCIPAL (imagen de fondo + botones)
+   FONDO TEMÁTICO (menú, formulario, reglas)
 ═══════════════════════════════════════════ */
-.menu-screen {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: #08120c;
-}
-.menu-screen--form {
-  background: transparent;
-  padding: 16px;
-}
-
-/* La "escena" mantiene el aspecto de la imagen para alinear los botones */
-.menu-stage {
+.themed-bg {
   position: relative;
-  width: min(100vw, calc(100vh * 1.668));
-  aspect-ratio: 1620 / 971;
-  background: url('/menu-bg.png') center / contain no-repeat;
-  container-type: size;
+  min-height: 100vh;
+  background: #08120c url('/menu-bg.png') center center / cover no-repeat;
+}
+/* Variante con scroll y contenido centrado (formulario / reglas) */
+.themed-bg--scroll {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 6vh 16px;
+  overflow-y: auto;
 }
 
-/* Columna de botones sobre la zona de la mesa (encima de los dibujados) */
+/* Columna de botones del menú, sobre el fieltro limpio */
 .menu-buttons {
   position: absolute;
   left: 50%;
-  top: 64.8%;
+  top: 58%;
   transform: translate(-50%, -50%);
-  width: 33%;
+  width: min(440px, 86vw);
   display: flex;
   flex-direction: column;
-  gap: 2.2cqh;
+  gap: 16px;
 }
 
 .menu-btn {
@@ -684,14 +678,14 @@ body::before {
   justify-content: center;
   gap: 0.6em;
   width: 100%;
-  padding: 3.3cqh 0;
-  border-radius: 2cqh;
+  padding: clamp(14px, 2.3vh, 22px) 0;
+  border-radius: 14px;
   font-family: 'Fraunces', Georgia, serif;
   font-weight: 800;
-  font-size: 3cqh;
+  font-size: clamp(18px, 2.5vh, 24px);
   letter-spacing: 0.04em;
   color: #e9dcc0;
-  background: #1b150d; /* opaco: cubre por completo el botón dibujado */
+  background: #1b150d;
   border: 2px solid rgba(216, 193, 154, 0.55);
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5), inset 0 0 22px rgba(0, 0, 0, 0.45);
   cursor: pointer;
@@ -717,24 +711,42 @@ body::before {
   font-size: 12px;
 }
 
+/* Tarjeta temática (cartón sobre fieltro) para formulario y reglas */
+.themed-card {
+  width: 100%;
+  max-width: 460px;
+  background: rgba(10, 20, 14, 0.94);
+  border: 2px solid rgba(216, 193, 154, 0.5);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 18px 50px -16px rgba(0, 0, 0, 0.85), inset 0 0 30px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 2;
+}
+.themed-input {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(216, 193, 154, 0.25);
+  color: #f3ecdf;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.themed-input::placeholder { color: rgba(243, 236, 223, 0.3); }
+.themed-input:focus { border-color: rgba(244, 184, 64, 0.6); }
+.themed-back {
+  font-size: 0.85rem;
+  color: rgba(216, 193, 154, 0.8);
+  margin-bottom: 12px;
+  transition: color 0.15s;
+}
+.themed-back:hover { color: #f4b840; }
+
 /* ═══════════════════════════════════════════
    PANTALLA DE REGLAS
 ═══════════════════════════════════════════ */
-.rules-screen {
-  min-height: 100vh;
-  display: grid;
-  place-items: start center;
-  padding: 28px 16px;
-}
 .rules-card {
-  width: 100%;
   max-width: 720px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  backdrop-filter: blur(10px);
-  padding: 24px 26px;
-  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55);
 }
 .rules-head {
   display: flex;
