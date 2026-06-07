@@ -792,3 +792,130 @@ body::before {
   border-radius: 14px;
   padding: 16px 18px;
 }
+
+/* ═══════════════════════════════════════════
+   SKIN LIMPIO (estilo plataforma, minimalista) — menú/form/reglas
+═══════════════════════════════════════════ */
+.clean-bg {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(120% 80% at 50% 0%, #12231a 0%, #0b140e 55%, #070d09 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 18px;
+  overflow-y: auto;
+}
+.clean-bg::before { /* viñeta sutil */
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(80% 60% at 50% 45%, transparent 60%, rgba(0,0,0,0.45) 100%);
+  pointer-events: none;
+}
+
+.clean-hero {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+.clean-dice {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.clean-dice .die-mini {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: rgba(243,236,223,0.08);
+  border: 1px solid rgba(243,236,223,0.18);
+  display: grid; place-items: center;
+}
+.clean-dice .die-mini span { width: 4px; height: 4px; border-radius: 50%; background: rgba(243,236,223,0.7); }
+
+.clean-logo {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(46px, 9vw, 74px);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  color: #f3ecdf;
+  margin: 0;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.3);
+}
+.clean-tagline {
+  margin: 10px 0 34px;
+  font-size: 0.8rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(243,236,223,0.45);
+}
+.clean-tagline strong { color: #f4b840; font-weight: 700; }
+
+.clean-actions { display: flex; flex-direction: column; gap: 12px; }
+
+.clean-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.55em;
+  width: 100%;
+  padding: 15px 0;
+  border-radius: 13px;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+  color: #f3ecdf;
+  background: rgba(243,236,223,0.05);
+  border: 1.5px solid rgba(243,236,223,0.14);
+  cursor: pointer;
+  transition: transform 0.08s, background 0.15s, border-color 0.15s, filter 0.15s;
+}
+.clean-btn svg { width: 1.15em; height: 1.15em; }
+.clean-btn:hover { background: rgba(243,236,223,0.09); border-color: rgba(243,236,223,0.24); }
+.clean-btn:active { transform: translateY(1px); }
+
+.clean-btn--primary {
+  background: linear-gradient(180deg, #43a35d 0%, #338049 100%);
+  border-color: #2c7340;
+  color: #fff;
+  box-shadow: 0 8px 22px -8px rgba(53,140,80,0.8), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.clean-btn--primary:hover { filter: brightness(1.07); background: linear-gradient(180deg, #49ad64 0%, #38894e 100%); }
+
+.clean-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.clean-foot {
+  margin-top: 26px;
+  font-size: 0.72rem;
+  color: rgba(243,236,223,0.3);
+  letter-spacing: 0.04em;
+}
+
+/* Tarjeta limpia (formulario / reglas) */
+.clean-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  background: #101a14;
+  border: 1px solid rgba(243,236,223,0.08);
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: 0 24px 60px -24px rgba(0,0,0,0.8);
+}
+.clean-card--wide { max-width: 700px; align-self: flex-start; }
+.clean-input {
+  padding: 12px 15px;
+  border-radius: 11px;
+  background: rgba(0,0,0,0.3);
+  border: 1.5px solid rgba(243,236,223,0.12);
+  color: #f3ecdf;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.clean-input::placeholder { color: rgba(243,236,223,0.28); }
+.clean-input:focus { border-color: #43a35d; }
+.clean-back { font-size: 0.85rem; color: rgba(243,236,223,0.5); margin-bottom: 12px; transition: color 0.15s; }
+.clean-back:hover { color: #43a35d; }
