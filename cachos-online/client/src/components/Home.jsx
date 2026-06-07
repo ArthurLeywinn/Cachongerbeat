@@ -1,22 +1,33 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext.jsx';
 import Die from './Die.jsx';
+import Rules from './Rules.jsx';
 
 const DEFAULT_SETTINGS = {
   dicePerPlayer: 5,
-  turnSeconds: null, // null = sin límite
-  calzoInfinito: false, // OFF = regla normal (al menos la mitad de los dados)
+  turnSeconds: null,
+  calzoInfinito: false,
   pasarEnabled: false,
 };
 
+// Iconos simples (SVG) para los botones del menú.
+const IconUsers = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+);
+const IconEnter = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+);
+const IconBook = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+);
+
 export default function Home() {
   const { createRoom, joinRoom, connected } = useGame();
+  const [view, setView] = useState('menu'); // 'menu' | 'form' | 'rules'
+  const [mode, setMode] = useState('create'); // 'create' | 'join'
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [mode, setMode] = useState('create');
   const [busy, setBusy] = useState(false);
-
-  // Reglas personalizadas (solo al crear).
   const [showRules, setShowRules] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const set = (patch) => setSettings((s) => ({ ...s, ...patch }));
@@ -24,41 +35,53 @@ export default function Home() {
   const handleSubmit = async () => {
     if (!name.trim()) return;
     setBusy(true);
-    if (mode === 'create') {
-      await createRoom(name.trim(), settings);
-    } else {
-      await joinRoom(code.trim().toUpperCase(), name.trim());
-    }
+    if (mode === 'create') await createRoom(name.trim(), settings);
+    else await joinRoom(code.trim().toUpperCase(), name.trim());
     setBusy(false);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
-      <div className="flex items-center gap-3 mb-2 animate-pop">
-        <Die value={5} size={40} />
-        <Die value={1} size={40} highlight />
-        <Die value={3} size={40} />
-      </div>
-      <h1 className="font-display text-5xl sm:text-6xl font-black tracking-tight text-bone">Cachos</h1>
-      <p className="text-bone/60 mt-2 mb-8 text-center max-w-sm">
-        Dudo / Liar&apos;s Dice multijugador en tiempo real. Bluffea, duda y calza.
-      </p>
+  // ── Vista REGLAS ──
+  if (view === 'rules') return <Rules onBack={() => setView('menu')} />;
 
-      <div className="glass rounded-2xl p-6 w-full max-w-md shadow-cup">
-        <div className="flex gap-2 mb-5 p-1 rounded-xl bg-black/20">
-          {['create', 'join'].map((m) => (
+  // ── Vista MENÚ (imagen de fondo + 3 botones) ──
+  if (view === 'menu') {
+    return (
+      <div className="menu-screen">
+        <div className="menu-stage">
+          <div className="menu-buttons">
             <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={[
-                'flex-1 py-2 rounded-lg text-sm font-semibold transition',
-                mode === m ? 'bg-amber-glow text-felt-900' : 'text-bone/60 hover:text-bone',
-              ].join(' ')}
+              className="menu-btn menu-btn--primary"
+              onClick={() => { setMode('create'); setView('form'); }}
             >
-              {m === 'create' ? 'Crear sala' : 'Unirse'}
+              <IconUsers /> <span>Crear sala</span>
             </button>
-          ))}
+            <button
+              className="menu-btn"
+              onClick={() => { setMode('join'); setView('form'); }}
+            >
+              <IconEnter /> <span>Unirse a sala</span>
+            </button>
+            <button className="menu-btn" onClick={() => setView('rules')}>
+              <IconBook /> <span>Reglas</span>
+            </button>
+          </div>
         </div>
+        {!connected && <p className="menu-conn">Conectando al servidor…</p>}
+      </div>
+    );
+  }
+
+  // ── Vista FORMULARIO (tras elegir Crear/Unirse) ──
+  return (
+    <div className="menu-screen menu-screen--form">
+      <div className="glass rounded-2xl p-6 w-full max-w-md shadow-cup relative z-10">
+        <button onClick={() => setView('menu')} className="text-sm text-bone/50 hover:text-bone/80 transition mb-3">
+          ← Volver
+        </button>
+
+        <h2 className="font-display text-2xl font-black text-amber-glow mb-4">
+          {mode === 'create' ? 'Crear sala' : 'Unirse a una sala'}
+        </h2>
 
         <label className="block text-xs uppercase tracking-wide text-bone/50 mb-1">Tu nombre</label>
         <input
@@ -82,7 +105,6 @@ export default function Home() {
           </>
         )}
 
-        {/* ── Reglas personalizadas (solo al crear) ── */}
         {mode === 'create' && (
           <div className="mb-4 rounded-xl border border-white/10 overflow-hidden">
             <button
@@ -95,98 +117,47 @@ export default function Home() {
 
             {showRules && (
               <div className="px-4 pb-4 pt-1 space-y-4">
-                {/* Dados por jugador */}
                 <div>
                   <p className="text-xs uppercase tracking-wide text-bone/50 mb-2">Dados por jugador</p>
                   <div className="flex items-center gap-4">
-                    <button
-                      className="w-9 h-9 rounded-full bg-black/30 text-xl hover:bg-black/50 transition"
-                      onClick={() => set({ dicePerPlayer: Math.max(1, settings.dicePerPlayer - 1) })}
-                    >
-                      −
-                    </button>
-                    <span className="font-display text-2xl font-black text-amber-glow w-8 text-center">
-                      {settings.dicePerPlayer}
-                    </span>
-                    <button
-                      className="w-9 h-9 rounded-full bg-black/30 text-xl hover:bg-black/50 transition"
-                      onClick={() => set({ dicePerPlayer: Math.min(6, settings.dicePerPlayer + 1) })}
-                    >
-                      +
-                    </button>
+                    <button className="w-9 h-9 rounded-full bg-black/30 text-xl hover:bg-black/50 transition" onClick={() => set({ dicePerPlayer: Math.max(1, settings.dicePerPlayer - 1) })}>−</button>
+                    <span className="font-display text-2xl font-black text-amber-glow w-8 text-center">{settings.dicePerPlayer}</span>
+                    <button className="w-9 h-9 rounded-full bg-black/30 text-xl hover:bg-black/50 transition" onClick={() => set({ dicePerPlayer: Math.min(6, settings.dicePerPlayer + 1) })}>+</button>
                     <span className="text-xs text-bone/30">(1–6, por defecto 5)</span>
                   </div>
                 </div>
 
-                {/* Tiempo por turno */}
                 <div>
                   <p className="text-xs uppercase tracking-wide text-bone/50 mb-2">Tiempo por turno</p>
                   <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { v: null, l: 'Sin límite' },
-                      { v: 15, l: '15s' },
-                      { v: 30, l: '30s' },
-                      { v: 60, l: '60s' },
-                    ].map((opt) => (
-                      <button
-                        key={String(opt.v)}
-                        onClick={() => set({ turnSeconds: opt.v })}
-                        className={[
-                          'py-2 rounded-lg text-xs font-semibold transition',
-                          settings.turnSeconds === opt.v
-                            ? 'bg-amber-glow text-felt-900'
-                            : 'bg-black/20 text-bone/60 hover:text-bone',
-                        ].join(' ')}
-                      >
+                    {[{ v: null, l: 'Sin límite' }, { v: 15, l: '15s' }, { v: 30, l: '30s' }, { v: 60, l: '60s' }].map((opt) => (
+                      <button key={String(opt.v)} onClick={() => set({ turnSeconds: opt.v })}
+                        className={['py-2 rounded-lg text-xs font-semibold transition', settings.turnSeconds === opt.v ? 'bg-amber-glow text-felt-900' : 'bg-black/20 text-bone/60 hover:text-bone'].join(' ')}>
                         {opt.l}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Calzo infinito (checkbox; OFF = regla normal) */}
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-bone/50">Calzo infinito</p>
-                    <p className="text-[10px] text-bone/30">
-                      OFF: solo con la mitad o más de los dados
-                    </p>
+                    <p className="text-[10px] text-bone/30">OFF: solo con la mitad o más de los dados</p>
                   </div>
-                  <button
-                    onClick={() => set({ calzoInfinito: !settings.calzoInfinito })}
-                    className={[
-                      'w-12 h-7 rounded-full transition relative',
-                      settings.calzoInfinito ? 'bg-amber-glow' : 'bg-black/40',
-                    ].join(' ')}
-                  >
-                    <span
-                      className={[
-                        'absolute top-1 w-5 h-5 rounded-full bg-bone transition-all',
-                        settings.calzoInfinito ? 'left-6' : 'left-1',
-                      ].join(' ')}
-                    />
+                  <button onClick={() => set({ calzoInfinito: !settings.calzoInfinito })}
+                    className={['w-12 h-7 rounded-full transition relative', settings.calzoInfinito ? 'bg-amber-glow' : 'bg-black/40'].join(' ')}>
+                    <span className={['absolute top-1 w-5 h-5 rounded-full bg-bone transition-all', settings.calzoInfinito ? 'left-6' : 'left-1'].join(' ')} />
                   </button>
                 </div>
 
-                {/* Pasar */}
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-bone/50">Acción “Pasar”</p>
-                    <p className="text-[10px] text-bone/30">Solo con 5 dados especiales</p>
+                    <p className="text-[10px] text-bone/30">Farol: declara mano especial</p>
                   </div>
-                  <button
-                    onClick={() => set({ pasarEnabled: !settings.pasarEnabled })}
-                    className={[
-                      'w-12 h-7 rounded-full transition relative',
-                      settings.pasarEnabled ? 'bg-amber-glow' : 'bg-black/40',
-                    ].join(' ')}
-                  >
-                    <span
-                      className={[
-                        'absolute top-1 w-5 h-5 rounded-full bg-bone transition-all',
-                        settings.pasarEnabled ? 'left-6' : 'left-1',
-                      ].join(' ')}
-                    />
+                  <button onClick={() => set({ pasarEnabled: !settings.pasarEnabled })}
+                    className={['w-12 h-7 rounded-full transition relative', settings.pasarEnabled ? 'bg-amber-glow' : 'bg-black/40'].join(' ')}>
+                    <span className={['absolute top-1 w-5 h-5 rounded-full bg-bone transition-all', settings.pasarEnabled ? 'left-6' : 'left-1'].join(' ')} />
                   </button>
                 </div>
               </div>
@@ -204,8 +175,6 @@ export default function Home() {
 
         {!connected && <p className="text-center text-xs text-red-400 mt-3">Conectando al servidor…</p>}
       </div>
-
-      <p className="text-bone/30 text-xs mt-8">2 a 4 jugadores</p>
     </div>
   );
 }
