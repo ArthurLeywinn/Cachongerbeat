@@ -821,6 +821,36 @@ body::before {
   max-width: 380px;
   text-align: center;
 }
+
+/* Layout en dos columnas estilo plataforma: escena | acción */
+.clean-split {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(24px, 5vw, 64px);
+  width: 100%;
+  max-width: 1080px;
+}
+.clean-scene-wrap { flex: 1 1 0; display: flex; justify-content: center; min-width: 0; }
+.clean-scene { width: 100%; max-width: 520px; height: auto; }
+.clean-split .clean-hero { flex: 0 0 360px; max-width: 360px; }
+
+@media (max-width: 880px) {
+  .clean-split { flex-direction: column; gap: 24px; }
+  .clean-scene { max-width: 380px; }
+  .clean-split .clean-hero { flex: none; }
+}
+
+/* Cacho volcado sobre el título */
+.clean-cup {
+  width: 116px;
+  height: auto;
+  display: block;
+  margin: 0 auto 10px;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
+}
 .clean-dice {
   display: flex;
   justify-content: center;
