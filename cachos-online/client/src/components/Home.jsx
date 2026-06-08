@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext.jsx';
 import Rules from './Rules.jsx';
+import { CupMark, HeroScene } from './MenuArt.jsx';
 
 // ─────────────────────────────────────────────────────────────
 // Cambia esta línea para elegir el estilo del menú:
@@ -49,27 +50,28 @@ export default function Home() {
     if (clean) {
       return (
         <div className="clean-bg">
-          <div className="clean-hero">
-            <div className="clean-dice">
-              {[1, 5, 3].map((n, i) => (
-                <span className="die-mini" key={i}><span /></span>
-              ))}
+          <div className="clean-split">
+            <div className="clean-scene-wrap">
+              <HeroScene className="clean-scene" />
             </div>
-            <h1 className="clean-logo">CACHOS</h1>
-            <p className="clean-tagline">Bluffea · <strong>Duda</strong> · Calza</p>
-            <div className="clean-actions">
-              <button className="clean-btn clean-btn--primary" onClick={() => { setMode('create'); setView('form'); }}>
-                <IconUsers /> Crear sala
-              </button>
-              <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
-                <IconEnter /> Unirse a sala
-              </button>
-              <button className="clean-btn" onClick={() => setView('rules')}>
-                <IconBook /> Reglas
-              </button>
+            <div className="clean-hero">
+              <CupMark className="clean-cup" />
+              <h1 className="clean-logo">CACHOS</h1>
+              <p className="clean-tagline">Bluffea · <strong>Duda</strong> · Calza</p>
+              <div className="clean-actions">
+                <button className="clean-btn clean-btn--primary" onClick={() => { setMode('create'); setView('form'); }}>
+                  <IconUsers /> Crear sala
+                </button>
+                <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
+                  <IconEnter /> Unirse a sala
+                </button>
+                <button className="clean-btn" onClick={() => setView('rules')}>
+                  <IconBook /> Reglas
+                </button>
+              </div>
+              <p className="clean-foot">2 a 6 jugadores · multijugador en tiempo real</p>
+              {!connected && <p className="clean-foot" style={{ color: '#f87171' }}>Conectando al servidor…</p>}
             </div>
-            <p className="clean-foot">2 a 4 jugadores · multijugador en tiempo real</p>
-            {!connected && <p className="clean-foot" style={{ color: '#f87171' }}>Conectando al servidor…</p>}
           </div>
         </div>
       );
