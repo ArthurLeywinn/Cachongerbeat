@@ -53,8 +53,8 @@ export default function PlayerSeat({ player, compact = false, bubble = null }) {
   if (compact) {
     return (
       <div className={['seat', isTurn ? 'seat--turn' : '', player.eliminated ? 'opacity-40' : ''].join(' ')}>
-        {/* Burbuja de chat (debajo del avatar para no recortarse arriba) */}
-        {bubble && <div className="speech-bubble speech-bubble--down">{bubble}</div>}
+        {/* Burbuja de chat (a la derecha del personaje) */}
+        {bubble && <div className="speech-bubble speech-bubble--right">{bubble}</div>}
 
         {/* Dados sobre la mesa, frente al personaje */}
         <div className="seat__dice">{renderDice(26)}</div>
@@ -67,12 +67,12 @@ export default function PlayerSeat({ player, compact = false, bubble = null }) {
 
         {/* Personaje */}
         <div className="seat__char">
-          <Character variant={variantFor(player.id)} speaking={isTurn} size={104} />
+          <Character variant={variantFor(player.id)} thinking={isTurn} size={104} />
         </div>
 
         {/* Vaso */}
         <div className="seat__cup">
-          <Cup size={46} />
+          <Cup size={46} revealed={reveal} />
         </div>
 
         {/* Badges */}

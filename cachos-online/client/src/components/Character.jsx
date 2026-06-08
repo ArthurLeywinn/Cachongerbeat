@@ -1,17 +1,17 @@
 import React from 'react';
 
 // =============================================================================
-// Character.jsx — Encapuchados estilo doodle (inspirados en la ilustración del
-// menú): capucha de color, cara asomada con ceño, y un cacho de cuero negro.
-// Variantes: 0 verde · 1 rojo · 2 negro · 3 rey (corona + cuello de piel).
-// Solo cambia lo visual; la lógica del juego no se toca.
+// Character.jsx — Encapuchados doodle (verde/rojo/negro/rey).
+//  - Por defecto: cara con ceño (como la ilustración).
+//  - En su turno (thinking): cara pensativa, mirada arriba y mano en la barbilla.
+// Cup: cacho de cuero. Boca abajo mientras se juega; se levanta al revelar.
+// Solo visual; la lógica del juego no cambia.
 // =============================================================================
 
 const SKIN = '#e7b489';
 const SKIN_D = '#bd835a';
 const INK = '#2c2118';
 
-// Paleta de capuchas por variante.
 const HOODS = [
   { hood: '#47512f', dark: '#333a22' }, // verde
   { hood: '#9d362b', dark: '#6f231c' }, // rojo
@@ -19,13 +19,7 @@ const HOODS = [
   { king: true, cloak: '#2f3a2a', cloakDark: '#1f281d' }, // rey
 ];
 
-/**
- * Personaje encapuchado.
- * @param variant 0..3
- * @param speaking turno activo (boca/cejas cambian un poco)
- * @param size ancho en px
- */
-export default function Character({ variant = 0, speaking = false, size = 120 }) {
+export default function Character({ variant = 0, thinking = false, size = 120 }) {
   const v = HOODS[variant % HOODS.length];
   const king = !!v.king;
 
@@ -41,12 +35,10 @@ export default function Character({ variant = 0, speaking = false, size = 120 })
       />
 
       {king ? (
-        // ── Cuello de piel del rey ──
         <g fill="#d9c8a6" stroke="#b6a079" strokeWidth="3" strokeLinejoin="round">
           <path d="M52 168 q14 -22 48 -22 q34 0 48 22 q-10 16 -28 18 q-20 4 -40 0 q-18 -2 -28 -18 Z" />
         </g>
       ) : (
-        // ── Capucha (parte trasera alrededor de la cabeza) ──
         <path
           d="M42 98 C38 34 92 18 100 18 C108 18 162 34 158 98 C158 132 132 152 100 152 C68 152 42 132 42 98 Z"
           fill={v.hood}
@@ -56,86 +48,92 @@ export default function Character({ variant = 0, speaking = false, size = 120 })
         />
       )}
 
-      {/* Cara (piel) */}
+      {/* Cara */}
       <ellipse cx="100" cy="94" rx="35" ry="41" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
 
       {king ? (
-        // ── Corona dorada ──
         <g>
-          <path
-            d="M62 54 L72 26 L86 48 L100 22 L114 48 L128 26 L138 54 C116 46 84 46 62 54 Z"
-            fill="#d7af3c"
-            stroke="#9c7d20"
-            strokeWidth="3"
-            strokeLinejoin="round"
-          />
+          <path d="M62 54 L72 26 L86 48 L100 22 L114 48 L128 26 L138 54 C116 46 84 46 62 54 Z" fill="#d7af3c" stroke="#9c7d20" strokeWidth="3" strokeLinejoin="round" />
           <circle cx="72" cy="26" r="4" fill="#f0d169" stroke="#9c7d20" strokeWidth="2" />
           <circle cx="100" cy="22" r="4.5" fill="#f0d169" stroke="#9c7d20" strokeWidth="2" />
           <circle cx="128" cy="26" r="4" fill="#f0d169" stroke="#9c7d20" strokeWidth="2" />
         </g>
       ) : (
-        // ── Borde de la capucha sobre la frente ──
-        <path
-          d="M63 70 C68 40 132 40 137 70 C138 58 122 50 100 50 C78 50 62 58 63 70 Z"
-          fill={v.hood}
-          stroke={v.dark}
-          strokeWidth="3.5"
-          strokeLinejoin="round"
-        />
+        <path d="M63 70 C68 40 132 40 137 70 C138 58 122 50 100 50 C78 50 62 58 63 70 Z" fill={v.hood} stroke={v.dark} strokeWidth="3.5" strokeLinejoin="round" />
       )}
 
-      {/* Cejas (ceño) */}
-      <path
-        d={speaking ? 'M74 84 L92 86 M126 84 L108 86' : 'M75 82 L92 89 M125 82 L108 89'}
-        fill="none"
-        stroke={INK}
-        strokeWidth="4.5"
-        strokeLinecap="round"
-      />
-
-      {/* Ojos */}
-      <ellipse cx="87" cy="99" rx="4.5" ry="6" fill={INK} />
-      <ellipse cx="113" cy="99" rx="4.5" ry="6" fill={INK} />
-
-      {/* Boca */}
-      {speaking ? (
-        <path d="M90 118 Q100 126 110 118" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
+      {thinking ? (
+        <>
+          {/* Cejas relajadas (levantadas) */}
+          <path d="M76 86 Q84 81 93 85 M124 86 Q116 81 107 85" fill="none" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+          {/* Ojos mirando hacia arriba */}
+          <ellipse cx="87" cy="97" rx="5" ry="6.5" fill="#fff" stroke={SKIN_D} strokeWidth="1" />
+          <ellipse cx="113" cy="97" rx="5" ry="6.5" fill="#fff" stroke={SKIN_D} strokeWidth="1" />
+          <circle cx="88" cy="93" r="3" fill={INK} />
+          <circle cx="114" cy="93" r="3" fill={INK} />
+          {/* Boca pequeña pensativa (ladeada) */}
+          <path d="M94 120 Q100 118 106 121" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
+          {/* Mano en la barbilla */}
+          <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5" strokeLinejoin="round">
+            <path d="M104 150 q18 -2 22 -16 q2 -8 -4 -10 q-6 -2 -8 6 q-2 8 -14 10 q-8 2 -6 8 q2 4 10 2 Z" />
+            <path d="M112 132 l1 8 M118 131 l1 7 M123 129 l1 6" fill="none" stroke={SKIN_D} strokeWidth="1.6" />
+          </g>
+        </>
       ) : (
-        <path d="M92 119 L108 119" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
+        <>
+          {/* Ceño (enojado) */}
+          <path d="M75 82 L92 89 M125 82 L108 89" fill="none" stroke={INK} strokeWidth="4.5" strokeLinecap="round" />
+          <ellipse cx="87" cy="99" rx="4.5" ry="6" fill={INK} />
+          <ellipse cx="113" cy="99" rx="4.5" ry="6" fill={INK} />
+          <path d="M92 119 L108 119" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
+        </>
       )}
     </svg>
   );
 }
 
 /**
- * Cacho de cuero negro con un par de dados asomando y manos sosteniéndolo.
+ * Cacho de cuero. Por defecto BOCA ABAJO (tapando los dados, como jugando).
+ * Al revelar (`revealed`) se levanta y muestra la abertura.
  */
-export function Cup({ size = 54 }) {
+export function Cup({ size = 54, revealed = false }) {
+  if (revealed) {
+    // Cacho levantado: abertura hacia arriba, dados asomando.
+    return (
+      <svg width={size} height={size * 1.25} viewBox="0 0 72 90" style={{ overflow: 'visible' }}>
+        <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5" strokeLinejoin="round">
+          <path d="M8 40 q-7 10 1 22 q5 7 14 6 l4 -10 q-10 1 -13 -8 q-2 -7 1 -13 Z" />
+          <path d="M64 40 q7 10 -1 22 q-5 7 -14 6 l-4 -10 q10 1 13 -8 q2 -7 -1 -13 Z" />
+        </g>
+        <path d="M16 18 L56 18 L50 76 L22 76 Z" fill="#16161b" stroke="#caa86f" strokeWidth="3" strokeLinejoin="round" />
+        <path d="M22 28 L50 28 M24 44 L48 44 M26 60 L46 60" stroke="rgba(202,168,111,0.45)" strokeWidth="1.5" strokeDasharray="3 4" />
+        <ellipse cx="36" cy="18" rx="20" ry="5.5" fill="#0b0b0e" stroke="#caa86f" strokeWidth="3" />
+        <rect x="22" y="4" width="14" height="14" rx="3" fill="#f3ecdf" stroke="#cbbfa4" strokeWidth="1" transform="rotate(-12 29 11)" />
+        <circle cx="29" cy="11" r="1.8" fill="#16382a" transform="rotate(-12 29 11)" />
+        <rect x="38" y="6" width="13" height="13" rx="3" fill="#f3ecdf" stroke="#cbbfa4" strokeWidth="1" transform="rotate(10 44 12)" />
+        <circle cx="41" cy="9" r="1.5" fill="#16382a" /><circle cx="47" cy="15" r="1.5" fill="#16382a" />
+        <ellipse cx="36" cy="80" rx="17" ry="3" fill="rgba(0,0,0,0.3)" />
+      </svg>
+    );
+  }
+  // Cacho BOCA ABAJO: base (estrecha) arriba, abertura (ancha) abajo sobre la mesa.
   return (
-    <svg width={size} height={size * 1.25} viewBox="0 0 72 90" style={{ overflow: 'visible' }}>
-      {/* Manos */}
+    <svg width={size} height={size * 1.2} viewBox="0 0 72 86" style={{ overflow: 'visible' }}>
+      {/* Manos sosteniendo */}
       <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5" strokeLinejoin="round">
-        <path d="M8 44 q-7 10 1 22 q5 7 14 6 l4 -10 q-10 1 -13 -8 q-2 -7 1 -13 Z" />
-        <path d="M64 44 q7 10 -1 22 q-5 7 -14 6 l-4 -10 q10 1 13 -8 q2 -7 -1 -13 Z" />
+        <path d="M10 40 q-7 9 0 20 q5 7 13 6 l3 -9 q-9 1 -12 -7 q-2 -7 1 -12 Z" />
+        <path d="M62 40 q7 9 0 20 q-5 7 -13 6 l-3 -9 q9 1 12 -7 q2 -7 -1 -12 Z" />
       </g>
-
-      {/* Cuerpo del cacho */}
-      <path d="M16 20 L56 20 L50 78 L22 78 Z" fill="#16161b" stroke="#caa86f" strokeWidth="3" strokeLinejoin="round" />
+      {/* Cuerpo invertido: arriba angosto, abajo ancho */}
+      <path d="M26 16 L46 16 L54 70 L18 70 Z" fill="#1a1a20" stroke="#caa86f" strokeWidth="3" strokeLinejoin="round" />
       {/* Costura */}
-      <path d="M22 30 L50 30 M24 46 L48 46 M26 62 L46 62" stroke="rgba(202,168,111,0.45)" strokeWidth="1.5" strokeDasharray="3 4" />
-      {/* Borde superior */}
-      <ellipse cx="36" cy="20" rx="20" ry="5.5" fill="#0b0b0e" stroke="#caa86f" strokeWidth="3" />
-
-      {/* Dados asomando */}
-      <g>
-        <rect x="22" y="6" width="14" height="14" rx="3" fill="#f3ecdf" stroke="#cbbfa4" strokeWidth="1" transform="rotate(-12 29 13)" />
-        <circle cx="29" cy="13" r="1.8" fill="#16382a" transform="rotate(-12 29 13)" />
-        <rect x="38" y="8" width="13" height="13" rx="3" fill="#f3ecdf" stroke="#cbbfa4" strokeWidth="1" transform="rotate(10 44 14)" />
-        <circle cx="41" cy="11" r="1.5" fill="#16382a" /><circle cx="47" cy="17" r="1.5" fill="#16382a" />
-      </g>
-
+      <path d="M28 26 L44 26 M25 42 L47 42 M22 58 L50 58" stroke="rgba(202,168,111,0.4)" strokeWidth="1.5" strokeDasharray="3 4" />
+      {/* Base (arriba) */}
+      <ellipse cx="36" cy="16" rx="10" ry="3.5" fill="#23232a" stroke="#caa86f" strokeWidth="2.5" />
+      {/* Abertura apoyada en la mesa (abajo) */}
+      <ellipse cx="36" cy="70" rx="18" ry="5" fill="#0b0b0e" stroke="#caa86f" strokeWidth="3" />
       {/* Sombra */}
-      <ellipse cx="36" cy="82" rx="17" ry="3" fill="rgba(0,0,0,0.3)" />
+      <ellipse cx="36" cy="76" rx="19" ry="3" fill="rgba(0,0,0,0.32)" />
     </svg>
   );
 }
