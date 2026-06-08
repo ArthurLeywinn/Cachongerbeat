@@ -122,30 +122,31 @@ body::before {
   max-width: 240px;
   justify-content: center;
   z-index: 2;
-  opacity: 0.5;
+  opacity: 0.96;
   pointer-events: none;
 }
 .discard-stack {
   display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.15);
+  gap: 3px;
+  padding: 4px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(243, 236, 223, 0.08);
 }
 .discard-die {
   position: relative;
-  width: 11px;
-  height: 11px;
-  border-radius: 3px;
-  background: rgba(243, 236, 223, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(243, 236, 223, 0.18);
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: #efe7d6;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 .discard-die::after {
   content: '';
   position: absolute;
-  inset: 38%;
+  inset: 36%;
   border-radius: 50%;
-  background: rgba(243, 236, 223, 0.45);
+  background: #16382a;
 }
 
 /* Slot de un oponente, anclado al borde superior de la mesa */
@@ -654,6 +655,25 @@ body::before {
   border-bottom-color: #f3ecdf;
 }
 
+/* Burbuja de oponente A LA DERECHA del personaje. La colita apunta a la izquierda. */
+.speech-bubble--right {
+  bottom: auto;
+  top: 42%;
+  left: 100%;
+  transform: none;
+  margin-bottom: 0;
+  margin-left: 10px;
+  max-width: 150px;
+}
+.speech-bubble--right::after {
+  top: 18px;
+  left: -12px;
+  transform: none;
+  border: 6px solid transparent;
+  border-top-color: transparent;
+  border-right-color: #f3ecdf;
+}
+
 /* ═══════════════════════════════════════════
    FONDO TEMÁTICO (menú, formulario, reglas)
 ═══════════════════════════════════════════ */
@@ -845,12 +865,12 @@ body::before {
   max-width: 1080px;
 }
 .clean-scene-wrap { flex: 1 1 0; display: flex; justify-content: center; min-width: 0; }
-.clean-scene { width: 100%; max-width: 520px; height: auto; }
+.clean-scene { width: 100%; max-width: 620px; height: auto; }
 .clean-split .clean-hero { flex: 0 0 360px; max-width: 360px; }
 
 @media (max-width: 880px) {
   .clean-split { flex-direction: column; gap: 24px; }
-  .clean-scene { max-width: 380px; }
+  .clean-scene { max-width: 440px; }
   .clean-split .clean-hero { flex: none; }
 }
 
