@@ -1,139 +1,141 @@
 import React from 'react';
 
 // =============================================================================
-// Character.jsx — Avatar tipo "doodle" dibujado en SVG (trazo a mano).
-// Inspirado en la composición de personajes sentados a la mesa. Cada jugador
-// recibe una variante distinta (peinado / gorra) de forma determinista según
-// su id, en la paleta verde del juego.
+// Character.jsx — Encapuchados estilo doodle (inspirados en la ilustración del
+// menú): capucha de color, cara asomada con ceño, y un cacho de cuero negro.
+// Variantes: 0 verde · 1 rojo · 2 negro · 3 rey (corona + cuello de piel).
+// Solo cambia lo visual; la lógica del juego no se toca.
 // =============================================================================
 
-// Trazo color hueso para que resalte sobre el fieltro verde.
-const STROKE = '#f3ecdf';
-const STROKE_SOFT = 'rgba(243,236,223,0.85)';
+const SKIN = '#e7b489';
+const SKIN_D = '#bd835a';
+const INK = '#2c2118';
 
-// Estilo de trazo "a mano": redondeado y un poco irregular.
-const handStroke = {
-  fill: 'none',
-  stroke: STROKE,
-  strokeWidth: 4,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-};
-
-// Variantes de cabello/sombrero (4, una por jugador típico).
-function Hair({ variant }) {
-  switch (variant) {
-    case 0: // pelo puntudo
-      return (
-        <path
-          d="M58 56 C54 30 78 18 100 20 C122 18 146 30 142 56 C150 40 138 30 130 34 C140 22 120 16 116 26 C118 12 96 12 96 26 C92 14 74 18 80 32 C66 28 56 42 58 56 Z"
-          fill="rgba(243,236,223,0.12)"
-          stroke={STROKE}
-          strokeWidth={3.5}
-          strokeLinejoin="round"
-        />
-      );
-    case 1: // pelo liso con flequillo
-      return (
-        <path
-          d="M56 58 C52 28 76 16 100 16 C124 16 148 28 144 58 C140 44 132 40 124 42 C120 34 110 34 108 42 C104 34 94 34 92 42 C84 38 76 42 76 50 C70 44 60 48 56 58 Z"
-          fill="rgba(243,236,223,0.12)"
-          stroke={STROKE}
-          strokeWidth={3.5}
-          strokeLinejoin="round"
-        />
-      );
-    case 2: // gorra
-      return (
-        <g fill="rgba(243,236,223,0.12)" stroke={STROKE} strokeWidth={3.5} strokeLinejoin="round">
-          <path d="M54 52 C54 26 80 18 100 18 C124 18 148 30 146 52 Z" />
-          <path d="M146 52 C162 50 172 54 170 60 C150 60 146 56 146 52 Z" />
-        </g>
-      );
-    default: // pelo corto ondulado
-      return (
-        <path
-          d="M58 56 C54 30 78 18 100 18 C122 18 146 30 142 56 C146 46 138 42 132 46 C134 38 122 36 120 44 C118 36 108 36 108 44 C106 36 94 36 94 44 C90 38 80 40 82 48 C74 42 62 46 58 56 Z"
-          fill="rgba(243,236,223,0.12)"
-          stroke={STROKE}
-          strokeWidth={3.5}
-          strokeLinejoin="round"
-        />
-      );
-  }
-}
+// Paleta de capuchas por variante.
+const HOODS = [
+  { hood: '#47512f', dark: '#333a22' }, // verde
+  { hood: '#9d362b', dark: '#6f231c' }, // rojo
+  { hood: '#202126', dark: '#0f0f12' }, // negro
+  { king: true, cloak: '#2f3a2a', cloakDark: '#1f281d' }, // rey
+];
 
 /**
- * Personaje sentado.
- * @param variant 0..3 (peinado)
- * @param speaking resalta (turno activo)
+ * Personaje encapuchado.
+ * @param variant 0..3
+ * @param speaking turno activo (boca/cejas cambian un poco)
  * @param size ancho en px
  */
 export default function Character({ variant = 0, speaking = false, size = 120 }) {
+  const v = HOODS[variant % HOODS.length];
+  const king = !!v.king;
+
   return (
-    <svg
-      width={size}
-      height={size * 1.15}
-      viewBox="0 0 200 230"
-      style={{ overflow: 'visible' }}
-    >
-      {/* Hombros / cuerpo */}
+    <svg width={size} height={size * 1.12} viewBox="0 0 200 224" style={{ overflow: 'visible' }}>
+      {/* Hombros / manto */}
       <path
-        d="M40 230 C40 180 60 158 100 158 C140 158 160 180 160 230"
-        fill="rgba(243,236,223,0.06)"
-        stroke={STROKE_SOFT}
-        strokeWidth={4}
+        d="M22 224 C22 168 56 146 100 146 C144 146 178 168 178 224 Z"
+        fill={king ? v.cloak : v.hood}
+        stroke={king ? v.cloakDark : v.dark}
+        strokeWidth="4"
         strokeLinejoin="round"
       />
-      {/* Cuello */}
-      <path d="M86 150 L86 168 M114 150 L114 168" {...handStroke} />
 
-      {/* Cabeza */}
-      <ellipse
-        cx="100"
-        cy="100"
-        rx="46"
-        ry="50"
-        fill="rgba(243,236,223,0.06)"
-        stroke={STROKE}
-        strokeWidth={4}
+      {king ? (
+        // ── Cuello de piel del rey ──
+        <g fill="#d9c8a6" stroke="#b6a079" strokeWidth="3" strokeLinejoin="round">
+          <path d="M52 168 q14 -22 48 -22 q34 0 48 22 q-10 16 -28 18 q-20 4 -40 0 q-18 -2 -28 -18 Z" />
+        </g>
+      ) : (
+        // ── Capucha (parte trasera alrededor de la cabeza) ──
+        <path
+          d="M42 98 C38 34 92 18 100 18 C108 18 162 34 158 98 C158 132 132 152 100 152 C68 152 42 132 42 98 Z"
+          fill={v.hood}
+          stroke={v.dark}
+          strokeWidth="4"
+          strokeLinejoin="round"
+        />
+      )}
+
+      {/* Cara (piel) */}
+      <ellipse cx="100" cy="94" rx="35" ry="41" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
+
+      {king ? (
+        // ── Corona dorada ──
+        <g>
+          <path
+            d="M62 54 L72 26 L86 48 L100 22 L114 48 L128 26 L138 54 C116 46 84 46 62 54 Z"
+            fill="#d7af3c"
+            stroke="#9c7d20"
+            strokeWidth="3"
+            strokeLinejoin="round"
+          />
+          <circle cx="72" cy="26" r="4" fill="#f0d169" stroke="#9c7d20" strokeWidth="2" />
+          <circle cx="100" cy="22" r="4.5" fill="#f0d169" stroke="#9c7d20" strokeWidth="2" />
+          <circle cx="128" cy="26" r="4" fill="#f0d169" stroke="#9c7d20" strokeWidth="2" />
+        </g>
+      ) : (
+        // ── Borde de la capucha sobre la frente ──
+        <path
+          d="M63 70 C68 40 132 40 137 70 C138 58 122 50 100 50 C78 50 62 58 63 70 Z"
+          fill={v.hood}
+          stroke={v.dark}
+          strokeWidth="3.5"
+          strokeLinejoin="round"
+        />
+      )}
+
+      {/* Cejas (ceño) */}
+      <path
+        d={speaking ? 'M74 84 L92 86 M126 84 L108 86' : 'M75 82 L92 89 M125 82 L108 89'}
+        fill="none"
+        stroke={INK}
+        strokeWidth="4.5"
+        strokeLinecap="round"
       />
 
-      {/* Pelo / gorra */}
-      <Hair variant={variant} />
-
       {/* Ojos */}
-      <ellipse cx="86" cy="98" rx="6.5" ry="9" fill={STROKE} />
-      <ellipse cx="114" cy="98" rx="6.5" ry="9" fill={STROKE} />
+      <ellipse cx="87" cy="99" rx="4.5" ry="6" fill={INK} />
+      <ellipse cx="113" cy="99" rx="4.5" ry="6" fill={INK} />
 
-      {/* Boca: sonríe si está hablando/turno */}
+      {/* Boca */}
       {speaking ? (
-        <path d="M86 122 Q100 134 114 122" {...handStroke} strokeWidth={3.5} />
+        <path d="M90 118 Q100 126 110 118" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
       ) : (
-        <path d="M88 124 L112 124" {...handStroke} strokeWidth={3.5} />
+        <path d="M92 119 L108 119" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
       )}
     </svg>
   );
 }
 
 /**
- * Vaso / cacho dibujado a mano (frente al jugador).
+ * Cacho de cuero negro con un par de dados asomando y manos sosteniéndolo.
  */
 export function Cup({ size = 54 }) {
   return (
-    <svg width={size} height={size * 1.2} viewBox="0 0 60 72" style={{ overflow: 'visible' }}>
-      {/* Cuerpo del vaso (trapecio) */}
-      <path
-        d="M12 8 L48 8 L43 64 L17 64 Z"
-        fill="rgba(20,58,42,0.6)"
-        stroke={STROKE}
-        strokeWidth={3.5}
-        strokeLinejoin="round"
-      />
+    <svg width={size} height={size * 1.25} viewBox="0 0 72 90" style={{ overflow: 'visible' }}>
+      {/* Manos */}
+      <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5" strokeLinejoin="round">
+        <path d="M8 44 q-7 10 1 22 q5 7 14 6 l4 -10 q-10 1 -13 -8 q-2 -7 1 -13 Z" />
+        <path d="M64 44 q7 10 -1 22 q-5 7 -14 6 l-4 -10 q10 1 13 -8 q2 -7 -1 -13 Z" />
+      </g>
+
+      {/* Cuerpo del cacho */}
+      <path d="M16 20 L56 20 L50 78 L22 78 Z" fill="#16161b" stroke="#caa86f" strokeWidth="3" strokeLinejoin="round" />
+      {/* Costura */}
+      <path d="M22 30 L50 30 M24 46 L48 46 M26 62 L46 62" stroke="rgba(202,168,111,0.45)" strokeWidth="1.5" strokeDasharray="3 4" />
       {/* Borde superior */}
-      <ellipse cx="30" cy="8" rx="18" ry="4.5" fill="rgba(12,31,23,0.8)" stroke={STROKE} strokeWidth={3} />
-      {/* Sombra bajo el vaso */}
-      <ellipse cx="30" cy="68" rx="16" ry="3" fill="rgba(0,0,0,0.25)" stroke="none" />
+      <ellipse cx="36" cy="20" rx="20" ry="5.5" fill="#0b0b0e" stroke="#caa86f" strokeWidth="3" />
+
+      {/* Dados asomando */}
+      <g>
+        <rect x="22" y="6" width="14" height="14" rx="3" fill="#f3ecdf" stroke="#cbbfa4" strokeWidth="1" transform="rotate(-12 29 13)" />
+        <circle cx="29" cy="13" r="1.8" fill="#16382a" transform="rotate(-12 29 13)" />
+        <rect x="38" y="8" width="13" height="13" rx="3" fill="#f3ecdf" stroke="#cbbfa4" strokeWidth="1" transform="rotate(10 44 14)" />
+        <circle cx="41" cy="11" r="1.5" fill="#16382a" /><circle cx="47" cy="17" r="1.5" fill="#16382a" />
+      </g>
+
+      {/* Sombra */}
+      <ellipse cx="36" cy="82" rx="17" ry="3" fill="rgba(0,0,0,0.3)" />
     </svg>
   );
 }
