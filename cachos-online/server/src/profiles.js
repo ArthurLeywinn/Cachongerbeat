@@ -20,8 +20,11 @@ const DATA_DIR = process.env.PROFILES_DIR || path.join(__dirname, '..', 'data');
 const FILE = path.join(DATA_DIR, 'profiles.json');
 
 const HOOD_COUNT = 6;
-const FACE_COUNT = 3;
+const FACE_COUNT = 15;
 const CUP_COUNT = 10;
+const BODY_COUNT = 11;
+const HAT_COUNT = 11;
+const ACC_COUNT = 6;
 
 // ── Store en archivo ────────────────────────────────────────────────────────
 
@@ -60,6 +63,9 @@ function sanitizeCosmetic(c) {
     hood: n(c?.hood, HOOD_COUNT),
     face: n(c?.face, FACE_COUNT),
     cup: n(c?.cup, CUP_COUNT),
+    body: n(c?.body, BODY_COUNT),
+    hat: n(c?.hat, HAT_COUNT),
+    acc: n(c?.acc, ACC_COUNT),
   };
 }
 
