@@ -21,7 +21,7 @@ const FILE = path.join(DATA_DIR, 'profiles.json');
 
 const HOOD_COUNT = 6;
 const FACE_COUNT = 3;
-const CUP_COUNT = 3;
+const CUP_COUNT = 10;
 
 // ── Store en archivo ────────────────────────────────────────────────────────
 
