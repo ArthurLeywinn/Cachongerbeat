@@ -1,19 +1,23 @@
 import React, { useEffect } from 'react';
 import { useGame } from './context/GameContext.jsx';
+import { useAuth } from './context/AuthContext.jsx';
 import Home from './components/Home.jsx';
 import Lobby from './components/Lobby.jsx';
 import GameTable from './components/GameTable.jsx';
 import Toast from './components/Toast.jsx';
 
-// Enruta entre las pantallas según el estado recibido del servidor.
 export default function App() {
   const { state, connected, error, setError } = useGame();
+  const { loading } = useAuth();
 
   useEffect(() => {
     if (!error) return;
     const t = setTimeout(() => setError(null), 3500);
     return () => clearTimeout(t);
   }, [error, setError]);
+
+  // Mientras verificamos la sesión guardada, no renderizamos nada.
+  if (loading) return null;
 
   let screen;
   if (!state) {
