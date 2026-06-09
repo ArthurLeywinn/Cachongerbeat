@@ -28,6 +28,9 @@ const nextId = (prefix) => `${prefix}_${Date.now().toString(36)}_${(SEQ += 1)}`;
 
 const OBLIGA_MODES = ['kamikaze', 'abierto', 'cerradoA', 'cerradoB'];
 
+// Máximo de jugadores por sala. Una sola fuente de verdad en el servidor.
+const MAX_PLAYERS = 6;
+
 // Normaliza y acota las reglas personalizadas elegidas al crear la sala.
 function normalizeSettings(s = {}) {
   const dice = Number(s.dicePerPlayer);
@@ -150,7 +153,7 @@ class Game {
 
   addPlayer(name, socketId) {
     if (this.status !== 'lobby') return { error: 'La partida ya comenzó.' };
-    if (this.players.length >= 4) return { error: 'La sala está llena (máximo 4 jugadores).' };
+    if (this.players.length >= MAX_PLAYERS) return { error: `La sala está llena (máximo ${MAX_PLAYERS} jugadores).` };
     const player = this._makePlayer(name, socketId);
     this.players.push(player);
     this.seatOrder.push(player.id);
@@ -593,9 +596,12 @@ class Game {
 
     if (this._finishIfWon()) return { ok: true, resolved: true, finished: true };
 
-    // La próxima ronda es normal (no se encadena). Parte la izquierda del obligado.
+    // La próxima ronda es normal (no se encadena). Tras un Kamikaze parte el
+    // propio obligado (el que activó el Kamikaze). Si quedó eliminado por su
+    // propia jugada, _startRound -> _resolveActiveStarter avanza al siguiente
+    // jugador activo automáticamente.
     this.blockObligaNextRound = true;
-    const nextStarterId = this._leftOf(obligadoId);
+    const nextStarterId = obligadoId;
     this.obliga = null;
     return { ok: true, resolved: true, finished: false, nextStarterId };
   }
@@ -778,6 +784,7 @@ class Game {
       phase: this.phase,
       round: this.round,
       hostId: this.hostId,
+      maxPlayers: MAX_PLAYERS,
       settings: this.settings,
       currentTurnId: this.currentTurnId,
       roundStarterId: this.roundStarterId,
@@ -807,4 +814,4 @@ class Game {
   }
 }
 
-module.exports = { Game };
+module.exports = { Game, MAX_PLAYERS };
