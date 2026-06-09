@@ -73,31 +73,11 @@ export default function Character({ variant = 0, thinking = false, size = 120 })
           <circle cx="114" cy="93" r="3" fill={INK} />
           {/* Boca pequeña pensativa (ladeada) */}
           <path d="M94 120 Q100 118 106 121" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
-
-          {/* ── Doodle de 3 manos en modo pensativo ── */}
-          {/* Mano 1: en la pera (gesto de "pensando") */}
+          {/* Mano en la barbilla (gesto de "pensando"). El vaso lo sostienen las
+              dos manos del propio cacho, abajo en la mesa (componente Cup). */}
           <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5" strokeLinejoin="round">
             <path d="M104 150 q18 -2 22 -16 q2 -8 -4 -10 q-6 -2 -8 6 q-2 8 -14 10 q-8 2 -6 8 q2 4 10 2 Z" />
             <path d="M112 132 l1 8 M118 131 l1 7 M123 129 l1 6" fill="none" stroke={SKIN_D} strokeWidth="1.6" />
-          </g>
-
-          {/* Mano 2: sostiene un pequeño cacho (vaso) abajo a la izquierda */}
-          <g strokeLinejoin="round">
-            {/* vasito de cuero */}
-            <path d="M40 150 L62 150 L58 182 L44 182 Z" fill="#1a1a20" stroke="#caa86f" strokeWidth="2.5" />
-            <ellipse cx="51" cy="150" rx="11" ry="3.4" fill="#23232a" stroke="#caa86f" strokeWidth="2" />
-            <path d="M45 160 L57 160 M46 170 L56 170" stroke="rgba(202,168,111,0.4)" strokeWidth="1.2" strokeDasharray="3 3" />
-            {/* mano que lo agarra */}
-            <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5">
-              <path d="M38 168 q-7 4 -6 12 q1 7 9 8 l20 1 q7 0 7 -7 q0 -6 -8 -6 l-14 -1 q-6 0 -7 -6 q-1 -4 -1 -4 Z" />
-              <path d="M50 176 l0 7 M58 177 l0 6" fill="none" stroke={SKIN_D} strokeWidth="1.6" />
-            </g>
-          </g>
-
-          {/* Mano 3: descansa al costado derecho (remata el doodle) */}
-          <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5" strokeLinejoin="round">
-            <path d="M150 158 q15 -3 17 -16 q1 -7 -5 -7 q-5 0 -6 7 q-1 7 -11 9 q-7 1 -5 8 q2 5 10 2 Z" />
-            <path d="M156 142 l1 7 M161 141 l1 6 M166 140 l1 5" fill="none" stroke={SKIN_D} strokeWidth="1.6" />
           </g>
         </>
       ) : (

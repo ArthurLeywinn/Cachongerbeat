@@ -56,35 +56,35 @@ export default function PlayerSeat({ player, compact = false, bubble = null }) {
         {/* Burbuja de chat (a la derecha del personaje) */}
         {bubble && <div className="speech-bubble speech-bubble--right">{bubble}</div>}
 
-        {/* Mesa del jugador: el vaso (cacho) tapa los dados; al revelar se desliza
-            al costado MANTENIÉNDOSE boca abajo y deja ver los dados que tapaba. */}
-        <div className="seat__table">
-          {player.eliminated ? (
-            <span className="text-bone/30 text-[10px]">sin dados</span>
-          ) : (
-            <>
-              {/* Dados debajo del vaso: solo visibles al revelar. */}
-              {reveal && <div className="seat__dice">{renderDice(26)}</div>}
-
-              {/* Cacho boca abajo. En juego tapa los dados (con su número);
-                  al revelar se desliza al lado sin voltearse. */}
-              <div className={['seat__cup', reveal ? 'seat__cup--away' : ''].join(' ')}>
-                <Cup size={50} revealed={false} />
-                {!reveal && <span className="seat__cup-count">{player.diceCount}</span>}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Nombre */}
+        {/* Nombre + cantidad de dados (sutil, fuera del vaso) */}
         <p className="seat__name">
           {player.name}
+          {!player.eliminated && <span className="seat__dc"> · {player.diceCount}🎲</span>}
           {!player.connected && <span className="seat__dc"> ·✕</span>}
         </p>
 
         {/* Personaje */}
         <div className="seat__char">
           <Character variant={variantFor(player.id)} thinking={isTurn} size={104} />
+        </div>
+
+        {/* Mesa del jugador: el cacho va boca abajo SOBRE la mesa, frente al
+            personaje, sostenido por sus dos manos y tapando los dados. Al dudar
+            se desliza al costado (sin voltearse) dejando ver los dados de abajo. */}
+        <div className="seat__table">
+          {player.eliminated ? (
+            <span className="text-bone/30 text-[10px]">sin dados</span>
+          ) : (
+            <>
+              {/* Dados debajo del cacho: solo visibles al revelar. */}
+              {reveal && <div className="seat__dice">{renderDice(26)}</div>}
+
+              {/* Cacho boca abajo (sus 2 manos vienen en el componente Cup). */}
+              <div className={['seat__cup', reveal ? 'seat__cup--away' : ''].join(' ')}>
+                <Cup size={52} revealed={false} />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Badges */}
