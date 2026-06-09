@@ -23,101 +23,18 @@ const IconEnter = () => (
 const IconBook = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
 );
+
 const IconTrophy = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
 );
 const IconLogout = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
 );
-const IconUser = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-);
 
-// ─── Panel de autenticación inline ────────────────────────────────────────────
-function AuthPanel({ onBack }) {
-  const { login, register } = useAuth();
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!username.trim() || !password) return;
-    setBusy(true);
-    setError('');
-    const res = mode === 'login'
-      ? await login(username.trim(), password)
-      : await register(username.trim(), password);
-    if (!res.ok) setError(res.error || 'Ocurrió un error.');
-    setBusy(false);
-    // Si fue exitoso, AuthContext actualiza user y Home re-renderiza al menú principal.
-  };
-
-  const handleKey = (e) => { if (e.key === 'Enter') handleSubmit(); };
-
-  return (
-    <div className="clean-bg">
-      <div className="clean-card" style={{ maxWidth: 380 }}>
-        <button onClick={onBack} className="clean-back">← Volver</button>
-
-        <h2 className="font-display text-2xl font-black text-amber-glow mb-1">
-          {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
-        </h2>
-        <p className="text-bone/40 text-xs mb-6 tracking-widest uppercase">
-          {mode === 'login' ? 'Accede a tu perfil y ranking' : 'Crea tu perfil para jugar ranked'}
-        </p>
-
-        <label className="block text-xs uppercase tracking-wide text-bone/50 mb-1">Usuario</label>
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          onKeyDown={handleKey}
-          placeholder="tu_nombre"
-          maxLength={20}
-          autoComplete="username"
-          className="clean-input w-full mb-3"
-        />
-
-        <label className="block text-xs uppercase tracking-wide text-bone/50 mb-1">Contraseña</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKey}
-          placeholder="••••••"
-          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-          className="clean-input w-full mb-4"
-        />
-
-        {error && (
-          <p className="text-red-400 text-xs mb-3 text-center">{error}</p>
-        )}
-
-        <button
-          onClick={handleSubmit}
-          disabled={busy || !username.trim() || !password}
-          className="clean-btn clean-btn--primary w-full mb-3"
-        >
-          {busy ? 'Cargando…' : mode === 'login' ? 'Entrar' : 'Registrarse'}
-        </button>
-
-        <button
-          onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
-          className="w-full text-xs text-bone/40 hover:text-bone/70 transition text-center py-1"
-        >
-          {mode === 'login' ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Componente principal ─────────────────────────────────────────────────────
 export default function Home() {
   const { createRoom, joinRoom, connected } = useGame();
   const { user, logout } = useAuth();
-  const [view, setView] = useState('menu'); // 'menu' | 'auth' | 'form' | 'rules' | 'leaderboard'
+  const [view, setView] = useState('menu');
   const [mode, setMode] = useState('create');
   const [ranked, setRanked] = useState(false);
   const [name, setName] = useState(user?.username || '');
@@ -129,13 +46,6 @@ export default function Home() {
 
   const clean = MENU_THEME === 'clean';
 
-  // Si el usuario acaba de autenticarse desde AuthPanel, actualizar el nombre.
-  React.useEffect(() => {
-    if (user?.username) setName(user.username);
-    // Si estaba en la vista de auth y ahora hay sesión, volver al menú.
-    if (user && view === 'auth') setView('menu');
-  }, [user]);
-
   const handleSubmit = async () => {
     if (!name.trim()) return;
     setBusy(true);
@@ -146,7 +56,6 @@ export default function Home() {
 
   if (view === 'rules') return <Rules onBack={() => setView('menu')} theme={MENU_THEME} />;
   if (view === 'leaderboard') return <Leaderboard onBack={() => setView('menu')} />;
-  if (view === 'auth') return <AuthPanel onBack={() => setView('menu')} />;
 
   // ════════════════ MENÚ ════════════════
   if (view === 'menu') {
@@ -168,24 +77,9 @@ export default function Home() {
                 <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
                   <IconEnter /> Unirse a sala
                 </button>
-                {user ? (
-                  <button
-                    className="clean-btn"
-                    style={{ borderColor: 'rgba(251,191,36,0.4)', color: '#fbbf24' }}
-                    onClick={() => { setMode('create'); setRanked(true); setView('form'); }}
-                  >
-                    <IconTrophy /> Partida ranked
-                  </button>
-                ) : (
-                  <button
-                    className="clean-btn"
-                    style={{ borderColor: 'rgba(251,191,36,0.3)', color: 'rgba(251,191,36,0.5)' }}
-                    onClick={() => setView('auth')}
-                    title="Inicia sesión para jugar ranked"
-                  >
-                    <IconTrophy /> Ranked <span className="text-[10px] ml-1 opacity-60">(inicia sesión)</span>
-                  </button>
-                )}
+                <button className="clean-btn" style={{ borderColor: 'rgba(251,191,36,0.4)', color: '#fbbf24' }} onClick={() => { setMode('create'); setRanked(true); setView('form'); }}>
+                  <IconTrophy /> Partida ranked
+                </button>
                 <button className="clean-btn" onClick={() => setView('leaderboard')}>
                   <IconTrophy /> Ranking
                 </button>
@@ -193,8 +87,7 @@ export default function Home() {
                   <IconBook /> Reglas
                 </button>
               </div>
-
-              {user ? (
+              {user && (
                 <div className="flex items-center justify-between mt-4 px-1">
                   <p className="text-bone/40 text-xs">
                     <span className="text-amber-glow font-semibold">{user.username}</span>
@@ -205,15 +98,7 @@ export default function Home() {
                     <IconLogout /> Salir
                   </button>
                 </div>
-              ) : (
-                <button
-                  onClick={() => setView('auth')}
-                  className="flex items-center gap-2 mt-4 px-1 text-xs text-bone/30 hover:text-bone/60 transition"
-                >
-                  <IconUser /> Iniciar sesión / Crear cuenta
-                </button>
               )}
-
               <p className="clean-foot">2 a 6 jugadores · multijugador en tiempo real</p>
               {!connected && <p className="clean-foot" style={{ color: '#f87171' }}>Conectando al servidor…</p>}
             </div>
@@ -227,7 +112,6 @@ export default function Home() {
         <div className="menu-buttons">
           <button className="menu-btn menu-btn--primary" onClick={() => { setMode('create'); setView('form'); }}><IconUsers /> <span>Crear sala</span></button>
           <button className="menu-btn" onClick={() => { setMode('join'); setView('form'); }}><IconEnter /> <span>Unirse a sala</span></button>
-          <button className="menu-btn" onClick={() => setView('auth')}><IconUser /> <span>{user ? user.username : 'Iniciar sesión'}</span></button>
           <button className="menu-btn" onClick={() => setView('rules')}><IconBook /> <span>Reglas</span></button>
         </div>
         {!connected && <p className="menu-conn">Conectando al servidor…</p>}
