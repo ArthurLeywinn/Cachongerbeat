@@ -20,14 +20,3 @@
     "nodemon": "^3.1.4"
   }
 }
-2. Borra server/package.json.json — ese archivo no debe existir.
-
-Luego:
-
-bash
-git add server/package.json
-git rm server/package.json.json
-git commit -m "fix: correct server package.json with new dependencies"
-git push
-
-
