@@ -3,6 +3,7 @@ import { useGame } from '../context/GameContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import Rules from './Rules.jsx';
 import Leaderboard from './Leaderboard.jsx';
+import Customizer from './Customizer.jsx';
 import { CupMark, HeroScene } from './MenuArt.jsx';
 
 const MENU_THEME = 'clean';
@@ -150,6 +151,7 @@ export default function Home() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showCustomizer, setShowCustomizer] = useState(false);
   const [rankedHint, setRankedHint] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const set = (patch) => setSettings((s) => ({ ...s, ...patch }));
@@ -192,6 +194,7 @@ export default function Home() {
     return (
       <div className="clean-bg">
         <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} />
+        {showCustomizer && <Customizer onClose={() => setShowCustomizer(false)} />}
 
         <div className="clean-split">
           <div className="clean-scene-wrap">
@@ -234,6 +237,9 @@ export default function Home() {
                 )}
               </div>
 
+              <button className="clean-btn" onClick={() => setShowCustomizer(true)}>
+                <IconUser /> Personalizar personaje
+              </button>
               <button className="clean-btn" onClick={() => setView('leaderboard')}>
                 <IconTrophy /> Ranking
               </button>

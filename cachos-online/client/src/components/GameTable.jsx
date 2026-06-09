@@ -9,18 +9,28 @@ import ObligaChooser from './ObligaChooser.jsx';
 import { bidText } from '../lib/rules.js';
 import Die from './Die.jsx';
 
-// Posiciones de los otros jugadores a lo largo del borde superior de la mesa.
-// Soporta hasta 5 oponentes (6 jugadores en total).
-function topPositions(total) {
+// Reparto horizontal (en % del ancho) de los oponentes a lo largo del borde
+// superior de la mesa. Soporta hasta 5 oponentes (6 jugadores en total).
+function seatXPercents(total) {
   const layouts = {
-    1: ['left-1/2 -translate-x-1/2'],
-    2: ['left-[28%] -translate-x-1/2', 'left-[72%] -translate-x-1/2'],
-    3: ['left-[20%] -translate-x-1/2', 'left-1/2 -translate-x-1/2', 'left-[80%] -translate-x-1/2'],
-    4: ['left-[15%] -translate-x-1/2', 'left-[38%] -translate-x-1/2', 'left-[62%] -translate-x-1/2', 'left-[85%] -translate-x-1/2'],
-    5: ['left-[12%] -translate-x-1/2', 'left-[31%] -translate-x-1/2', 'left-1/2 -translate-x-1/2', 'left-[69%] -translate-x-1/2', 'left-[88%] -translate-x-1/2'],
+    1: [50],
+    2: [28, 72],
+    3: [20, 50, 80],
+    4: [15, 38, 62, 85],
+    5: [12, 31, 50, 69, 88],
   };
   const clamped = Math.min(Math.max(total, 1), 5);
   return layouts[clamped] || layouts[5];
+}
+
+// La mesa (.big-table) es un óvalo: top 26%, ancho 150%, alto 150%, redondeado
+// al 50%. Calculamos la altura (%) del borde superior del óvalo en una posición
+// horizontal dada, para "sentar" a cada jugador justo sobre la curva.
+function tableRimTopPct(xPct) {
+  const cx = 50, cy = 101, rx = 75, ry = 75; // mismos números que el CSS
+  const nx = (xPct - cx) / rx;
+  const k = Math.max(0, 1 - nx * nx);
+  return cy - ry * Math.sqrt(k); // % de la altura del área de juego
 }
 
 // Hook: convierte los mensajes de chat nuevos en burbujas que duran 5s.
@@ -67,7 +77,8 @@ export default function GameTable() {
   const finished = state.status === 'finished';
   const winner = finished ? state.players.find((p) => p.id === state.winnerId) : null;
   const totalDice = state.players.reduce((sum, p) => sum + (p.eliminated ? 0 : p.diceCount), 0);
-  const positions = topPositions(others.length);
+  const xs = seatXPercents(others.length);
+  const dense = others.length >= 4;
   const myBubble = bubbles[playerId]?.text || null;
 
   return (
@@ -131,12 +142,27 @@ export default function GameTable() {
           </div>
         )}
 
-        {/* Oponentes sentados en el borde superior (con su burbuja de chat) */}
-        {others.map((p, i) => (
-          <div key={p.id} className={`seat-slot ${others.length >= 4 ? 'seat-slot--dense' : ''} ${positions[i]}`}>
-            <PlayerSeat player={p} compact bubble={bubbles[p.id]?.text || null} />
-          </div>
-        ))}
+        {/* Oponentes sentados sobre el borde curvo de la mesa (con su burbuja) */}
+        {others.map((p, i) => {
+          const x = xs[i];
+          const rim = tableRimTopPct(x); // % donde está el borde de la mesa en esa x
+          return (
+            <div
+              key={p.id}
+              className="seat-slot"
+              style={{
+                left: `${x}%`,
+                top: `${rim}%`,
+                // El asiento crece hacia ARRIBA desde el borde: el cacho queda
+                // apoyado en la mesa. -50% centra horizontalmente; -86% sube el
+                // asiento dejando el cacho sobre la curva.
+                transform: `translate(-50%, -86%) scale(${dense ? 0.84 : 1})`,
+              }}
+            >
+              <PlayerSeat player={p} compact bubble={bubbles[p.id]?.text || null} />
+            </div>
+          );
+        })}
 
         {/* Chat — lateral izquierdo */}
         <ChatPanel />

@@ -1,6 +1,6 @@
 import React from 'react';
 import Die from './Die.jsx';
-import Character, { Cup } from './Character.jsx';
+import Character, { Cup, HOOD_COUNT, FACE_COUNT, CUP_COUNT } from './Character.jsx';
 import { useGame } from '../context/GameContext.jsx';
 
 // Etiquetas cortas para el badge según la modalidad de Obliga activa.
@@ -11,11 +11,25 @@ const OBLIGA_LABELS = {
   cerradoB: 'Cerrado',
 };
 
-// Deriva una variante de personaje (0..3) determinista a partir del id.
-function variantFor(id) {
+// Apariencia del personaje. Si el servidor envía `player.cosmetic`
+// ({ hood, face, cup }) la usamos; si no, derivamos algo estable desde el id
+// para que igual se vea variedad mientras no haya personalización guardada.
+function cosmeticFor(player) {
+  const c = player.cosmetic;
+  if (c && (c.hood != null || c.face != null || c.cup != null)) {
+    return {
+      hood: (c.hood ?? 0) % HOOD_COUNT,
+      face: (c.face ?? 0) % FACE_COUNT,
+      cup: (c.cup ?? 0) % CUP_COUNT,
+    };
+  }
   let h = 0;
-  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) % 4;
-  return h;
+  for (let i = 0; i < player.id.length; i += 1) h = (h * 31 + player.id.charCodeAt(i)) >>> 0;
+  return {
+    hood: h % HOOD_COUNT,
+    face: Math.floor(h / 7) % FACE_COUNT,
+    cup: Math.floor(h / 53) % CUP_COUNT,
+  };
 }
 
 export default function PlayerSeat({ player, compact = false, bubble = null }) {
@@ -25,12 +39,16 @@ export default function PlayerSeat({ player, compact = false, bubble = null }) {
   const reveal = state.phase === 'reveal' || state.phase === 'finished';
   const dice = player.dice;
   const highlightFace = reveal && state.lastResult ? state.lastResult.bid?.face : null;
+  const cos = cosmeticFor(player);
 
   const renderDice = (size) => {
     if (player.eliminated) {
       return <span className="text-bone/30 text-[10px]">sin dados</span>;
     }
-    if (dice) {
+    // Solo mostramos valores reales si el servidor nos los envió (array con datos).
+    // Para los rivales (dice == null) o estados sin valores, mostramos "?" según
+    // su cantidad de dados, igual para todos.
+    if (Array.isArray(dice) && dice.length > 0) {
       return dice.map((v, i) => (
         <Die
           key={i}
@@ -56,36 +74,29 @@ export default function PlayerSeat({ player, compact = false, bubble = null }) {
         {/* Burbuja de chat (a la derecha del personaje) */}
         {bubble && <div className="speech-bubble speech-bubble--right">{bubble}</div>}
 
-        {/* Nombre + cantidad de dados (sutil, fuera del vaso) */}
+        {/* Dados del jugador (ocultos como "?" mientras juega; reales al revelar),
+            ARRIBA del personaje, junto a su nombre. */}
+        <div className="seat__dice">{renderDice(24)}</div>
+
+        {/* Nombre */}
         <p className="seat__name">
           {player.name}
-          {!player.eliminated && <span className="seat__dc"> · {player.diceCount}🎲</span>}
           {!player.connected && <span className="seat__dc"> ·✕</span>}
         </p>
 
         {/* Personaje */}
         <div className="seat__char">
-          <Character variant={variantFor(player.id)} thinking={isTurn} size={104} />
+          <Character hood={cos.hood} face={cos.face} thinking={isTurn} size={92} />
         </div>
 
-        {/* Mesa del jugador: el cacho va boca abajo SOBRE la mesa, frente al
-            personaje, sostenido por sus dos manos y tapando los dados. Al dudar
-            se desliza al costado (sin voltearse) dejando ver los dados de abajo. */}
-        <div className="seat__table">
-          {player.eliminated ? (
-            <span className="text-bone/30 text-[10px]">sin dados</span>
-          ) : (
-            <>
-              {/* Dados debajo del cacho: solo visibles al revelar. */}
-              {reveal && <div className="seat__dice">{renderDice(26)}</div>}
-
-              {/* Cacho boca abajo (sus 2 manos vienen en el componente Cup). */}
-              <div className={['seat__cup', reveal ? 'seat__cup--away' : ''].join(' ')}>
-                <Cup size={52} revealed={false} />
-              </div>
-            </>
-          )}
-        </div>
+        {/* Cacho boca abajo, apoyado en la mesa frente al personaje (sus 2 manos
+            vienen en el componente Cup). Al dudar se desliza al costado sin
+            voltearse (animación de revelado). */}
+        {!player.eliminated && (
+          <div className={['seat__cup', reveal ? 'seat__cup--away' : ''].join(' ')}>
+            <Cup size={46} revealed={false} style={cos.cup} />
+          </div>
+        )}
 
         {/* Badges */}
         <div className="seat__badges">
