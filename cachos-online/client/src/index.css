@@ -150,16 +150,13 @@ body::before {
 }
 
 /* Slot de un oponente, anclado al borde superior de la mesa */
+/* Slot de un oponente. La posición (left/top) y el translate/scale los calcula
+   GameTable según la curva de la mesa; aquí solo el origen y la transición. */
 .seat-slot {
   position: absolute;
-  top: 2%;
   z-index: 3;
-}
-
-/* Con muchos jugadores (5 oponentes) los asientos se achican para no chocar. */
-.seat-slot--dense {
-  transform-origin: top center;
-  scale: 0.82;
+  transform-origin: bottom center;
+  transition: transform 0.2s ease;
 }
 
 /* Panel de historial — arriba a la derecha, altura fija con scroll interno */
@@ -378,38 +375,26 @@ body::before {
 }
 
 /* Mesa del jugador: contenedor donde el cacho tapa los dados y luego se desliza. */
-.seat__table {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60px;
-  margin-top: -20px; /* el cacho se solapa frente al personaje, sobre la mesa */
-  margin-bottom: 2px;
-}
-
-/* Dados del oponente — visibles solo al revelar (debajo del cacho). */
+/* Dados del oponente — fila compacta ARRIBA del personaje (junto al nombre).
+   Ocultos como "?" mientras juega; valores reales al revelar. */
 .seat__dice {
   display: flex;
   gap: 3px;
   flex-wrap: nowrap;
   justify-content: center;
-  min-height: 28px;
+  min-height: 26px;
+  margin-bottom: 2px;
   padding: 4px 6px;
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.18);
-  animation: pop 0.3s ease-out;
 }
 
-/* Cacho boca abajo que tapa los dados. Centrado sobre la mesa del jugador. */
+/* Cacho boca abajo, apoyado en la mesa frente al personaje (se solapa con él).
+   Sigue el flujo de la columna; al revelar se desliza al lado sin voltearse. */
 .seat__cup {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
-  transition: transform 0.55s cubic-bezier(0.22, 0.7, 0.18, 1);
+  margin-top: -20px;
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45));
-  z-index: 3;
+  transition: transform 0.55s cubic-bezier(0.22, 0.7, 0.18, 1);
 }
 
 /* Al revelar: se desliza al costado SIN voltearse (sigue boca abajo). */
