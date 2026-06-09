@@ -1,6 +1,6 @@
 import React from 'react';
 import Die from './Die.jsx';
-import Character, { Cup, HOOD_COUNT, FACE_COUNT, CUP_COUNT } from './Character.jsx';
+import Character, { Cup, HOOD_COUNT, FACE_COUNT, CUP_COUNT, BODY_COUNT, HAT_COUNT, ACC_COUNT } from './Character.jsx';
 import { useGame } from '../context/GameContext.jsx';
 
 // Etiquetas cortas para el badge según la modalidad de Obliga activa.
@@ -16,11 +16,14 @@ const OBLIGA_LABELS = {
 // para que igual se vea variedad mientras no haya personalización guardada.
 function cosmeticFor(player) {
   const c = player.cosmetic;
-  if (c && (c.hood != null || c.face != null || c.cup != null)) {
+  if (c && (c.hood != null || c.face != null || c.cup != null || c.body != null || c.hat != null || c.acc != null)) {
     return {
       hood: (c.hood ?? 0) % HOOD_COUNT,
       face: (c.face ?? 0) % FACE_COUNT,
       cup: (c.cup ?? 0) % CUP_COUNT,
+      body: (c.body ?? 0) % BODY_COUNT,
+      hat: (c.hat ?? 0) % HAT_COUNT,
+      acc: (c.acc ?? 0) % ACC_COUNT,
     };
   }
   let h = 0;
@@ -29,6 +32,9 @@ function cosmeticFor(player) {
     hood: h % HOOD_COUNT,
     face: Math.floor(h / 7) % FACE_COUNT,
     cup: Math.floor(h / 53) % CUP_COUNT,
+    body: 0,
+    hat: 0,
+    acc: 0,
   };
 }
 
@@ -86,7 +92,7 @@ export default function PlayerSeat({ player, compact = false, bubble = null }) {
 
         {/* Personaje */}
         <div className="seat__char">
-          <Character hood={cos.hood} face={cos.face} thinking={isTurn} size={92} />
+          <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} />
         </div>
 
         {/* Cacho boca abajo, apoyado en la mesa frente al personaje (sus 2 manos

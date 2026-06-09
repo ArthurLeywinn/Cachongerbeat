@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import Character, { Cup, HOODS, HOOD_COUNT, FACE_COUNT, CUP_COUNT, CUP_NAMES } from './Character.jsx';
+import Character, { Cup, HOODS, HOOD_COUNT, FACE_COUNT, FACE_NAMES, CUP_COUNT, CUP_NAMES, BODY_COUNT, BODY_NAMES, HAT_COUNT, HAT_NAMES, ACC_COUNT, ACC_NAMES } from './Character.jsx';
 import { useProfile } from '../context/ProfileContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const HOOD_NAMES = ['Verde', 'Rojo', 'Negro', 'Azul', 'Morado', 'Mostaza'];
-const FACE_NAMES = ['Clásica', 'Serena', 'Pícara'];
 
 // Cuántos elementos están disponibles SIN iniciar sesión (defaults).
 const FREE_CUPS = 3;
+const FREE_FACES = 3;
 
 function Chip({ active, onClick, locked, children }) {
   return (
@@ -29,7 +29,6 @@ export default function Customizer({ onClose }) {
   const { user } = useAuth() || {};
   const unlocked = !!user; // los skins nuevos se desbloquean al iniciar sesión
 
-  const [previewTurn, setPreviewTurn] = useState(true);
   const [msg, setMsg] = useState(null);
 
   const pickCup = (i) => {
@@ -39,6 +38,16 @@ export default function Customizer({ onClose }) {
     }
     setMsg(null);
     applyCosmetic({ cup: i });
+  };
+
+  // Para cuerpo/gorro/accesorio: la opción 0 (default) es gratis; el resto pide login.
+  const pickPart = (key, i) => {
+    if (i !== 0 && !unlocked) {
+      setMsg('Inicia sesión (arriba a la izquierda) para desbloquear esto.');
+      return;
+    }
+    setMsg(null);
+    applyCosmetic({ [key]: i });
   };
 
   const doSave = async () => {
@@ -57,13 +66,9 @@ export default function Customizer({ onClose }) {
         <div className="grid md:grid-cols-2 gap-4 p-5">
           {/* Vista previa */}
           <div className="flex flex-col items-center justify-center bg-black/25 rounded-xl py-6">
-            <Character hood={cosmetic.hood} face={cosmetic.face} thinking={previewTurn} size={150} />
+            <Character hood={cosmetic.hood} face={cosmetic.face} body={cosmetic.body} hat={cosmetic.hat} acc={cosmetic.acc} size={150} />
             <div className="-mt-5">
               <Cup size={60} style={cosmetic.cup} />
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Chip active={!previewTurn} onClick={() => setPreviewTurn(false)}>Neutral</Chip>
-              <Chip active={previewTurn} onClick={() => setPreviewTurn(true)}>En su turno</Chip>
             </div>
           </div>
 
@@ -103,11 +108,57 @@ export default function Customizer({ onClose }) {
             </div>
 
             <div>
-              <p className="text-bone/50 text-xs uppercase tracking-wider mb-2">Expresión</p>
+              <p className="text-bone/50 text-xs uppercase tracking-wider mb-2">
+                Expresión{!unlocked && <span className="text-bone/30 normal-case"> · {FREE_FACES} gratis</span>}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {Array.from({ length: FACE_COUNT }).map((_, i) => (
-                  <Chip key={i} active={cosmetic.face === i} onClick={() => applyCosmetic({ face: i })}>
+                  <Chip
+                    key={i}
+                    active={cosmetic.face === i}
+                    locked={i >= FREE_FACES && !unlocked}
+                    onClick={() => {
+                      if (i >= FREE_FACES && !unlocked) { setMsg('Inicia sesión (arriba a la izquierda) para desbloquear esta expresión.'); return; }
+                      setMsg(null);
+                      applyCosmetic({ face: i });
+                    }}
+                  >
                     {FACE_NAMES[i]}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-bone/50 text-xs uppercase tracking-wider mb-2">
+                Cuerpo{!unlocked && <span className="text-bone/30 normal-case"> · capucha gratis</span>}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: BODY_COUNT }).map((_, i) => (
+                  <Chip key={i} active={cosmetic.body === i} locked={i !== 0 && !unlocked} onClick={() => pickPart('body', i)}>
+                    {BODY_NAMES[i]}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-bone/50 text-xs uppercase tracking-wider mb-2">Gorro / casco</p>
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: HAT_COUNT }).map((_, i) => (
+                  <Chip key={i} active={cosmetic.hat === i} locked={i !== 0 && !unlocked} onClick={() => pickPart('hat', i)}>
+                    {HAT_NAMES[i]}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-bone/50 text-xs uppercase tracking-wider mb-2">Accesorio</p>
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: ACC_COUNT }).map((_, i) => (
+                  <Chip key={i} active={cosmetic.acc === i} locked={i !== 0 && !unlocked} onClick={() => pickPart('acc', i)}>
+                    {ACC_NAMES[i]}
                   </Chip>
                 ))}
               </div>
