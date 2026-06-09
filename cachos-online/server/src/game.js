@@ -40,10 +40,12 @@ function normalizeSettings(s = {}) {
 }
 
 class Game {
-  constructor(code, hostName, hostSocketId, settings) {
+  constructor(code, hostName, hostSocketId, settings, ranked = false) {
     this.code = code;
     this.status = 'lobby'; // 'lobby' | 'playing' | 'finished'
     this.phase = 'lobby'; // 'lobby' | 'obliga-choose' | 'bidding' | 'reveal' | 'finished'
+    this.ranked = !!ranked; // si true, al terminar se aplica ELO
+    this.eliminationOrder = []; // playerIds en orden de eliminación (el primero = cayó antes)
 
     this.settings = normalizeSettings(settings);
 
@@ -504,6 +506,7 @@ class Game {
       loser.eliminated = true;
       loser.diceCount = 0;
       this._addLog(`${loser.name} se quedó sin dados y queda eliminado.`);
+      if (!this.eliminationOrder.includes(loser.id)) this.eliminationOrder.push(loser.id);
     }
 
     this._queueObligaTriggers();
@@ -563,6 +566,7 @@ class Game {
         if (p.diceCount <= 0) {
           p.diceCount = 0;
           p.eliminated = true;
+          if (!this.eliminationOrder.includes(p.id)) this.eliminationOrder.push(p.id);
         }
       }
     });
@@ -613,6 +617,7 @@ class Game {
         loser.eliminated = true;
         loser.diceCount = 0;
         this._addLog(`${loser.name} se quedó sin dados y queda eliminado.`);
+        if (!this.eliminationOrder.includes(loser.id)) this.eliminationOrder.push(loser.id);
       }
     }
 
