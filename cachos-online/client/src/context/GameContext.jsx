@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { socket, emitAck } from '../socket.js';
 import { useAuth } from './AuthContext.jsx';
+import { getLocalCosmetic } from './ProfileContext.jsx';
 
 const GameContext = createContext(null);
 export const useGame = () => useContext(GameContext);
@@ -65,7 +66,7 @@ export function GameProvider({ children }) {
 
   async function createRoom(name, settings, ranked = false) {
     setError(null);
-    const res = await emitAck('room:create', { name, settings, token, ranked });
+    const res = await emitAck('room:create', { name, settings, token, ranked, cosmetic: getLocalCosmetic() });
     if (res.ok) {
       setCode(res.code);
       setPlayerId(res.playerId);
@@ -79,7 +80,7 @@ export function GameProvider({ children }) {
 
   async function joinRoom(joinCode, name) {
     setError(null);
-    const res = await emitAck('room:join', { code: joinCode, name, token });
+    const res = await emitAck('room:join', { code: joinCode, name, token, cosmetic: getLocalCosmetic() });
     if (res.ok) {
       setCode(res.code);
       setPlayerId(res.playerId);
