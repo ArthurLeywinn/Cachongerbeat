@@ -4,11 +4,12 @@ import { useAuth } from './context/AuthContext.jsx';
 import Home from './components/Home.jsx';
 import Lobby from './components/Lobby.jsx';
 import GameTable from './components/GameTable.jsx';
+import Auth from './components/Auth.jsx';
 import Toast from './components/Toast.jsx';
 
 export default function App() {
   const { state, connected, error, setError } = useGame();
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     if (!error) return;
@@ -18,6 +19,9 @@ export default function App() {
 
   // Mientras verificamos la sesión guardada, no renderizamos nada.
   if (loading) return null;
+
+  // Sin sesión → pantalla de login/registro.
+  if (!user) return <Auth />;
 
   let screen;
   if (!state) {
