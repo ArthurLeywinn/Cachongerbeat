@@ -54,7 +54,7 @@ export default function Lobby() {
 
         <div className="space-y-2 mb-6">
           <p className="text-xs uppercase tracking-wide text-bone/50 mb-1">
-            Jugadores ({state.players.length}/4)
+            Jugadores ({state.players.length}/{state.maxPlayers || 6})
           </p>
           {state.players.map((p) => (
             <div

@@ -10,14 +10,17 @@ import { bidText } from '../lib/rules.js';
 import Die from './Die.jsx';
 
 // Posiciones de los otros jugadores a lo largo del borde superior de la mesa.
+// Soporta hasta 5 oponentes (6 jugadores en total).
 function topPositions(total) {
   const layouts = {
     1: ['left-1/2 -translate-x-1/2'],
     2: ['left-[28%] -translate-x-1/2', 'left-[72%] -translate-x-1/2'],
     3: ['left-[20%] -translate-x-1/2', 'left-1/2 -translate-x-1/2', 'left-[80%] -translate-x-1/2'],
+    4: ['left-[15%] -translate-x-1/2', 'left-[38%] -translate-x-1/2', 'left-[62%] -translate-x-1/2', 'left-[85%] -translate-x-1/2'],
+    5: ['left-[12%] -translate-x-1/2', 'left-[31%] -translate-x-1/2', 'left-1/2 -translate-x-1/2', 'left-[69%] -translate-x-1/2', 'left-[88%] -translate-x-1/2'],
   };
-  const clamped = Math.min(Math.max(total, 1), 3);
-  return layouts[clamped] || layouts[3];
+  const clamped = Math.min(Math.max(total, 1), 5);
+  return layouts[clamped] || layouts[5];
 }
 
 // Hook: convierte los mensajes de chat nuevos en burbujas que duran 5s.
@@ -130,7 +133,7 @@ export default function GameTable() {
 
         {/* Oponentes sentados en el borde superior (con su burbuja de chat) */}
         {others.map((p, i) => (
-          <div key={p.id} className={`seat-slot ${positions[i]}`}>
+          <div key={p.id} className={`seat-slot ${others.length >= 4 ? 'seat-slot--dense' : ''} ${positions[i]}`}>
             <PlayerSeat player={p} compact bubble={bubbles[p.id]?.text || null} />
           </div>
         ))}
