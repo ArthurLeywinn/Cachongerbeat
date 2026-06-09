@@ -13,7 +13,7 @@ const PROFILE_KEY = 'cachos-profile';
 const isDev = import.meta.env.DEV;
 const SERVER = isDev ? (import.meta.env.VITE_SERVER_URL || 'http://localhost:3001') : '';
 
-const DEFAULT_COSMETIC = { hood: 0, face: 0, cup: 0 };
+const DEFAULT_COSMETIC = { hood: 0, face: 0, cup: 0, body: 0, hat: 0, acc: 0 };
 
 // Lectura usada también por GameContext al crear/unirse a una sala.
 export function getLocalCosmetic() {
@@ -25,6 +25,9 @@ export function getLocalCosmetic() {
       hood: Number(c.hood) || 0,
       face: Number(c.face) || 0,
       cup: Number(c.cup) || 0,
+      body: Number(c.body) || 0,
+      hat: Number(c.hat) || 0,
+      acc: Number(c.acc) || 0,
     };
   } catch {
     return { ...DEFAULT_COSMETIC };
