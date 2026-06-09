@@ -93,6 +93,7 @@ class Game {
       dice: [],
       eliminated: false,
       isHost,
+      cosmetic: null, // personalización { hood, face, cup } enviada por el cliente
       obligaUsed: false, // Obliga es un beneficio único por jugador durante toda la partida
       passedThisRound: false, // "Pasar" se permite una vez por ronda por persona
       chatCount: 0, // mensajes enviados en el turno actual (límite anti-spam)
@@ -741,6 +742,7 @@ class Game {
         eliminated: p.eliminated,
         isHost: p.isHost,
         isYou: p.id === forPlayerId,
+        cosmetic: p.cosmetic || null,
         obligaUsed: p.obligaUsed,
         dice,
       };

@@ -11,6 +11,10 @@ const { Server } = require('socket.io');
 
 const { GameManager } = require('./gameManager');
 const { register, login, requireAuth, verifySocketToken } = require('./auth');
+const {
+  registerProfile, loginProfile, getProfileById, setCosmetic,
+  verifyProfileToken, sanitizeCosmetic,
+} = require('./profiles');
 const { supabase } = require('./db');
 const { calculateElo } = require('./elo');
 
@@ -54,6 +58,49 @@ app.get('/auth/me', requireAuth, async (req, res) => {
     .maybeSingle();
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
   res.json({ ok: true, user });
+});
+
+// ---------------------------------------------------------------------------
+// Rutas REST — Perfil (login simple + personalización del personaje)
+// ---------------------------------------------------------------------------
+
+function requireProfile(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const payload = verifyProfileToken(token);
+  if (!payload) return res.status(401).json({ error: 'No autenticado.' });
+  req.profile = payload;
+  next();
+}
+
+// POST /profile/register  { username, password, cosmetic }
+app.post('/profile/register', async (req, res) => {
+  const { username, password, cosmetic } = req.body || {};
+  const result = await registerProfile(username, password, cosmetic);
+  if (result.error) return res.status(400).json(result);
+  res.json(result);
+});
+
+// POST /profile/login  { username, password }
+app.post('/profile/login', async (req, res) => {
+  const { username, password } = req.body || {};
+  const result = await loginProfile(username, password);
+  if (result.error) return res.status(401).json(result);
+  res.json(result);
+});
+
+// GET /profile/me  — devuelve el perfil (incluye personalización)
+app.get('/profile/me', requireProfile, (req, res) => {
+  const profile = getProfileById(req.profile.pid);
+  if (!profile) return res.status(404).json({ error: 'Perfil no encontrado.' });
+  res.json({ ok: true, profile });
+});
+
+// PUT /profile/cosmetic  { cosmetic }  — guarda el personaje elegido
+app.put('/profile/cosmetic', requireProfile, (req, res) => {
+  const result = setCosmetic(req.profile.pid, req.body?.cosmetic);
+  if (result.error) return res.status(400).json(result);
+  res.json(result);
 });
 
 // GET /leaderboard  — top 20 por ELO
@@ -209,7 +256,7 @@ async function applyRankedElo(game) {
 io.on('connection', (socket) => {
 
   // Crear sala -------------------------------------------------------------
-  socket.on('room:create', ({ name, settings, token, ranked }, cb) => {
+  socket.on('room:create', ({ name, settings, token, ranked, cosmetic }, cb) => {
     // Si hay token válido, asociamos el userId.
     const auth = verifySocketToken(token);
     const displayName = auth ? auth.username : name;
@@ -218,12 +265,13 @@ io.on('connection', (socket) => {
     const player = game.players[0];
     // Asociar userId al jugador si está autenticado.
     if (auth) player.userId = auth.userId;
+    if (cosmetic) player.cosmetic = sanitizeCosmetic(cosmetic);
     cb?.({ ok: true, code: game.code, playerId: player.id, state: game.serialize(player.id) });
     broadcastState(game);
   });
 
   // Unirse por código ------------------------------------------------------
-  socket.on('room:join', ({ code, name, token }, cb) => {
+  socket.on('room:join', ({ code, name, token, cosmetic }, cb) => {
     const game = manager.getRoom(code);
     if (!game) return cb?.({ ok: false, error: 'No existe una sala con ese código.' });
     const auth = verifySocketToken(token);
@@ -231,6 +279,7 @@ io.on('connection', (socket) => {
     const result = game.addPlayer(displayName, socket.id);
     if (result.error) return cb?.({ ok: false, error: result.error });
     if (auth) result.player.userId = auth.userId;
+    if (cosmetic) result.player.cosmetic = sanitizeCosmetic(cosmetic);
     socket.join(game.code);
     cb?.({ ok: true, code: game.code, playerId: result.player.id, state: game.serialize(result.player.id) });
     broadcastState(game);
@@ -361,7 +410,7 @@ function locate(socketId) {
 // ---------------------------------------------------------------------------
 const clientDist = path.resolve(__dirname, '../../client/dist');
 app.use(express.static(clientDist));
-app.get(/^\/(?!socket\.io|health|auth|leaderboard).*/, (_req, res) => {
+app.get(/^\/(?!socket\.io|health|auth|profile|leaderboard).*/, (_req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'), (err) => {
     if (err) res.status(200).send('Servidor de Cachos en ejecución.');
   });
