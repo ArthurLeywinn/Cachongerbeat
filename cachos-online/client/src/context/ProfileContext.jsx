@@ -13,7 +13,8 @@ const PROFILE_KEY = 'cachos-profile';
 const isDev = import.meta.env.DEV;
 const SERVER = isDev ? (import.meta.env.VITE_SERVER_URL || 'http://localhost:3001') : '';
 
-const DEFAULT_COSMETIC = { hood: 0, face: 0, cup: 0, body: 0, hat: 0, acc: 0 };
+// Personaje por defecto: el nuevo punk (poncho rojo + mohawk, sin capucha).
+const DEFAULT_COSMETIC = { hood: 1, face: 0, cup: 0, body: 11, hat: 11, acc: 0 };
 
 // Lectura usada también por GameContext al crear/unirse a una sala.
 export function getLocalCosmetic() {

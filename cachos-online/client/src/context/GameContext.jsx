@@ -15,6 +15,8 @@ export function GameProvider({ children }) {
   const [playerId, setPlayerId] = useState(null);
   const [code, setCode] = useState(null);
   const [error, setError] = useState(null);
+  // Cola de matchmaking ranked: { inQueue, count, min, max }
+  const [queue, setQueue] = useState({ inQueue: false, count: 0, min: 3, max: 6 });
   const reconnectRef = useRef(false);
 
   const saveSession = (c, pid) => {
@@ -46,14 +48,29 @@ export function GameProvider({ children }) {
         }
       }
     }
-    function onDisconnect() { setConnected(false); }
+    function onDisconnect() {
+      setConnected(false);
+      setQueue((q) => ({ ...q, inQueue: false }));
+    }
     function onState(s) { setState(s); }
     function onEloUpdate(data) { applyEloUpdate?.(data); }
+    function onQueueUpdate({ count, min, max }) {
+      setQueue((q) => ({ ...q, count, min: min ?? q.min, max: max ?? q.max }));
+    }
+    function onQueueMatched({ code: c, playerId: pid, state: st }) {
+      setQueue((q) => ({ ...q, inQueue: false }));
+      setCode(c);
+      setPlayerId(pid);
+      setState(st);
+      saveSession(c, pid);
+    }
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('state', onState);
     socket.on('elo:update', onEloUpdate);
+    socket.on('queue:update', onQueueUpdate);
+    socket.on('queue:matched', onQueueMatched);
     if (socket.connected) onConnect();
 
     return () => {
@@ -61,6 +78,8 @@ export function GameProvider({ children }) {
       socket.off('disconnect', onDisconnect);
       socket.off('state', onState);
       socket.off('elo:update', onEloUpdate);
+      socket.off('queue:update', onQueueUpdate);
+      socket.off('queue:matched', onQueueMatched);
     };
   }, [token, applyEloUpdate]);
 
@@ -97,8 +116,8 @@ export function GameProvider({ children }) {
     if (!res.ok) setError(res.error);
     return res;
   }
-  async function bid(quantity, face) {
-    const res = await emitAck('game:bid', { quantity, face });
+  async function bid(quantity, face, direction) {
+    const res = await emitAck('game:bid', { quantity, face, direction });
     if (!res.ok) setError(res.error);
     return res;
   }
@@ -133,6 +152,24 @@ export function GameProvider({ children }) {
     return res;
   }
 
+  // ── Matchmaking ranked ──
+  async function joinQueue() {
+    setError(null);
+    const res = await emitAck('queue:join', { token, cosmetic: getLocalCosmetic() });
+    if (res.ok) {
+      setQueue({ inQueue: true, count: res.count ?? 1, min: res.min ?? 3, max: res.max ?? 6 });
+    } else {
+      setError(res.error || 'No se pudo entrar a la cola.');
+    }
+    return res;
+  }
+
+  async function leaveQueue() {
+    const res = await emitAck('queue:leave', {});
+    setQueue((q) => ({ ...q, inQueue: false, count: 0 }));
+    return res;
+  }
+
   function leave() {
     clearSession();
     setState(null);
@@ -145,6 +182,7 @@ export function GameProvider({ children }) {
     connected, state, playerId, code, error, setError,
     createRoom, joinRoom, startGame, bid, doubt, calzar,
     chooseObliga, pasar, doubtPass, sendChat, leave,
+    queue, joinQueue, leaveQueue,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
