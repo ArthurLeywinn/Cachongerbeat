@@ -36,12 +36,28 @@ const FACE_NAMES_PLURAL = {
   6: 'sextas',
 };
 
+// Versión en singular ("1 as", "1 tonto", "1 sexta", etc.).
+const FACE_NAMES_SINGULAR = {
+  1: 'as',
+  2: 'tonto',
+  3: 'tren',
+  4: 'cuarta',
+  5: 'quina',
+  6: 'sexta',
+};
+
+// Etiqueta de pinta con concordancia gramatical: singular si la cantidad es 1.
+function faceLabel(face, quantity) {
+  return quantity === 1 ? FACE_NAMES_SINGULAR[face] : FACE_NAMES_PLURAL[face];
+}
+
 /**
- * Devuelve una etiqueta legible para una apuesta, ej: { quantity: 4, face: 3 } -> "4 trenes".
+ * Devuelve una etiqueta legible para una apuesta, ej: { quantity: 4, face: 3 } -> "4 trenes",
+ * { quantity: 1, face: 6 } -> "1 sexta".
  */
 function formatBid(bid) {
   if (!bid) return '—';
-  return `${bid.quantity} ${FACE_NAMES_PLURAL[bid.face]}`;
+  return `${bid.quantity} ${faceLabel(bid.face, bid.quantity)}`;
 }
 
 /**
@@ -93,7 +109,7 @@ function countFace(allDice, face) {
  *
  * @returns {{ ok: boolean, reason?: string }}
  */
-function validateRaise(prev, next) {
+function validateRaise(prev, next, opts = {}) {
   if (!next || typeof next.quantity !== 'number' || typeof next.face !== 'number') {
     return { ok: false, reason: 'Apuesta mal formada.' };
   }
@@ -102,6 +118,10 @@ function validateRaise(prev, next) {
   }
   if (next.quantity < 1) {
     return { ok: false, reason: 'La cantidad debe ser al menos 1.' };
+  }
+  // La cantidad nunca puede superar el total de dados en juego.
+  if (Number.isFinite(opts.totalDice) && next.quantity > opts.totalDice) {
+    return { ok: false, reason: `No puedes apostar más de ${opts.totalDice} (dados en juego).` };
   }
 
   // Primera apuesta de la ronda.
@@ -127,7 +147,7 @@ function validateRaise(prev, next) {
     if (next.quantity >= min) return { ok: true };
     return {
       ok: false,
-      reason: `Al salir de ases debes apostar al menos ${min} ${FACE_NAMES_PLURAL[next.face]}.`,
+      reason: `Al salir de ases debes apostar al menos ${min} ${faceLabel(next.face, min)}.`,
     };
   }
 
@@ -223,6 +243,8 @@ module.exports = {
   ACE,
   FACE_NAMES,
   FACE_NAMES_PLURAL,
+  FACE_NAMES_SINGULAR,
+  faceLabel,
   formatBid,
   rollDice,
   countFace,

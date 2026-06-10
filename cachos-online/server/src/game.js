@@ -60,6 +60,20 @@ class Game {
     this.roundStarterId = null;
     this.round = 0;
 
+    // Dirección de juego de la ronda: 1 = izquierda (siguiente en seatOrder),
+    // -1 = derecha. La elige el jugador que abre la ronda.
+    this.roundDirection = 1;
+
+    // ── Partida falsa ──
+    // Si alguien ABRE la ronda apostando ases, no hay apuesta real: el turno
+    // pasa y el siguiente jugador abre libremente. No se puede dudar/calzar
+    // una partida falsa y no puede haber dos seguidas en la misma ronda.
+    this.falsa = null; // { playerId } mientras está activa
+    this.falsaUsedThisRound = false;
+
+    // Resultados ELO de la partida (los llena index.js al terminar si es ranked).
+    this.eloResults = null; // [{ playerId, userId, delta, newElo }]
+
     this.initialTotalDice = 0;
     this.centerPool = 0;
 
@@ -237,6 +251,9 @@ class Game {
     this.lastResult = null;
     this.obliga = null;
     this.pendingPass = null;
+    this.falsa = null;
+    this.falsaUsedThisRound = false;
+    this.roundDirection = 1;
     this.log = []; // el historial se reinicia en cada ronda (no se acumula)
     this.players.forEach((p) => { p.passedThisRound = false; });
 
@@ -294,9 +311,11 @@ class Game {
 
   _advanceTurn() {
     const order = this.seatOrder;
+    const len = order.length;
+    const dir = this.roundDirection === -1 ? -1 : 1;
     const idx = order.indexOf(this.currentTurnId);
-    for (let i = 1; i <= order.length; i += 1) {
-      const id = order[(idx + i) % order.length];
+    for (let i = 1; i <= len; i += 1) {
+      const id = order[(((idx + dir * i) % len) + len) % len];
       const p = this.getPlayer(id);
       if (p && !p.eliminated) {
         this.currentTurnId = id;
@@ -353,12 +372,20 @@ class Game {
   // Apuestas / Dudar / Calzar
   // ---------------------------------------------------------------------------
 
-  placeBid(playerId, quantity, face) {
+  placeBid(playerId, quantity, face, direction) {
     if (this.phase !== 'bidding') return { error: 'No es momento de apostar.' };
     if (this.currentTurnId !== playerId) return { error: 'No es tu turno.' };
 
     const mode = this.obliga?.mode;
     const q = Number(quantity);
+    const f = Number(face);
+    const totalInPlay = this.activePlayers().reduce((s, p) => s + p.diceCount, 0);
+    const isOpening = !this.currentBid;
+
+    // El que abre la ronda elige la dirección de juego (izquierda/derecha).
+    if (isOpening && (direction === 'left' || direction === 'right')) {
+      this.roundDirection = direction === 'right' ? -1 : 1;
+    }
 
     // Apostar tras un paso es válido: la ronda continúa con la apuesta previa al
     // paso. Al apostar, el paso deja de poder dudarse.
@@ -367,6 +394,7 @@ class Game {
     // ── Modalidad Cerrado "de esta": pinta bloqueada (secreta), solo sube cantidad ──
     if (mode === 'cerradoA') {
       if (q < 1) return { error: 'La cantidad debe ser al menos 1.' };
+      if (q > totalInPlay) return { error: `No puedes apostar más de ${totalInPlay} (dados en juego).` };
       if (this.currentBid && q <= this.currentBid.quantity) {
         return { error: 'Solo puedes aumentar la cantidad ("X de esta") o dudar.' };
       }
@@ -381,10 +409,27 @@ class Game {
       return { ok: true };
     }
 
+    // ── Partida falsa: abrir la ronda apostando ases ──
+    if (isOpening && f === ACE && !this.obliga) {
+      if (this.falsaUsedThisRound) {
+        return { error: 'No puede haber dos partidas falsas seguidas: abre con otra pinta.' };
+      }
+      this.falsaUsedThisRound = true;
+      this.falsa = { playerId };
+      const passer = this.getPlayer(playerId);
+      this._advanceTurn();
+      const opener = this.getPlayer(this.currentTurnId);
+      this._addLog(`${passer.name} abre con ases: PARTIDA FALSA. ${opener ? opener.name : 'El siguiente'} abre la ronda libremente.`);
+      return { ok: true };
+    }
+
     // ── Resto de modalidades / juego normal ──
-    const next = { quantity: q, face: Number(face) };
-    const check = validateRaise(this.currentBid, next);
+    const next = { quantity: q, face: f };
+    const check = validateRaise(this.currentBid, next, { totalDice: totalInPlay });
     if (!check.ok) return { error: check.reason };
+
+    // Si veníamos de una partida falsa, esta apuesta abre la ronda de verdad.
+    if (this.falsa) this.falsa = null;
 
     this.currentBid = { ...next, playerId };
     this._addLog(`${this.getPlayer(playerId).name} apuesta ${formatBid(this.currentBid)}.`);
@@ -398,6 +443,7 @@ class Game {
     if (this.pendingPass) {
       return { error: 'Hay un paso pendiente: solo puedes apostar o dudar el paso.' };
     }
+    if (this.falsa) return { error: 'No se puede dudar una partida falsa: debes abrir la ronda.' };
     if (!this.currentBid) return { error: 'No hay apuesta para dudar.' };
 
     const bid = this.currentBid;
@@ -428,6 +474,7 @@ class Game {
     if (this.phase !== 'bidding') return { error: 'No es momento de calzar.' };
     if (this.currentTurnId !== playerId) return { error: 'No es tu turno.' };
     if (this.pendingPass) return { error: 'No se puede calzar un paso.' };
+    if (this.falsa) return { error: 'No se puede calzar una partida falsa: debes abrir la ronda.' };
     if (!this.currentBid) return { error: 'No hay apuesta para calzar.' };
     if (this.obliga?.mode === 'cerradoA') {
       return { error: 'En Obliga "de esta" no se puede calzar, solo subir cantidad o dudar.' };
@@ -471,7 +518,10 @@ class Game {
     if (this.obliga) return { error: 'No se puede pasar durante una ronda de Obliga.' };
     if (!this.currentBid) return { error: 'No puedes pasar antes de la primera apuesta de la ronda.' };
 
+    if (this.falsa) return { error: 'No se puede pasar durante una partida falsa.' };
+
     const player = this.getPlayer(playerId);
+    if (player.diceCount !== 5) return { error: 'Solo puedes pasar con exactamente 5 dados.' };
     if (player.passedThisRound) return { error: 'Ya pasaste en esta ronda.' };
 
     // Se permite pasar SIEMPRE (es un farol): el jugador declara tener una mano
@@ -536,9 +586,14 @@ class Game {
   autoBid() {
     if (this.phase !== 'bidding') return { ok: false };
     const playerId = this.currentTurnId;
+    const totalInPlay = this.activePlayers().reduce((s, p) => s + p.diceCount, 0);
 
     // Si hay un paso pendiente, el jugador restringido apuesta sobre la apuesta previa.
     if (this.currentBid) {
+      // Si subir excedería el total de dados en juego, duda automáticamente.
+      if (this.currentBid.quantity + 1 > totalInPlay) {
+        return this.pendingPass ? this.doubtPass(playerId) : this.doubt(playerId);
+      }
       if (this.currentBid.esta) {
         return this.placeBid(playerId, this.currentBid.quantity + 1, 0);
       }
@@ -696,6 +751,30 @@ class Game {
     return { ok: true };
   }
 
+  // Posiciones finales: ganador primero, luego en orden inverso de eliminación.
+  _finalStandings() {
+    if (this.status !== 'finished') return null;
+    const ids = [];
+    if (this.winnerId) ids.push(this.winnerId);
+    [...this.eliminationOrder].reverse().forEach((id) => {
+      if (!ids.includes(id)) ids.push(id);
+    });
+    this.players.forEach((p) => { if (!ids.includes(p.id)) ids.push(p.id); });
+    return ids.map((id, i) => {
+      const p = this.getPlayer(id);
+      const er = this.eloResults?.find((r) => r.playerId === id) || null;
+      return {
+        id,
+        name: p?.name || '—',
+        cosmetic: p?.cosmetic || null,
+        place: i + 1,
+        isWinner: id === this.winnerId,
+        eloDelta: er ? er.delta : null,
+        newElo: er ? er.newElo : null,
+      };
+    });
+  }
+
   // ---------------------------------------------------------------------------
   // Serialización segura por jugador
   // ---------------------------------------------------------------------------
@@ -776,8 +855,10 @@ class Game {
       this.currentTurnId === forPlayerId &&
       !!this.currentBid &&
       !this.pendingPass &&
+      !this.falsa &&
       !this.obliga &&
       me && !me.eliminated &&
+      me.diceCount === 5 &&
       !me.passedThisRound;
 
     return {
@@ -791,6 +872,15 @@ class Game {
       currentTurnId: this.currentTurnId,
       roundStarterId: this.roundStarterId,
       currentBid: currentBidOut,
+      ranked: this.ranked,
+      roundDirection: this.roundDirection,
+      // El que abre elige a quién le pasa el turno (define la dirección).
+      youChooseDirection:
+        this.phase === 'bidding' && !this.currentBid && !this.obliga &&
+        this.currentTurnId === forPlayerId && this.activePlayers().length > 2,
+      falsa: this.falsa ? { playerId: this.falsa.playerId } : null,
+      falsaUsedThisRound: this.falsaUsedThisRound,
+      finalStandings: this._finalStandings(),
       centerPool: this.centerPool,
       initialTotalDice: this.initialTotalDice,
       totalDiceInPlay: totalInPlay,
