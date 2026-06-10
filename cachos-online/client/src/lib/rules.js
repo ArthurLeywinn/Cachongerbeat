@@ -24,9 +24,23 @@ export const FACE_NAMES_PLURAL = {
   6: 'sextas',
 };
 
+export const FACE_NAMES_SINGULAR = {
+  1: 'as',
+  2: 'tonto',
+  3: 'tren',
+  4: 'cuarta',
+  5: 'quina',
+  6: 'sexta',
+};
+
+// Concordancia gramatical: singular si la cantidad es 1.
+export function faceLabel(face, quantity) {
+  return quantity === 1 ? FACE_NAMES_SINGULAR[face] : FACE_NAMES_PLURAL[face];
+}
+
 export function formatBid(bid) {
   if (!bid) return '—';
-  return `${bid.quantity} ${FACE_NAMES_PLURAL[bid.face]}`;
+  return `${bid.quantity} ${faceLabel(bid.face, bid.quantity)}`;
 }
 
 // Etiqueta de apuesta segura: en modo "de esta" la pinta está oculta, así que
@@ -38,13 +52,20 @@ export function bidText(bid) {
 }
 
 // Misma lógica que el servidor (ver server/src/rules.js).
-export function validateRaise(prev, next) {
+export function validateRaise(prev, next, opts = {}) {
   if (!next) return { ok: false, reason: 'Apuesta vacía.' };
   if (next.face < 1 || next.face > 6) return { ok: false, reason: 'Pinta inválida.' };
   if (next.quantity < 1) return { ok: false, reason: 'La cantidad debe ser al menos 1.' };
+  if (Number.isFinite(opts.totalDice) && next.quantity > opts.totalDice) {
+    return { ok: false, reason: `Máximo ${opts.totalDice} (dados en juego).` };
+  }
 
   if (!prev) {
-    if (next.face === ACE) return { ok: false, reason: 'No puedes abrir con ases.' };
+    if (next.face === ACE) {
+      // Abrir con ases = partida falsa (si está permitida en esta ronda).
+      if (opts.allowFalsa) return { ok: true, falsa: true };
+      return { ok: false, reason: 'No puede haber dos partidas falsas seguidas.' };
+    }
     return { ok: true };
   }
 
@@ -60,7 +81,7 @@ export function validateRaise(prev, next) {
     const min = prev.quantity * 2 + 1;
     return next.quantity >= min
       ? { ok: true }
-      : { ok: false, reason: `Mínimo ${min} ${FACE_NAMES_PLURAL[next.face]}.` };
+      : { ok: false, reason: `Mínimo ${min} ${faceLabel(next.face, min)}.` };
   }
   if (!prevIsAce && nextIsAce) {
     const min = Math.ceil(prev.quantity / 2);
