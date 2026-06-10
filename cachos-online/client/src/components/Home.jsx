@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import Rules from './Rules.jsx';
 import Leaderboard from './Leaderboard.jsx';
 import Customizer from './Customizer.jsx';
+import History from './History.jsx';
+import RankedQueue from './RankedQueue.jsx';
 import { CupMark, HeroScene } from './MenuArt.jsx';
 
 const MENU_THEME = 'clean';
@@ -27,6 +29,9 @@ const IconLogout = () => (
 );
 const IconUser = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+);
+const IconHistory = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
 );
 const IconLock = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -172,9 +177,8 @@ export default function Home() {
       setTimeout(() => setRankedHint(false), 3000);
       return;
     }
-    setMode('create');
-    setRanked(true);
-    setView('form');
+    // Ranked ya no crea sala: entra a la cola de matchmaking.
+    setView('rankedQueue');
   };
 
   const handleSubmit = async () => {
@@ -187,6 +191,8 @@ export default function Home() {
 
   if (view === 'rules') return <Rules onBack={() => setView('menu')} theme={MENU_THEME} />;
   if (view === 'leaderboard') return <Leaderboard onBack={() => setView('menu')} />;
+  if (view === 'history') return <History onBack={() => setView('menu')} />;
+  if (view === 'rankedQueue') return <RankedQueue onBack={() => setView('menu')} />;
   if (view === 'auth') return <AuthPanel onBack={() => setView('menu')} initialMode={authInitialMode} />;
 
   // ════════════════ MENÚ ════════════════
@@ -224,7 +230,7 @@ export default function Home() {
                   onClick={handleRankedClick}
                 >
                   {user ? <IconTrophy /> : <IconLock />}
-                  Partida ranked
+                  Buscar partida ranked
                   {!user && <span className="text-[10px] ml-1 opacity-50">· requiere cuenta</span>}
                 </button>
                 {rankedHint && (
@@ -236,6 +242,12 @@ export default function Home() {
                   </div>
                 )}
               </div>
+
+              {user && (
+                <button className="clean-btn" onClick={() => setView('history')}>
+                  <IconHistory /> Mi historial
+                </button>
+              )}
 
               <button className="clean-btn" onClick={() => setShowCustomizer(true)}>
                 <IconUser /> Personalizar personaje

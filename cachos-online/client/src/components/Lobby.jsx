@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext.jsx';
+import Character, { Cup } from './Character.jsx';
 import Die from './Die.jsx';
 
+// Sala de espera con la temática visual del juego: slots de jugadores con su
+// personaje, contador /6 y distinción clara entre lobby normal y ranked.
 export default function Lobby() {
   const { state, playerId, startGame, leave } = useGame();
   const [copied, setCopied] = useState(false);
@@ -10,6 +13,9 @@ export default function Lobby() {
   const me = state.players.find((p) => p.id === playerId);
   const isHost = me?.isHost;
   const canStart = state.players.length >= 2;
+  const maxPlayers = state.maxPlayers || 6;
+  const ranked = !!state.ranked;
+  const emptySlots = Math.max(0, maxPlayers - state.players.length);
 
   const copyCode = () => {
     navigator.clipboard?.writeText(state.code);
@@ -18,10 +24,16 @@ export default function Lobby() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
-      <div className="glass rounded-2xl p-8 w-full max-w-lg shadow-cup">
-        <div className="text-center mb-6">
-          <p className="text-bone/50 text-sm uppercase tracking-widest mb-1">Sala de espera</p>
+    <div className="lobby-bg">
+      <div className={['lobby-card glass', ranked ? 'lobby-card--ranked' : ''].join(' ')}>
+        {/* ── Encabezado ── */}
+        <div className="text-center mb-5">
+          {ranked ? (
+            <span className="lobby-badge lobby-badge--ranked">🏆 Partida ranked</span>
+          ) : (
+            <span className="lobby-badge">🎲 Partida casual</span>
+          )}
+          <p className="text-bone/50 text-xs uppercase tracking-widest mt-3 mb-1">Sala de espera</p>
           <button
             onClick={copyCode}
             className="font-display text-6xl font-black tracking-[0.15em] text-amber-glow hover:brightness-110 transition"
@@ -34,62 +46,59 @@ export default function Lobby() {
           </p>
         </div>
 
-        {/* Resumen de reglas activas */}
+        {/* ── Resumen de reglas activas ── */}
         {state.settings && (
           <div className="flex flex-wrap gap-2 justify-center mb-6">
-            <span className="px-3 py-1 rounded-full bg-black/25 text-xs text-bone/70">
-              🎲 {state.settings.dicePerPlayer} dados
-            </span>
-            <span className="px-3 py-1 rounded-full bg-black/25 text-xs text-bone/70">
+            <span className="lobby-chip">🎲 {state.settings.dicePerPlayer} dados</span>
+            <span className="lobby-chip">
               ⏱ {state.settings.turnSeconds ? `${state.settings.turnSeconds}s/turno` : 'Sin límite'}
             </span>
-            <span className="px-3 py-1 rounded-full bg-black/25 text-xs text-bone/70">
-              Calzo {state.settings.calzoInfinito ? 'infinito' : 'normal'}
-            </span>
+            <span className="lobby-chip">Calzo {state.settings.calzoInfinito ? 'infinito' : 'normal'}</span>
             {state.settings.pasarEnabled && (
-              <span className="px-3 py-1 rounded-full bg-sky-500/20 text-xs text-sky-200">Pasar activado</span>
+              <span className="lobby-chip lobby-chip--sky">Pasar activado</span>
             )}
+            {ranked && <span className="lobby-chip lobby-chip--gold">Reglas fijas de ranked</span>}
           </div>
         )}
 
-        <div className="space-y-2 mb-6">
-          <p className="text-xs uppercase tracking-wide text-bone/50 mb-1">
-            Jugadores ({state.players.length}/{state.maxPlayers || 6})
-          </p>
+        {/* ── Slots de jugadores ── */}
+        <p className="text-xs uppercase tracking-wide text-bone/50 mb-2 text-center">
+          Jugadores <span className="text-amber-glow font-bold">{state.players.length}/{maxPlayers}</span>
+        </p>
+        <div className="lobby-grid mb-6">
           {state.players.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between px-4 py-3 rounded-xl bg-black/20 animate-pop"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-amber-glow/20 grid place-items-center text-amber-glow font-bold">
-                  {p.name.charAt(0).toUpperCase()}
+            <div key={p.id} className="lobby-slot animate-pop">
+              <div className="lobby-slot__art">
+                <Character
+                  hood={p.cosmetic?.hood ?? 0}
+                  face={p.cosmetic?.face ?? 0}
+                  body={p.cosmetic?.body ?? 0}
+                  hat={p.cosmetic?.hat ?? 0}
+                  acc={p.cosmetic?.acc ?? 0}
+                  size={74}
+                />
+                <div className="lobby-slot__cup">
+                  <Cup size={30} style={p.cosmetic?.cup ?? 0} />
                 </div>
-                <span className="font-medium">
-                  {p.name}
-                  {p.id === playerId && <span className="text-bone/40"> (tú)</span>}
-                </span>
               </div>
-              {p.isHost && (
-                <span className="text-xs px-2 py-1 rounded-md bg-amber-glow/15 text-amber-glow font-semibold">
-                  Anfitrión
-                </span>
-              )}
+              <p className="lobby-slot__name">
+                {p.name}
+                {p.id === playerId && <span className="text-bone/40"> (tú)</span>}
+              </p>
+              {p.isHost && <span className="lobby-slot__host">Anfitrión</span>}
             </div>
           ))}
-          {Array.from({ length: 4 - state.players.length }).map((_, i) => (
-            <div
-              key={`empty-${i}`}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/10 text-bone/30"
-            >
-              <div className="w-8 h-8 rounded-full bg-white/5 grid place-items-center">
-                <Die value={null} size={20} />
+          {Array.from({ length: emptySlots }).map((_, i) => (
+            <div key={`empty-${i}`} className="lobby-slot lobby-slot--empty">
+              <div className="lobby-slot__art lobby-slot__art--empty">
+                <Die value={null} size={30} />
               </div>
-              Esperando jugador…
+              <p className="lobby-slot__name text-bone/30">Esperando…</p>
             </div>
           ))}
         </div>
 
+        {/* ── Acciones ── */}
         {isHost ? (
           <button
             onClick={startGame}

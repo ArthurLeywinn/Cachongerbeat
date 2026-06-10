@@ -6,6 +6,7 @@ import ActionLog from './ActionLog.jsx';
 import ChatPanel from './ChatPanel.jsx';
 import RoundResult from './RoundResult.jsx';
 import ObligaChooser from './ObligaChooser.jsx';
+import GameOver from './GameOver.jsx';
 import { bidText } from '../lib/rules.js';
 import Die from './Die.jsx';
 
@@ -92,6 +93,11 @@ export default function GameTable() {
             <p className="text-[11px] text-bone/40">
               Sala <span className="text-amber-glow font-semibold tracking-widest">{state.code}</span>
               {' · '}Ronda {state.round}
+              {state.status === 'playing' && (
+                <span title={state.roundDirection === -1 ? 'Jugando hacia la derecha' : 'Jugando hacia la izquierda'}>
+                  {' '}{state.roundDirection === -1 ? '↻' : '↺'}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -221,29 +227,8 @@ export default function GameTable() {
 
       <ObligaChooser />
 
-      {/* ── Pantalla de victoria ── */}
-      {finished && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="glass rounded-3xl p-10 text-center shadow-cup animate-pop max-w-md">
-            <div className="flex justify-center gap-2 mb-4">
-              <Die value={1} size={44} highlight />
-              <Die value={6} size={44} />
-              <Die value={1} size={44} highlight />
-            </div>
-            <p className="text-bone/50 uppercase tracking-widest text-sm mb-2">Fin de la partida</p>
-            <h2 className="font-display text-4xl font-black text-amber-glow mb-2">
-              {winner ? `¡${winner.name} gana!` : 'Empate'}
-            </h2>
-            <p className="text-bone/60 mb-6">Último jugador con dados en pie.</p>
-            <button
-              onClick={leave}
-              className="px-6 py-3 rounded-xl bg-amber-glow text-felt-900 font-bold hover:brightness-105 transition"
-            >
-              Volver al inicio
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── Pantalla de fin de partida ── */}
+      <GameOver />
     </div>
   );
 }
