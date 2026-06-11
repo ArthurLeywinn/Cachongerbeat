@@ -23,7 +23,7 @@ const HOOD_COUNT = 6;
 const FACE_COUNT = 15;
 const CUP_COUNT = 10;
 const BODY_COUNT = 12;
-const HAT_COUNT = 12;
+const HAT_COUNT = 13;
 const ACC_COUNT = 6;
 
 // ── Store en archivo ────────────────────────────────────────────────────────

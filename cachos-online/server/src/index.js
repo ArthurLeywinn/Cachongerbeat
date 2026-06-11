@@ -181,6 +181,185 @@ const revealTimers = new Map();
 const turnTimers = new Map();
 
 // ---------------------------------------------------------------------------
+// Presencia de usuarios (sistema de amigos)
+// ---------------------------------------------------------------------------
+// userId -> { socketId, username, status: 'menu' | 'lobby' | 'playing', code }
+const presence = new Map();
+
+function presencePayload(userId) {
+  const p = presence.get(userId);
+  return {
+    userId,
+    username: p?.username || null,
+    status: p ? p.status : 'offline',
+    // Solo se expone el código de sala si el amigo está en LOBBY (para "Unirse").
+    code: p && p.status === 'lobby' ? p.code : null,
+  };
+}
+
+async function getAcceptedFriendIds(userId) {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from('friendships')
+    .select('requester_id, receiver_id')
+    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
+    .eq('status', 'accepted');
+  return (data || []).map((r) => (r.requester_id === userId ? r.receiver_id : r.requester_id));
+}
+
+// Difunde el estado de `userId` a todos sus amigos conectados.
+async function broadcastPresence(userId) {
+  try {
+    const payload = presencePayload(userId);
+    const friends = await getAcceptedFriendIds(userId);
+    for (const fid of friends) {
+      const fp = presence.get(fid);
+      if (fp?.socketId) io.to(fp.socketId).emit('friends:status', payload);
+    }
+  } catch { /* sin DB no hay amigos que avisar */ }
+}
+
+function setUserPresence(userId, username, socketId, status, code = null) {
+  if (!userId) return;
+  presence.set(userId, { socketId, username, status, code });
+  broadcastPresence(userId);
+}
+
+function clearPresenceBySocket(socketId) {
+  for (const [userId, p] of presence.entries()) {
+    if (p.socketId === socketId) {
+      presence.delete(userId);
+      broadcastPresence(userId);
+    }
+  }
+}
+
+function notifyUser(userId, payload) {
+  const p = presence.get(userId);
+  if (p?.socketId) io.to(p.socketId).emit('friends:notify', payload);
+}
+
+// ---------------------------------------------------------------------------
+// Rutas REST — Amigos
+// ---------------------------------------------------------------------------
+
+// GET /friends — lista de amigos (con estado en vivo) + solicitudes pendientes
+app.get('/friends', requireAuth, async (req, res) => {
+  if (!supabase) return res.json({ ok: true, friends: [], incoming: [], outgoing: [] });
+  const me = req.user.userId;
+
+  const { data: rows } = await supabase
+    .from('friendships')
+    .select('requester_id, receiver_id, status')
+    .or(`requester_id.eq.${me},receiver_id.eq.${me}`);
+
+  const all = rows || [];
+  const otherIds = [...new Set(all.map((r) => (r.requester_id === me ? r.receiver_id : r.requester_id)))];
+  let usersById = {};
+  if (otherIds.length) {
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, username, elo')
+      .in('id', otherIds);
+    usersById = Object.fromEntries((users || []).map((u) => [u.id, u]));
+  }
+
+  const friends = [];
+  const incoming = [];
+  const outgoing = [];
+  for (const r of all) {
+    const otherId = r.requester_id === me ? r.receiver_id : r.requester_id;
+    const u = usersById[otherId];
+    if (!u) continue;
+    const base = { userId: otherId, username: u.username, elo: u.elo };
+    if (r.status === 'accepted') {
+      friends.push({ ...base, ...presencePayload(otherId) });
+    } else if (r.receiver_id === me) {
+      incoming.push(base);
+    } else {
+      outgoing.push(base);
+    }
+  }
+
+  res.json({ ok: true, friends, incoming, outgoing });
+});
+
+// GET /friends/search?q= — buscar usuarios por nombre para enviar solicitud
+app.get('/friends/search', requireAuth, async (req, res) => {
+  if (!supabase) return res.json({ ok: true, users: [] });
+  const q = String(req.query.q || '').trim().toLowerCase();
+  if (q.length < 2) return res.json({ ok: true, users: [] });
+  const { data } = await supabase
+    .from('users')
+    .select('id, username, elo')
+    .ilike('username', `%${q}%`)
+    .neq('id', req.user.userId)
+    .limit(10);
+  res.json({ ok: true, users: data || [] });
+});
+
+// POST /friends/request  { username } — enviar solicitud de amistad
+app.post('/friends/request', requireAuth, async (req, res) => {
+  if (!supabase) return res.status(400).json({ error: 'Base de datos no disponible.' });
+  const me = req.user.userId;
+  const username = String(req.body?.username || '').trim().toLowerCase();
+  if (!username) return res.status(400).json({ error: 'Falta el nombre de usuario.' });
+
+  const { data: target } = await supabase
+    .from('users').select('id, username').eq('username', username).maybeSingle();
+  if (!target) return res.status(404).json({ error: 'Usuario no encontrado.' });
+  if (target.id === me) return res.status(400).json({ error: 'No puedes agregarte a ti mismo.' });
+
+  const { data: existing } = await supabase
+    .from('friendships')
+    .select('id, status, requester_id')
+    .or(`and(requester_id.eq.${me},receiver_id.eq.${target.id}),and(requester_id.eq.${target.id},receiver_id.eq.${me})`)
+    .maybeSingle();
+  if (existing) {
+    if (existing.status === 'accepted') return res.status(400).json({ error: 'Ya son amigos.' });
+    if (existing.requester_id === me) return res.status(400).json({ error: 'Ya enviaste una solicitud.' });
+    return res.status(400).json({ error: 'Este usuario ya te envió una solicitud: revisa tus notificaciones.' });
+  }
+
+  const { error } = await supabase
+    .from('friendships')
+    .insert({ requester_id: me, receiver_id: target.id, status: 'pending' });
+  if (error) return res.status(500).json({ error: 'No se pudo enviar la solicitud.' });
+
+  // Notificación en tiempo real (campana) si el receptor está conectado.
+  notifyUser(target.id, { type: 'request', from: { userId: me, username: req.user.username } });
+  res.json({ ok: true });
+});
+
+// POST /friends/accept  { requesterId, accept } — aceptar o rechazar solicitud
+app.post('/friends/accept', requireAuth, async (req, res) => {
+  if (!supabase) return res.status(400).json({ error: 'Base de datos no disponible.' });
+  const me = req.user.userId;
+  const { requesterId, accept } = req.body || {};
+  if (!requesterId) return res.status(400).json({ error: 'Falta requesterId.' });
+
+  const { data: row } = await supabase
+    .from('friendships')
+    .select('id')
+    .eq('requester_id', requesterId)
+    .eq('receiver_id', me)
+    .eq('status', 'pending')
+    .maybeSingle();
+  if (!row) return res.status(404).json({ error: 'Solicitud no encontrada.' });
+
+  if (accept) {
+    await supabase.from('friendships').update({ status: 'accepted' }).eq('id', row.id);
+    notifyUser(requesterId, { type: 'accepted', from: { userId: me, username: req.user.username } });
+    // Ambos se ven online de inmediato.
+    broadcastPresence(me);
+    broadcastPresence(requesterId);
+  } else {
+    await supabase.from('friendships').delete().eq('id', row.id);
+  }
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
 // Utilidades de difusión
 // ---------------------------------------------------------------------------
 
@@ -336,7 +515,7 @@ async function applyRankedElo(game) {
 }
 
 // ---------------------------------------------------------------------------
-// Matchmaking ranked — cola de búsqueda de partida
+// Matchmaking ranked — colas separadas por tamaño de partida (2 a 6)
 // ---------------------------------------------------------------------------
 // Reglas FIJAS de ranked (no personalizables).
 const RANKED_SETTINGS = {
@@ -345,41 +524,37 @@ const RANKED_SETTINGS = {
   calzoInfinito: false, // calzo solo con la mitad o más (impar redondea arriba)
   pasarEnabled: true,   // pasar solo con 5 dados y una vez por ronda (lo valida game.js)
 };
-const QUEUE_MIN = 3;
-const QUEUE_MAX = 6;
-const QUEUE_WAIT_MS = 15000; // al llegar a 3, espera 15s por más jugadores
+const QUEUE_SIZES = [2, 3, 4, 5, 6];
 
-const rankedQueue = []; // { socketId, userId, username, cosmetic }
-let rankedQueueTimer = null;
+// Una cola independiente por tamaño: quien busca partida de 4 solo
+// empareja con otros que también buscan partida de 4.
+const rankedQueues = new Map(QUEUE_SIZES.map((n) => [n, []])); // size -> [{ socketId, userId, username, cosmetic }]
 
-function broadcastQueue() {
-  for (const q of rankedQueue) {
-    io.to(q.socketId).emit('queue:update', {
-      count: rankedQueue.length,
-      min: QUEUE_MIN,
-      max: QUEUE_MAX,
-    });
+function broadcastQueue(size) {
+  const queue = rankedQueues.get(size) || [];
+  for (const q of queue) {
+    io.to(q.socketId).emit('queue:update', { size, count: queue.length });
   }
 }
 
-function removeFromQueue(socketId) {
-  const idx = rankedQueue.findIndex((q) => q.socketId === socketId);
-  if (idx === -1) return false;
-  rankedQueue.splice(idx, 1);
-  if (rankedQueue.length < QUEUE_MIN && rankedQueueTimer) {
-    clearTimeout(rankedQueueTimer);
-    rankedQueueTimer = null;
+function removeFromQueues(socketId) {
+  let removed = false;
+  for (const [size, queue] of rankedQueues.entries()) {
+    const idx = queue.findIndex((q) => q.socketId === socketId);
+    if (idx !== -1) {
+      queue.splice(idx, 1);
+      broadcastQueue(size);
+      removed = true;
+    }
   }
-  broadcastQueue();
-  return true;
+  return removed;
 }
 
-function formRankedMatch() {
-  clearTimeout(rankedQueueTimer);
-  rankedQueueTimer = null;
-  if (rankedQueue.length < QUEUE_MIN) return;
+function formRankedMatch(size) {
+  const queue = rankedQueues.get(size);
+  if (!queue || queue.length < size) return;
 
-  const members = rankedQueue.splice(0, QUEUE_MAX);
+  const members = queue.splice(0, size);
   const host = members[0];
   const game = manager.createRoom(host.username, host.socketId, RANKED_SETTINGS, true);
   const hostPlayer = game.players[0];
@@ -405,16 +580,10 @@ function formRankedMatch() {
       playerId,
       state: game.serialize(playerId),
     });
+    setUserPresence(member.userId, member.username, member.socketId, 'playing', game.code);
   }
   broadcastState(game);
-  broadcastQueue();
-}
-
-function tryFormMatch() {
-  if (rankedQueue.length >= QUEUE_MAX) return formRankedMatch();
-  if (rankedQueue.length >= QUEUE_MIN && !rankedQueueTimer) {
-    rankedQueueTimer = setTimeout(formRankedMatch, QUEUE_WAIT_MS);
-  }
+  broadcastQueue(size);
 }
 
 // ---------------------------------------------------------------------------
@@ -422,6 +591,36 @@ function tryFormMatch() {
 // ---------------------------------------------------------------------------
 
 io.on('connection', (socket) => {
+
+  // Presencia: el cliente anuncia su sesión al conectar (sistema de amigos).
+  socket.on('presence:online', ({ token }, cb) => {
+    const auth = verifySocketToken(token);
+    if (!auth) return cb?.({ ok: false });
+    socket.data.userId = auth.userId;
+    // Si ya está en una sala, refleja ese estado; si no, está en el menú.
+    const ctx = locate(socket.id);
+    if (ctx) {
+      const status = ctx.game.status === 'lobby' ? 'lobby' : 'playing';
+      setUserPresence(auth.userId, auth.username, socket.id, status, ctx.game.code);
+    } else {
+      setUserPresence(auth.userId, auth.username, socket.id, 'menu');
+    }
+    cb?.({ ok: true });
+  });
+
+  // Invitar a un amigo a tu sala actual (notificación con el código).
+  socket.on('friends:invite', ({ token, toUserId }, cb) => {
+    const auth = verifySocketToken(token);
+    if (!auth) return cb?.({ ok: false, error: 'No autenticado.' });
+    const ctx = locate(socket.id);
+    if (!ctx) return cb?.({ ok: false, error: 'No estás en una sala.' });
+    notifyUser(toUserId, {
+      type: 'invite',
+      from: { userId: auth.userId, username: auth.username },
+      code: ctx.game.code,
+    });
+    cb?.({ ok: true });
+  });
 
   // Crear sala -------------------------------------------------------------
   socket.on('room:create', ({ name, settings, token, ranked, cosmetic }, cb) => {
@@ -434,6 +633,7 @@ io.on('connection', (socket) => {
     // Asociar userId al jugador si está autenticado.
     if (auth) player.userId = auth.userId;
     if (cosmetic) player.cosmetic = sanitizeCosmetic(cosmetic);
+    if (auth) setUserPresence(auth.userId, auth.username, socket.id, 'lobby', game.code);
     cb?.({ ok: true, code: game.code, playerId: player.id, state: game.serialize(player.id) });
     broadcastState(game);
   });
@@ -448,6 +648,7 @@ io.on('connection', (socket) => {
     if (result.error) return cb?.({ ok: false, error: result.error });
     if (auth) result.player.userId = auth.userId;
     if (cosmetic) result.player.cosmetic = sanitizeCosmetic(cosmetic);
+    if (auth) setUserPresence(auth.userId, auth.username, socket.id, 'lobby', game.code);
     socket.join(game.code);
     cb?.({ ok: true, code: game.code, playerId: result.player.id, state: game.serialize(result.player.id) });
     broadcastState(game);
@@ -462,6 +663,10 @@ io.on('connection', (socket) => {
     // Re-asociar userId si llegó con token.
     const auth = verifySocketToken(token);
     if (auth) result.player.userId = auth.userId;
+    if (auth) {
+      const status = game.status === 'lobby' ? 'lobby' : 'playing';
+      setUserPresence(auth.userId, auth.username, socket.id, status, game.code);
+    }
     socket.join(game.code);
     cb?.({ ok: true, code: game.code, playerId, state: game.serialize(playerId) });
     broadcastState(game);
@@ -474,6 +679,13 @@ io.on('connection', (socket) => {
     const result = ctx.game.start(ctx.player.id);
     if (result.error) return cb?.({ ok: false, error: result.error });
     cb?.({ ok: true });
+    // Amigos: todos los jugadores con cuenta pasan a "en partida".
+    for (const p of ctx.game.players) {
+      if (p.userId) {
+        const existing = presence.get(p.userId);
+        setUserPresence(p.userId, existing?.username || p.name, p.socketId, 'playing', ctx.game.code);
+      }
+    }
     broadcastState(ctx.game);
   });
 
@@ -555,28 +767,36 @@ io.on('connection', (socket) => {
     broadcastState(ctx.game);
   });
 
-  // Cola ranked --------------------------------------------------------------
-  socket.on('queue:join', ({ token, cosmetic }, cb) => {
+  // Cola ranked (por tamaño de partida) --------------------------------------
+  socket.on('queue:join', ({ token, cosmetic, size }, cb) => {
     const auth = verifySocketToken(token);
     if (!auth) return cb?.({ ok: false, error: 'Necesitas una cuenta para jugar ranked.' });
     if (locate(socket.id)) return cb?.({ ok: false, error: 'Ya estás en una sala.' });
-    if (rankedQueue.some((q) => q.socketId === socket.id || q.userId === auth.userId)) {
-      return cb?.({ ok: true, count: rankedQueue.length, min: QUEUE_MIN, max: QUEUE_MAX });
+
+    const n = Number(size);
+    if (!QUEUE_SIZES.includes(n)) return cb?.({ ok: false, error: 'Tamaño de partida inválido (2 a 6).' });
+
+    // Salir de cualquier otra cola antes de entrar a esta.
+    removeFromQueues(socket.id);
+    const queue = rankedQueues.get(n);
+    if (queue.some((q) => q.userId === auth.userId)) {
+      return cb?.({ ok: true, size: n, count: queue.length });
     }
-    rankedQueue.push({ socketId: socket.id, userId: auth.userId, username: auth.username, cosmetic });
-    cb?.({ ok: true, count: rankedQueue.length, min: QUEUE_MIN, max: QUEUE_MAX });
-    broadcastQueue();
-    tryFormMatch();
+    queue.push({ socketId: socket.id, userId: auth.userId, username: auth.username, cosmetic });
+    cb?.({ ok: true, size: n, count: queue.length });
+    broadcastQueue(n);
+    if (queue.length >= n) formRankedMatch(n);
   });
 
   socket.on('queue:leave', (_payload, cb) => {
-    removeFromQueue(socket.id);
+    removeFromQueues(socket.id);
     cb?.({ ok: true });
   });
 
   // Desconexión ------------------------------------------------------------
   socket.on('disconnect', () => {
-    removeFromQueue(socket.id);
+    removeFromQueues(socket.id);
+    clearPresenceBySocket(socket.id);
     const ctx = locate(socket.id);
     if (!ctx) return;
     ctx.game.markDisconnected(socket.id);
@@ -598,7 +818,7 @@ function locate(socketId) {
 // ---------------------------------------------------------------------------
 const clientDist = path.resolve(__dirname, '../../client/dist');
 app.use(express.static(clientDist));
-app.get(/^\/(?!socket\.io|health|auth|profile|leaderboard|history).*/, (_req, res) => {
+app.get(/^\/(?!socket\.io|health|auth|profile|leaderboard|history|friends).*/, (_req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'), (err) => {
     if (err) res.status(200).send('Servidor de Cachos en ejecución.');
   });
