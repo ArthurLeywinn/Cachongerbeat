@@ -24,15 +24,18 @@ export default function BidPanel() {
   // Dirección de juego que elige el que abre la ronda.
   const [direction, setDirection] = useState('left');
 
-  // Cuenta regresiva visual (cosmética; el servidor es el que decide el timeout).
+  // Cuenta regresiva sincronizada con el servidor (turnDeadline = epoch ms del
+  // timeout real). Antes era cosmética y podía desfasarse del reloj del server.
   const turnSeconds = state.settings?.turnSeconds || null;
+  const deadline = state.turnDeadline || null;
   const [remaining, setRemaining] = useState(turnSeconds);
   useEffect(() => {
-    if (!turnSeconds || state.phase !== 'bidding') return undefined;
-    setRemaining(turnSeconds);
-    const t = setInterval(() => setRemaining((r) => (r > 0 ? r - 1 : 0)), 1000);
+    if (!turnSeconds || !deadline || state.phase !== 'bidding') return undefined;
+    const tick = () => setRemaining(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+    tick();
+    const t = setInterval(tick, 250);
     return () => clearInterval(t);
-  }, [state.currentTurnId, turnSeconds, state.phase, state.round]);
+  }, [deadline, turnSeconds, state.phase]);
 
   useEffect(() => {
     if (isEsta) setQuantity(prev ? Math.min(maxQ, prev.quantity + 1) : 1);

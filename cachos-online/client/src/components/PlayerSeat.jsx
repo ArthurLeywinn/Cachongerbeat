@@ -1,6 +1,7 @@
 import React from 'react';
 import Die from './Die.jsx';
 import Character, { Cup, HOOD_COUNT, FACE_COUNT, CUP_COUNT, BODY_COUNT, HAT_COUNT, ACC_COUNT } from './Character.jsx';
+import TurnRing from './TurnRing.jsx';
 import { useGame } from '../context/GameContext.jsx';
 
 // Etiquetas cortas para el badge según la modalidad de Obliga activa.
@@ -38,7 +39,7 @@ function cosmeticFor(player) {
   };
 }
 
-export default function PlayerSeat({ player, compact = false, bubble = null }) {
+export default function PlayerSeat({ player, compact = false, bubble = null, onShowProfile = null }) {
   const { state } = useGame();
   const isTurn = state.currentTurnId === player.id && state.phase === 'bidding';
   const isObligado = state.obliga?.playerId === player.id;
@@ -84,14 +85,28 @@ export default function PlayerSeat({ player, compact = false, bubble = null }) {
             ARRIBA del personaje, junto a su nombre. */}
         <div className="seat__dice">{renderDice(24)}</div>
 
-        {/* Nombre */}
-        <p className="seat__name">
-          {player.name}
-          {!player.connected && <span className="seat__dc"> ·✕</span>}
-        </p>
+        {/* Nombre — clicable si el jugador tiene cuenta (abre su perfil) */}
+        {player.hasAccount && onShowProfile ? (
+          <button
+            className="seat__name seat__name--link"
+            onClick={() => onShowProfile(player.name)}
+            title="Ver perfil"
+          >
+            {player.name}
+            {!player.connected && <span className="seat__dc"> ·✕</span>}
+          </button>
+        ) : (
+          <p className="seat__name">
+            {player.name}
+            {!player.connected && <span className="seat__dc"> ·✕</span>}
+          </p>
+        )}
 
-        {/* Personaje */}
-        <div className="seat__char">
+        {/* Personaje (+ anillo de tiempo si es su turno y la sala tiene reloj) */}
+        <div className="seat__char" style={{ position: 'relative' }}>
+          {isTurn && state.turnDeadline && (
+            <TurnRing deadline={state.turnDeadline} totalSeconds={state.settings?.turnSeconds} size={108} />
+          )}
           <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} />
         </div>
 

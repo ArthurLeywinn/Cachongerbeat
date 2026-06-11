@@ -13,6 +13,25 @@ const MENU_THEME = 'clean';
 
 const DEFAULT_SETTINGS = { dicePerPlayer: 5, turnSeconds: null, calzoInfinito: false, pasarEnabled: false };
 
+// Modos de juego con identidad (estilo Bullet/Blitz/Rápida de chess.com).
+// Cada uno fija las reglas de la sala de una vez; "Personalizado" abre el
+// panel detallado de siempre.
+const GAME_MODES = [
+  {
+    id: 'clasico', icon: '🎲', name: 'Clásico', desc: 'Sin reloj · calzo a la mitad',
+    settings: { dicePerPlayer: 5, turnSeconds: null, calzoInfinito: false, pasarEnabled: false },
+  },
+  {
+    id: 'rapido', icon: '⚡', name: 'Rápido', desc: '30s por turno · pasar activado',
+    settings: { dicePerPlayer: 5, turnSeconds: 30, calzoInfinito: false, pasarEnabled: true },
+  },
+  {
+    id: 'relampago', icon: '🔥', name: 'Relámpago', desc: '15s · calzo infinito · pasar',
+    settings: { dicePerPlayer: 5, turnSeconds: 15, calzoInfinito: true, pasarEnabled: true },
+  },
+  { id: 'custom', icon: '🛠️', name: 'Personalizado', desc: 'Elige cada regla', settings: null },
+];
+
 const IconUsers = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 );
@@ -160,7 +179,18 @@ export default function Home() {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [rankedHint, setRankedHint] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [gameMode, setGameMode] = useState('clasico');
   const set = (patch) => setSettings((s) => ({ ...s, ...patch }));
+
+  const pickMode = (m) => {
+    setGameMode(m.id);
+    if (m.settings) {
+      setSettings(m.settings);
+      setShowRules(false);
+    } else {
+      setShowRules(true); // Personalizado: abrir el panel de reglas
+    }
+  };
 
   React.useEffect(() => {
     if (user?.username) setName(user.username);
@@ -305,6 +335,31 @@ export default function Home() {
         )}
 
         {mode === 'create' && (
+          <>
+            <label className="block text-xs uppercase tracking-wide text-bone/50 mb-2">Modo de juego</label>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {GAME_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => pickMode(m)}
+                  className={[
+                    'text-left rounded-xl px-3 py-2.5 border transition',
+                    gameMode === m.id
+                      ? 'border-amber-glow/60 bg-amber-glow/10'
+                      : 'border-bone/10 bg-black/15 hover:border-bone/25',
+                  ].join(' ')}
+                >
+                  <p className="text-sm font-bold text-bone flex items-center gap-1.5">
+                    <span>{m.icon}</span> {m.name}
+                  </p>
+                  <p className="text-[10px] text-bone/40 mt-0.5 leading-tight">{m.desc}</p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {mode === 'create' && gameMode === 'custom' && (
           <div className="mb-4 rounded-xl border border-bone/15 overflow-hidden">
             <button onClick={() => setShowRules((v) => !v)}
               className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-bone/80 hover:bg-white/5 transition">

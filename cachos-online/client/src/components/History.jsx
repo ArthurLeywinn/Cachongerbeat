@@ -1,58 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import PlayerProfile from './PlayerProfile.jsx';
 
 const isDev = import.meta.env.DEV;
 const SERVER = isDev ? import.meta.env.VITE_SERVER_URL || 'http://localhost:3001' : '';
 
-// Modal con el perfil público de un jugador (ELO, partidas, winrate).
-function PlayerProfile({ username, onClose }) {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+// Curva de ELO de las últimas partidas (estilo gráfico de rating de chess.com).
+function EloChart({ games }) {
+  // games viene del más reciente al más antiguo → lo invertimos para el eje X.
+  const pts = [...games].reverse().map((g) => g.eloAfter).filter((v) => v != null);
+  if (pts.length < 2) return null;
 
-  useEffect(() => {
-    setData(null);
-    setError(null);
-    fetch(`${SERVER}/profile/${encodeURIComponent(username)}`)
-      .then((r) => r.json())
-      .then((res) => (res.ok ? setData(res.user) : setError(res.error || 'No se pudo cargar.')))
-      .catch(() => setError('No se pudo cargar el perfil.'));
-  }, [username]);
-
-  const winRate = data && data.games_played > 0
-    ? Math.round((data.games_won / data.games_played) * 100)
-    : 0;
+  const W = 440, H = 110, PAD = { l: 34, r: 10, t: 12, b: 14 };
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const span = Math.max(10, max - min);
+  const lo = min - span * 0.15, hi = max + span * 0.15;
+  const x = (i) => PAD.l + (i / (pts.length - 1)) * (W - PAD.l - PAD.r);
+  const y = (v) => H - PAD.b - ((v - lo) / (hi - lo)) * (H - PAD.t - PAD.b);
+  const line = pts.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  const area = `${PAD.l},${H - PAD.b} ${line} ${x(pts.length - 1)},${H - PAD.b}`;
+  const up = pts[pts.length - 1] >= pts[0];
 
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="glass rounded-2xl p-6 w-full max-w-xs text-center animate-pop" onClick={(e) => e.stopPropagation()}>
-        <div className="w-14 h-14 mx-auto rounded-full bg-amber-glow/20 grid place-items-center text-amber-glow font-display font-black text-2xl mb-3">
-          {username.charAt(0).toUpperCase()}
-        </div>
-        <h3 className="font-display text-xl font-black text-amber-glow mb-4">{username}</h3>
-        {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
-        {!data && !error && <p className="text-bone/40 text-sm mb-3">Cargando…</p>}
-        {data && (
-          <div className="grid grid-cols-2 gap-2 mb-4 text-left">
-            <div className="bg-black/25 rounded-lg px-3 py-2">
-              <p className="text-[10px] text-bone/40 uppercase tracking-wider">ELO</p>
-              <p className="font-display font-black text-lg text-amber-glow">{data.elo}</p>
-            </div>
-            <div className="bg-black/25 rounded-lg px-3 py-2">
-              <p className="text-[10px] text-bone/40 uppercase tracking-wider">Winrate</p>
-              <p className="font-display font-black text-lg">{winRate}%</p>
-            </div>
-            <div className="bg-black/25 rounded-lg px-3 py-2">
-              <p className="text-[10px] text-bone/40 uppercase tracking-wider">Jugadas</p>
-              <p className="font-display font-black text-lg">{data.games_played}</p>
-            </div>
-            <div className="bg-black/25 rounded-lg px-3 py-2">
-              <p className="text-[10px] text-bone/40 uppercase tracking-wider">Ganadas</p>
-              <p className="font-display font-black text-lg">{data.games_won}</p>
-            </div>
-          </div>
-        )}
-        <button onClick={onClose} className="text-sm text-bone/50 hover:text-bone transition">Cerrar</button>
+    <div className="bg-black/25 rounded-xl p-3 mb-4">
+      <div className="flex items-baseline justify-between mb-1">
+        <p className="text-[10px] text-bone/40 uppercase tracking-widest">Evolución de ELO</p>
+        <p className="font-display font-black text-amber-glow">{pts[pts.length - 1]}</p>
       </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+        {[lo + (hi - lo) * 0.25, lo + (hi - lo) * 0.5, lo + (hi - lo) * 0.75].map((v, i) => (
+          <g key={i}>
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,0.06)" />
+            <text x={PAD.l - 5} y={y(v) + 3} fontSize="8" fill="rgba(243,236,223,0.3)" textAnchor="end">
+              {Math.round(v)}
+            </text>
+          </g>
+        ))}
+        <polygon points={area} fill={up ? 'rgba(52,211,153,0.10)' : 'rgba(248,113,113,0.10)'} />
+        <polyline points={line} fill="none" stroke={up ? '#34d399' : '#f87171'} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        {pts.map((v, i) => (
+          <circle key={i} cx={x(i)} cy={y(v)} r="2.5" fill="#f4b840" />
+        ))}
+      </svg>
     </div>
   );
 }
@@ -89,6 +78,8 @@ export default function History({ onBack }) {
         <h2 className="font-display text-2xl font-black text-amber-glow mb-5 text-center">
           Mi historial · Ranked
         </h2>
+
+        {!loading && games.length >= 2 && <EloChart games={games} />}
 
         {loading && <p className="text-bone/40 text-center text-sm py-8">Cargando historial…</p>}
         {!loading && games.length === 0 && (

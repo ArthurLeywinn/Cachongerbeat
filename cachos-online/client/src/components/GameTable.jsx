@@ -7,7 +7,9 @@ import ChatPanel from './ChatPanel.jsx';
 import RoundResult from './RoundResult.jsx';
 import ObligaChooser from './ObligaChooser.jsx';
 import GameOver from './GameOver.jsx';
+import PlayerProfile from './PlayerProfile.jsx';
 import { bidText } from '../lib/rules.js';
+import { sounds, isMuted, toggleMuted } from '../lib/sounds.js';
 import Die from './Die.jsx';
 
 // Reparto horizontal (en % del ancho) de los oponentes a lo largo del borde
@@ -24,11 +26,19 @@ function seatXPercents(total) {
   return layouts[clamped] || layouts[5];
 }
 
+// Escala del asiento según cuántos oponentes hay: en 1v1 el rival es grande
+// (protagonismo de duelo); con la mesa llena se achican para no amontonarse.
+function seatScale(opponents) {
+  const scales = { 1: 1.32, 2: 1.14, 3: 1.0, 4: 0.85, 5: 0.72 };
+  return scales[Math.min(Math.max(opponents, 1), 5)] || 1;
+}
+
 // La mesa (.big-table) es un óvalo: top 26%, ancho 150%, alto 150%, redondeado
 // al 50%. Calculamos la altura (%) del borde superior del óvalo en una posición
 // horizontal dada, para "sentar" a cada jugador justo sobre la curva.
 function tableRimTopPct(xPct) {
-  const cx = 50, cy = 101, rx = 75, ry = 75; // mismos números que el CSS
+  // Mesa nueva: top 32%, ancho 128%, alto 134% → centro (50, 99), radios (64, 67).
+  const cx = 50, cy = 99, rx = 64, ry = 67; // mismos números que el CSS
   const nx = (xPct - cx) / rx;
   const k = Math.max(0, 1 - nx * nx);
   return cy - ry * Math.sqrt(k); // % de la altura del área de juego
@@ -68,9 +78,47 @@ function useSpeechBubbles(chat) {
   return bubbles;
 }
 
+// Hook: dispara los efectos de sonido según los cambios de estado del juego.
+function useGameSounds(state, playerId) {
+  const prev = useRef({ turnId: null, phase: null, bidKey: null, status: null });
+  useEffect(() => {
+    if (!state) return;
+    const p = prev.current;
+    const bidKey = state.currentBid
+      ? `${state.currentBid.playerId}:${state.currentBid.quantity}:${state.currentBid.face ?? 'x'}`
+      : null;
+
+    // Fin de partida: fanfarria o derrota.
+    if (state.status === 'finished' && p.status !== 'finished') {
+      if (state.winnerId === playerId) sounds.win();
+      else sounds.lose();
+    } else if (state.phase === 'reveal' && p.phase !== 'reveal') {
+      // Revelación: dados rodando + resultado personal.
+      sounds.roll();
+      const r = state.lastResult;
+      if (r?.gainerId === playerId) setTimeout(() => sounds.gainDie(), 600);
+      else if (r?.loserId === playerId) setTimeout(() => sounds.loseDie(), 600);
+      else if (r?.type === 'kamikaze' && (r.losses || []).some((l) => l.id === playerId)) {
+        setTimeout(() => sounds.loseDie(), 600);
+      }
+    } else if (state.phase === 'bidding') {
+      // Apuesta nueva de otro jugador.
+      if (bidKey && bidKey !== p.bidKey && state.currentBid.playerId !== playerId) sounds.bid();
+      // Me toca a mí.
+      if (state.currentTurnId === playerId && p.turnId !== playerId) sounds.myTurn();
+    }
+
+    prev.current = { turnId: state.currentTurnId, phase: state.phase, bidKey, status: state.status };
+  }, [state, playerId]);
+}
+
 export default function GameTable() {
-  const { state, playerId, leave } = useGame();
+  const { state, playerId, leave, resign } = useGame();
   const bubbles = useSpeechBubbles(state?.chat);
+  const [muted, setMuted] = useState(isMuted());
+  const [confirmResign, setConfirmResign] = useState(false);
+  const [profileOf, setProfileOf] = useState(null); // username del perfil abierto
+  useGameSounds(state, playerId);
   if (!state) return null;
 
   const me = state.players.find((p) => p.id === playerId);
@@ -79,8 +127,23 @@ export default function GameTable() {
   const winner = finished ? state.players.find((p) => p.id === state.winnerId) : null;
   const totalDice = state.players.reduce((sum, p) => sum + (p.eliminated ? 0 : p.diceCount), 0);
   const xs = seatXPercents(others.length);
-  const dense = others.length >= 4;
+  const scale = seatScale(others.length);
+  const myDieSize = others.length === 1 ? 58 : others.length >= 4 ? 42 : 48;
   const myBubble = bubbles[playerId]?.text || null;
+  const bidderName = state.currentBid
+    ? state.players.find((p) => p.id === state.currentBid.playerId)?.name
+    : null;
+  const canResign = state.status === 'playing' && me && !me.eliminated;
+
+  const handleResign = async () => {
+    if (!confirmResign) {
+      setConfirmResign(true);
+      setTimeout(() => setConfirmResign(false), 4000);
+      return;
+    }
+    setConfirmResign(false);
+    await resign();
+  };
 
   return (
     <div className="table-scene">
@@ -102,27 +165,36 @@ export default function GameTable() {
           </div>
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 text-center">
-          {state.currentBid ? (
-            <p className="text-bone/70 text-sm">
-              Apuesta actual:{' '}
-              <span className="font-display text-lg font-bold text-amber-glow">
-                {bidText(state.currentBid)}
-              </span>
-            </p>
-          ) : (
-            <p className="text-bone/30 text-sm">Esperando la primera apuesta de la ronda…</p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="hud-counter">
             <p className="text-[10px] text-bone/40 uppercase tracking-widest leading-none">Dados en juego</p>
             <p className="font-display text-2xl font-black text-amber-glow leading-none mt-0.5">{totalDice}</p>
           </div>
-          <button onClick={leave} className="text-xs text-bone/40 hover:text-bone/70 transition px-2 py-1 rounded border border-white/10 hover:border-white/20">
-            Salir
+          <button
+            onClick={() => setMuted(toggleMuted())}
+            className="text-base text-bone/40 hover:text-bone/70 transition px-2 py-1 rounded border border-white/10 hover:border-white/20"
+            title={muted ? 'Activar sonido' : 'Silenciar'}
+          >
+            {muted ? '🔇' : '🔊'}
           </button>
+          {canResign ? (
+            <button
+              onClick={handleResign}
+              className={[
+                'text-xs transition px-2 py-1 rounded border',
+                confirmResign
+                  ? 'text-red-300 border-red-400/60 bg-red-500/15'
+                  : 'text-bone/40 hover:text-red-300 border-white/10 hover:border-red-400/40',
+              ].join(' ')}
+              title="Abandonar la partida (quedas eliminado y la mesa sigue)"
+            >
+              {confirmResign ? '¿Seguro? Rendirse' : 'Rendirse'}
+            </button>
+          ) : (
+            <button onClick={leave} className="text-xs text-bone/40 hover:text-bone/70 transition px-2 py-1 rounded border border-white/10 hover:border-white/20">
+              Salir
+            </button>
+          )}
         </div>
       </header>
 
@@ -131,6 +203,22 @@ export default function GameTable() {
       {/* ── Escena de la mesa ── */}
       <div className="play-area">
         <div className="big-table" aria-hidden="true" />
+        <div className="table-stitch" aria-hidden="true" />
+
+        {/* Placa central con la apuesta vigente (sobre el fieltro) */}
+        {state.status === 'playing' && (
+          state.currentBid ? (
+            <div className="bid-plaque" key={`${state.currentBid.quantity}-${state.currentBid.face ?? 'x'}-${state.currentBid.playerId}`}>
+              <span className="bid-plaque__label">Apuesta actual</span>
+              <span className="bid-plaque__value">{bidText(state.currentBid)}</span>
+              {bidderName && <span className="bid-plaque__by">de {bidderName}</span>}
+            </div>
+          ) : state.phase === 'bidding' ? (
+            <div className="bid-plaque bid-plaque--empty">
+              <span className="bid-plaque__value">Esperando la primera apuesta…</span>
+            </div>
+          ) : null
+        )}
 
         {/* Descarte: dados pequeños y apagados, agrupados de a 5 (sin número) */}
         {state.centerPool > 0 && (
@@ -161,11 +249,13 @@ export default function GameTable() {
                 top: `${rim}%`,
                 // El asiento crece hacia ARRIBA desde el borde: el cacho queda
                 // apoyado en la mesa. -50% centra horizontalmente; -86% sube el
-                // asiento dejando el cacho sobre la curva.
-                transform: `translate(-50%, -86%) scale(${dense ? 0.84 : 1})`,
+                // asiento dejando el cacho sobre la curva. La escala depende de
+                // cuántos rivales hay (1v1 grandes → mesa llena chicos).
+                transform: `translate(-50%, -86%) scale(${scale})`,
+                animationDelay: `${i * 0.07}s`,
               }}
             >
-              <PlayerSeat player={p} compact bubble={bubbles[p.id]?.text || null} />
+              <PlayerSeat player={p} compact bubble={bubbles[p.id]?.text || null} onShowProfile={setProfileOf} />
             </div>
           );
         })}
@@ -184,7 +274,7 @@ export default function GameTable() {
                   <Die
                     key={i}
                     value={v}
-                    size={48}
+                    size={myDieSize}
                     rolling={state.phase === 'reveal'}
                     highlight={
                       state.phase === 'reveal' && state.lastResult
@@ -193,7 +283,7 @@ export default function GameTable() {
                     }
                   />
                 ))
-              : Array.from({ length: me.diceCount }).map((_, i) => <Die key={i} value={null} size={48} />)}
+              : Array.from({ length: me.diceCount }).map((_, i) => <Die key={i} value={null} size={myDieSize} />)}
           </div>
         )}
       </div>
@@ -229,6 +319,9 @@ export default function GameTable() {
 
       {/* ── Pantalla de fin de partida ── */}
       <GameOver />
+
+      {/* Perfil público de un jugador (clic en su nombre) */}
+      {profileOf && <PlayerProfile username={profileOf} onClose={() => setProfileOf(null)} />}
     </div>
   );
 }
