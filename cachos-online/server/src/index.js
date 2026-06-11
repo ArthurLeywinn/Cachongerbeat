@@ -10,6 +10,7 @@ const cors = require('cors');
 const { Server } = require('socket.io');
 
 const { GameManager } = require('./gameManager');
+const historyStore = require('./historyStore');
 const { register, login, requireAuth, verifySocketToken } = require('./auth');
 const {
   registerProfile, loginProfile, getProfileById, setCosmetic,
@@ -115,41 +116,52 @@ app.get('/leaderboard', async (_req, res) => {
   res.json({ ok: true, players: data });
 });
 
-// GET /history — últimas partidas ranked del usuario autenticado
+// GET /history — últimas partidas del usuario autenticado.
+// Mezcla las RANKED guardadas en Supabase (con delta de ELO) con las CASUALES
+// del historial local del servidor. Antes solo existían las ranked, por lo que
+// el historial salía vacío para quien jugaba casual.
 app.get('/history', requireAuth, async (req, res) => {
-  if (!supabase) return res.json({ ok: true, games: [] });
+  let rankedGames = [];
 
-  const { data: mine, error } = await supabase
-    .from('ranked_game_players')
-    .select('game_id, place, delta, elo_before, elo_after, created_at')
-    .eq('user_id', req.user.userId)
-    .order('created_at', { ascending: false })
-    .limit(15);
+  if (supabase) {
+    const { data: mine, error } = await supabase
+      .from('ranked_game_players')
+      .select('game_id, place, delta, elo_before, elo_after, created_at')
+      .eq('user_id', req.user.userId)
+      .order('created_at', { ascending: false })
+      .limit(15);
 
-  if (error || !mine || mine.length === 0) return res.json({ ok: true, games: [] });
+    if (!error && mine && mine.length > 0) {
+      const ids = mine.map((r) => r.game_id);
+      const { data: participants } = await supabase
+        .from('ranked_game_players')
+        .select('game_id, user_id, place, delta, users(username)')
+        .in('game_id', ids);
 
-  const ids = mine.map((r) => r.game_id);
-  const { data: participants } = await supabase
-    .from('ranked_game_players')
-    .select('game_id, user_id, place, delta, users(username)')
-    .in('game_id', ids);
+      rankedGames = mine.map((r) => ({
+        gameId: r.game_id,
+        date: r.created_at,
+        ranked: true,
+        place: r.place,
+        delta: r.delta,
+        eloAfter: r.elo_after,
+        players: (participants || [])
+          .filter((p) => p.game_id === r.game_id)
+          .sort((a, b) => a.place - b.place)
+          .map((p) => ({
+            username: p.users?.username || '—',
+            place: p.place,
+            delta: p.delta,
+            isYou: p.user_id === req.user.userId,
+          })),
+      }));
+    }
+  }
 
-  const games = mine.map((r) => ({
-    gameId: r.game_id,
-    date: r.created_at,
-    place: r.place,
-    delta: r.delta,
-    eloAfter: r.elo_after,
-    players: (participants || [])
-      .filter((p) => p.game_id === r.game_id)
-      .sort((a, b) => a.place - b.place)
-      .map((p) => ({
-        username: p.users?.username || '—',
-        place: p.place,
-        delta: p.delta,
-        isYou: p.user_id === req.user.userId,
-      })),
-  }));
+  const casualGames = historyStore.getGames(req.user.userId);
+  const games = [...rankedGames, ...casualGames]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 20);
 
   res.json({ ok: true, games });
 });
@@ -394,6 +406,9 @@ app.post('/friends/accept', requireAuth, async (req, res) => {
 // ---------------------------------------------------------------------------
 
 function broadcastState(game) {
+  // Al terminar, registrar la partida en el historial local (solo casuales;
+  // las ranked quedan en Supabase con su delta de ELO).
+  if (game.status === 'finished') historyStore.recordGame(game);
   // Armar el reloj ANTES de serializar para que el estado lleve turnDeadline.
   armTurnTimer(game);
   for (const player of game.players) {
@@ -642,11 +657,23 @@ io.on('connection', (socket) => {
   });
 
   // Invitar a un amigo a tu sala actual (notificación con el código).
-  socket.on('friends:invite', ({ token, toUserId }, cb) => {
+  socket.on('friends:invite', async ({ token, toUserId }, cb) => {
     const auth = verifySocketToken(token);
     if (!auth) return cb?.({ ok: false, error: 'No autenticado.' });
     const ctx = locate(socket.id);
     if (!ctx) return cb?.({ ok: false, error: 'No estás en una sala.' });
+    if (!supabase) return cb?.({ ok: false, error: 'Función de amigos no disponible.' });
+
+    // Solo se puede invitar a amigos aceptados (antes cualquiera podía
+    // spamear invitaciones a cualquier usuario conectado).
+    const { data: friendship } = await supabase
+      .from('friendships')
+      .select('status')
+      .or(`and(requester_id.eq.${auth.userId},receiver_id.eq.${toUserId}),and(requester_id.eq.${toUserId},receiver_id.eq.${auth.userId})`)
+      .eq('status', 'accepted')
+      .maybeSingle();
+    if (!friendship) return cb?.({ ok: false, error: 'Solo puedes invitar a tus amigos.' });
+
     notifyUser(toUserId, {
       type: 'invite',
       from: { userId: auth.userId, username: auth.username },
