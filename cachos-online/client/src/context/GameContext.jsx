@@ -15,8 +15,8 @@ export function GameProvider({ children }) {
   const [playerId, setPlayerId] = useState(null);
   const [code, setCode] = useState(null);
   const [error, setError] = useState(null);
-  // Cola de matchmaking ranked: { inQueue, count, min, max }
-  const [queue, setQueue] = useState({ inQueue: false, count: 0, min: 3, max: 6 });
+  // Cola de matchmaking ranked (separada por tamaño): { inQueue, size, count }
+  const [queue, setQueue] = useState({ inQueue: false, size: null, count: 0 });
   const reconnectRef = useRef(false);
 
   const saveSession = (c, pid) => {
@@ -27,6 +27,8 @@ export function GameProvider({ children }) {
   useEffect(() => {
     function onConnect() {
       setConnected(true);
+      // Anunciar presencia (sistema de amigos) si hay sesión iniciada.
+      if (token) socket.emit('presence:online', { token });
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw && !reconnectRef.current) {
         reconnectRef.current = true;
@@ -54,8 +56,8 @@ export function GameProvider({ children }) {
     }
     function onState(s) { setState(s); }
     function onEloUpdate(data) { applyEloUpdate?.(data); }
-    function onQueueUpdate({ count, min, max }) {
-      setQueue((q) => ({ ...q, count, min: min ?? q.min, max: max ?? q.max }));
+    function onQueueUpdate({ count, size }) {
+      setQueue((q) => ({ ...q, count, size: size ?? q.size }));
     }
     function onQueueMatched({ code: c, playerId: pid, state: st }) {
       setQueue((q) => ({ ...q, inQueue: false }));
@@ -72,6 +74,7 @@ export function GameProvider({ children }) {
     socket.on('queue:update', onQueueUpdate);
     socket.on('queue:matched', onQueueMatched);
     if (socket.connected) onConnect();
+    if (socket.connected && token) socket.emit('presence:online', { token });
 
     return () => {
       socket.off('connect', onConnect);
@@ -152,12 +155,12 @@ export function GameProvider({ children }) {
     return res;
   }
 
-  // ── Matchmaking ranked ──
-  async function joinQueue() {
+  // ── Matchmaking ranked (cola separada por tamaño de partida) ──
+  async function joinQueue(size) {
     setError(null);
-    const res = await emitAck('queue:join', { token, cosmetic: getLocalCosmetic() });
+    const res = await emitAck('queue:join', { token, cosmetic: getLocalCosmetic(), size });
     if (res.ok) {
-      setQueue({ inQueue: true, count: res.count ?? 1, min: res.min ?? 3, max: res.max ?? 6 });
+      setQueue({ inQueue: true, size: res.size ?? size, count: res.count ?? 1 });
     } else {
       setError(res.error || 'No se pudo entrar a la cola.');
     }
@@ -166,7 +169,7 @@ export function GameProvider({ children }) {
 
   async function leaveQueue() {
     const res = await emitAck('queue:leave', {});
-    setQueue((q) => ({ ...q, inQueue: false, count: 0 }));
+    setQueue({ inQueue: false, size: null, count: 0 });
     return res;
   }
 
