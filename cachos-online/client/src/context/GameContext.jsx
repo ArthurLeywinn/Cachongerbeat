@@ -149,6 +149,16 @@ export function GameProvider({ children }) {
     if (!res.ok) setError(res.error);
     return res;
   }
+  async function resign() {
+    const res = await emitAck('game:resign', {});
+    if (!res.ok) setError(res.error);
+    return res;
+  }
+  async function rematch() {
+    const res = await emitAck('game:rematch', {});
+    if (!res.ok) setError(res.error);
+    return res;
+  }
   async function sendChat(text) {
     const res = await emitAck('game:chat', { text });
     if (!res.ok) setError(res.error);
@@ -184,7 +194,7 @@ export function GameProvider({ children }) {
   const value = {
     connected, state, playerId, code, error, setError,
     createRoom, joinRoom, startGame, bid, doubt, calzar,
-    chooseObliga, pasar, doubtPass, sendChat, leave,
+    chooseObliga, pasar, doubtPass, sendChat, leave, resign, rematch,
     queue, joinQueue, leaveQueue,
   };
 
