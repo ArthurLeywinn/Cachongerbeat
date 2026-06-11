@@ -58,7 +58,21 @@ body::before {
   height: 100dvh;
   overflow: hidden;
   position: relative;
-  background: radial-gradient(circle at 50% 36%, #11231a 0%, #0a120c 58%, #070b08 100%);
+  /* Fondo limpio con profundidad: lámpara cálida sobre la mesa, base carbón
+     azulada y viñeta suave en los bordes (estilo sala de juego iluminada). */
+  background:
+    radial-gradient(ellipse 75% 52% at 50% 62%, rgba(244, 184, 64, 0.10) 0%, rgba(244, 184, 64, 0.03) 42%, transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 110%, #11231b 0%, transparent 60%),
+    linear-gradient(180deg, #0d1412 0%, #0a100e 45%, #070c0a 100%);
+}
+/* Viñeta perimetral, sin tocar el contenido */
+.table-scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: inset 0 0 160px 40px rgba(0, 0, 0, 0.55);
 }
 
 /* Barra superior */
@@ -87,34 +101,129 @@ body::before {
 .big-table {
   position: absolute;
   left: 50%;
-  top: 26%;
+  top: 32%;
   transform: translateX(-50%);
-  width: 150%;
-  height: 150%;
-  background: radial-gradient(ellipse at 50% 30%, #2a7050 0%, #20603f 40%, #154329 72%, #0e2c1c 100%);
+  width: 128%;
+  height: 134%;
+  /* Fieltro con punto de luz de lámpara y caída hacia los bordes */
+  background:
+    radial-gradient(ellipse 55% 32% at 50% 22%, rgba(255, 235, 190, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 28%, #2d7a56 0%, #226744 38%, #174a2e 70%, #0f3120 100%);
   border-radius: 50%;
-  border: 9px solid #2d2016;
+  /* Borde de madera con veta (anillo exterior) */
+  border: 12px solid transparent;
+  background-clip: padding-box;
   box-shadow:
-    0 -10px 70px rgba(0, 0, 0, 0.5),
-    inset 0 22px 60px rgba(0, 0, 0, 0.32),
-    inset 0 0 0 3px rgba(0, 0, 0, 0.25);
+    0 -14px 60px rgba(0, 0, 0, 0.55),
+    0 18px 50px -10px rgba(0, 0, 0, 0.7),
+    inset 0 26px 70px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.3);
   z-index: 0;
 }
-/* Aro de costura interior (paralelo al borde) */
+/* Anillo de madera con veta y brillo barnizado */
+.big-table::before {
+  content: '';
+  position: absolute;
+  inset: -13px;
+  border-radius: 50%;
+  padding: 12px;
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.14) 0%, transparent 28%),
+    repeating-linear-gradient(98deg, #5a3d22 0 7px, #4a3019 7px 13px, #553a20 13px 22px),
+    linear-gradient(#3a2715, #2c1d0f);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+/* Ribete dorado + costura interior (doble detalle) */
 .big-table::after {
   content: '';
   position: absolute;
-  inset: 26px;
+  inset: 20px;
   border-radius: 50%;
-  border: 2px dashed rgba(243, 236, 223, 0.14);
+  border: 1.5px solid rgba(212, 175, 96, 0.22);
+  box-shadow: inset 0 0 0 7px rgba(0, 0, 0, 0.12);
   pointer-events: none;
+}
+/* Costura punteada, paralela al ribete */
+.table-stitch {
+  position: absolute;
+  left: 50%;
+  top: 32%;
+  transform: translateX(-50%);
+  width: 128%;
+  height: 134%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.table-stitch::after {
+  content: '';
+  position: absolute;
+  inset: 34px;
+  border-radius: 50%;
+  border: 2px dashed rgba(243, 236, 223, 0.12);
+}
+
+/* Placa central de la apuesta vigente — cuero oscuro con ribete dorado */
+.bid-plaque {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 22px 10px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(16, 24, 18, 0.92), rgba(8, 14, 10, 0.92));
+  border: 1px solid rgba(212, 175, 96, 0.35);
+  box-shadow:
+    0 10px 28px -10px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  animation: plaquePop 0.25s ease;
+}
+.bid-plaque__label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 223, 0.4);
+}
+.bid-plaque__value {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  color: #f4b840;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+.bid-plaque__by {
+  font-size: 10px;
+  color: rgba(243, 236, 223, 0.45);
+}
+.bid-plaque--empty .bid-plaque__value {
+  color: rgba(243, 236, 223, 0.3);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+@keyframes plaquePop {
+  from { transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
 /* Descarte: mini-dados apagados agrupados de a 5 (sin número, discretos) */
 .discard {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: 43%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-wrap: wrap;
@@ -157,7 +266,41 @@ body::before {
   z-index: 3;
   transform-origin: bottom center;
   transition: transform 0.2s ease;
+  animation: seatIn 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards;
 }
+@keyframes seatIn {
+  from { opacity: 0; margin-top: -14px; }
+  to   { opacity: 1; margin-top: 0; }
+}
+
+/* Anillo de cuenta regresiva del turno (alrededor del personaje en turno) */
+.turn-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  pointer-events: none;
+  z-index: 5;
+}
+.turn-ring circle {
+  fill: none;
+  stroke-linecap: round;
+}
+.turn-ring__bg { stroke: rgba(0, 0, 0, 0.4); }
+.turn-ring__fg { stroke: #f4b840; transition: stroke-dashoffset 0.2s linear, stroke 0.3s; }
+.turn-ring__fg--low { stroke: #ef4444; }
+
+/* Nombre de jugador clicable (abre su perfil público) */
+.seat__name--link {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline dotted rgba(243, 236, 223, 0.25);
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+.seat__name--link:hover { color: #f4b840; }
 
 /* Panel de historial — arriba a la derecha, altura fija con scroll interno */
 .log-panel {
