@@ -188,11 +188,14 @@ const SHOULDERS = 'M22 224 C22 168 56 146 100 146 C144 146 178 168 178 224 Z';
 
 // Nombres para el personalizador.
 export const BODY_NAMES = ['Capucha', 'Rey', 'Ninja', 'Mago', 'Vaquero', 'Pirata', 'Caballero', 'Monje', 'Detective', 'Hacker', 'Deportista', 'Punk'];
-export const HAT_NAMES = ['Ninguno', 'Corona', 'Sombrero mago', 'Sombrero vaquero', 'Sombrero pirata', 'Casco', 'Gorro detective', 'Capucha hoodie', 'Vincha', 'Capucha monje', 'Cinta ninja', 'Mohawk'];
+export const HAT_NAMES = ['Ninguno', 'Corona', 'Sombrero mago', 'Sombrero vaquero', 'Sombrero pirata', 'Casco', 'Gorro detective', 'Capucha hoodie', 'Vincha', 'Capucha monje', 'Cinta ninja', 'Mohawk', 'Capucha'];
 
 // Índices del nuevo personaje por defecto (punk con poncho rojo, sin capucha).
 export const PUNK_BODY = 11;
 export const MOHAWK_HAT = 11;
+// La capucha clásica ya NO es parte del personaje base: es un accesorio de
+// cabeza más (sección "Cabeza"), con el color de atuendo elegido.
+export const HOOD_HAT = 12;
 export const ACC_NAMES = ['Ninguno', 'Lentes', 'Parche', 'Pipa', 'Pañuelo', 'Katana'];
 export const BODY_COUNT = BODY_NAMES.length;
 export const HAT_COUNT = HAT_NAMES.length;
@@ -375,6 +378,21 @@ function Hat({ idx, hoodColor, hoodDark }) {
           <path d="M136 76 l16 -6 -2 10 12 2 -14 8 -2 -8 Z" />
         </g>
       );
+    case 12: // Capucha clásica (accesorio): aro de capucha con hueco para la cara
+      return (
+        <g>
+          <path
+            d="M42 98 C38 34 92 18 100 18 C108 18 162 34 158 98 C158 132 132 152 100 152 C68 152 42 132 42 98 Z M65 94 a35 41 0 1 0 70 0 a35 41 0 1 0 -70 0 Z"
+            fillRule="evenodd"
+            fill={hoodColor}
+            stroke={hoodDark}
+            strokeWidth="4"
+            strokeLinejoin="round"
+          />
+          {/* Sombra del borde de la capucha sobre la frente */}
+          <path d="M63 70 C68 40 132 40 137 70 C138 58 122 50 100 50 C78 50 62 58 63 70 Z" fill={hoodColor} stroke={hoodDark} strokeWidth="3.5" strokeLinejoin="round" />
+        </g>
+      );
     case 11: // Mohawk: cresta de púas negras sobre cabeza calva
       return (
         <g stroke={INK} strokeWidth="7" strokeLinecap="round">
@@ -455,10 +473,6 @@ export default function Character({ hood, variant = 0, face = 0, thinking = fals
   const uid = useId().replace(/:/g, '');
   const sclip = `sh-${uid}`;
 
-  // Cabeza descubierta (sin capucha): para el Mohawk, el Punk y el personaje
-  // que antes era el default (capucha simple sin gorro) — se le quitó la capucha.
-  const bareHead = hatI === MOHAWK_HAT || bi === PUNK_BODY || (bi === 0 && hatI === 0);
-
   return (
     <svg width={size} height={size * 1.12} viewBox="0 0 200 224" style={{ overflow: 'visible' }}>
       <defs><clipPath id={sclip}><path d={SHOULDERS} /></clipPath></defs>
@@ -468,25 +482,11 @@ export default function Character({ hood, variant = 0, face = 0, thinking = fals
       {/* Cuerpo / disfraz */}
       <Body idx={bi} hoodColor={v.hood} hoodDark={v.dark} clip={sclip} />
 
-      {bareHead ? (
-        <>
-          {/* Cabeza calva con orejas */}
-          <ellipse cx="61" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
-          <ellipse cx="139" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
-          <ellipse cx="100" cy="92" rx="39" ry="46" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
-          <path d="M68 64 Q100 48 132 64" fill="none" stroke={SKIN_D} strokeWidth="2" opacity="0.45" />
-        </>
-      ) : (
-        <>
-          {/* Capucha de la cabeza */}
-          <path d="M42 98 C38 34 92 18 100 18 C108 18 162 34 158 98 C158 132 132 152 100 152 C68 152 42 132 42 98 Z" fill={v.hood} stroke={v.dark} strokeWidth="4" strokeLinejoin="round" />
-
-          {/* Cara */}
-          <ellipse cx="100" cy="94" rx="35" ry="41" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
-          {/* Sombra del borde de la capucha sobre la frente */}
-          <path d="M63 70 C68 40 132 40 137 70 C138 58 122 50 100 50 C78 50 62 58 63 70 Z" fill={v.hood} stroke={v.dark} strokeWidth="3.5" strokeLinejoin="round" />
-        </>
-      )}
+      {/* Cabeza base: SIEMPRE pelada (la capucha es ahora un accesorio de cabeza) */}
+      <ellipse cx="61" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
+      <ellipse cx="139" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
+      <ellipse cx="100" cy="92" rx="39" ry="46" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
+      <path d="M68 64 Q100 48 132 64" fill="none" stroke={SKIN_D} strokeWidth="2" opacity="0.45" />
 
       {/* Expresión */}
       <Face idx={fi} />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Character, { Cup, HOODS, HOOD_COUNT, FACE_COUNT, FACE_NAMES, CUP_COUNT, CUP_NAMES, BODY_COUNT, BODY_NAMES, HAT_COUNT, HAT_NAMES, ACC_COUNT, ACC_NAMES, PUNK_BODY, MOHAWK_HAT } from './Character.jsx';
+import Character, { Cup, HOODS, HOOD_COUNT, FACE_COUNT, FACE_NAMES, CUP_COUNT, CUP_NAMES, BODY_COUNT, BODY_NAMES, HAT_COUNT, HAT_NAMES, ACC_COUNT, ACC_NAMES, PUNK_BODY, MOHAWK_HAT, HOOD_HAT } from './Character.jsx';
 import { useProfile } from '../context/ProfileContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -9,7 +9,7 @@ const HOOD_NAMES = ['Verde', 'Rojo', 'Negro', 'Azul', 'Morado', 'Mostaza'];
 const FREE_CUPS = 3;
 const FREE_FACES = 3;
 const FREE_BODIES = [0, PUNK_BODY];  // capucha simple + punk (default nuevo)
-const FREE_HATS = [0, MOHAWK_HAT];   // ninguno + mohawk (default nuevo)
+const FREE_HATS = [0, MOHAWK_HAT, HOOD_HAT]; // ninguno + mohawk + capucha clásica
 const FREE_ACCS = [0];
 
 function Chip({ active, onClick, locked, children }) {
@@ -106,18 +106,26 @@ export default function Customizer({ onClose }) {
                   </Chip>
                 ))}
               </div>
-            </Section>
-
-            <Section step="2" title="Capucha" hint="· color del atuendo">
+              <p className="text-bone/35 text-[11px] mt-3 mb-1.5">Color del atuendo</p>
               <div className="flex flex-wrap gap-2">
                 {Array.from({ length: HOOD_COUNT }).map((_, i) => (
                   <button
                     key={i}
                     onClick={() => applyCosmetic({ hood: i })}
                     title={HOOD_NAMES[i]}
-                    className={`w-9 h-9 rounded-full border-2 transition ${cosmetic.hood === i ? 'border-amber-glow scale-110' : 'border-black/40 hover:border-bone/40'}`}
+                    className={`w-7 h-7 rounded-full border-2 transition ${cosmetic.hood === i ? 'border-amber-glow scale-110' : 'border-black/40 hover:border-bone/40'}`}
                     style={{ background: HOODS[i].hood }}
                   />
+                ))}
+              </div>
+            </Section>
+
+            <Section step="2" title="Cabeza" hint="· se superpone sobre el personaje">
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: HAT_COUNT }).map((_, i) => (
+                  <Chip key={i} active={cosmetic.hat === i} locked={!FREE_HATS.includes(i) && !unlocked} onClick={() => pickHat(i)}>
+                    {HAT_NAMES[i]}
+                  </Chip>
                 ))}
               </div>
             </Section>
@@ -152,16 +160,6 @@ export default function Customizer({ onClose }) {
                       }}
                     >
                       {FACE_NAMES[i]}
-                    </Chip>
-                  ))}
-                </div>
-              </Section>
-
-              <Section title="Gorro / casco">
-                <div className="flex flex-wrap gap-2">
-                  {Array.from({ length: HAT_COUNT }).map((_, i) => (
-                    <Chip key={i} active={cosmetic.hat === i} locked={!FREE_HATS.includes(i) && !unlocked} onClick={() => pickHat(i)}>
-                      {HAT_NAMES[i]}
                     </Chip>
                   ))}
                 </div>

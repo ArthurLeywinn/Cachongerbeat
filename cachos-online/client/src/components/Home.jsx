@@ -6,6 +6,7 @@ import Leaderboard from './Leaderboard.jsx';
 import Customizer from './Customizer.jsx';
 import History from './History.jsx';
 import RankedQueue from './RankedQueue.jsx';
+import FriendsBar from './FriendsBar.jsx';
 import { CupMark, HeroScene } from './MenuArt.jsx';
 
 const MENU_THEME = 'clean';
@@ -200,6 +201,7 @@ export default function Home() {
     return (
       <div className="clean-bg">
         <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} />
+        <FriendsBar />
         {showCustomizer && <Customizer onClose={() => setShowCustomizer(false)} />}
 
         <div className="clean-split">
@@ -279,6 +281,7 @@ export default function Home() {
   return (
     <div className={wrapClass}>
       <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} />
+      <FriendsBar />
       <div className={cardClass}>
         <button onClick={() => setView('menu')} className={backClass}>← Volver</button>
 

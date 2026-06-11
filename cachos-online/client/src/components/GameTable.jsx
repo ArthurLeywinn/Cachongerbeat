@@ -170,9 +170,6 @@ export default function GameTable() {
           );
         })}
 
-        {/* Chat — lateral izquierdo */}
-        <ChatPanel />
-
         {/* Historial — esquina inferior derecha */}
         <div className="log-panel">
           <ActionLog />
@@ -200,6 +197,9 @@ export default function GameTable() {
           </div>
         )}
       </div>
+
+      {/* Chat — lateral izquierdo, FUERA del play-area (overflow hidden lo cortaba) */}
+      <ChatPanel />
 
       {/* ── Zona inferior: HUD ── */}
       <div className="my-zone">
