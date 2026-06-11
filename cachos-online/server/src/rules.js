@@ -173,12 +173,12 @@ function validateRaise(prev, next, opts = {}) {
 
 /**
  * ¿Se permite "Calzar" en este momento?
- * Regla usada: solo se puede calzar cuando hay MÁS de la mitad de los dados
- * totales en juego, o cuando el participante tenga un solo dado.
+ * Regla: disponible cuando quedan AL MENOS la mitad de los dados iniciales en
+ * juego, salvo que la sala tenga "Calzo infinito" (siempre disponible).
  *
  * @param {number} totalDiceInPlay  Dados actualmente en manos de los jugadores.
  * @param {number} initialTotalDice Dados al inicio de la partida.
- * @param {number} playerDiceCount  Dados del jugador que quiere calzar.
+ * @param {boolean} calzoInfinito   Regla de sala: calzo siempre disponible.
  */
 function canCalzar(totalDiceInPlay, initialTotalDice, calzoInfinito = false) {
   // Calzo infinito: siempre disponible.

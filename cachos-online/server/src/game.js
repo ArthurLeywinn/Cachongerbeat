@@ -91,10 +91,33 @@ class Game {
     this.log = [];
     this.chat = []; // mensajes de chat (separado del historial de juego)
 
+    // ── Resumen de partida (estilo "Game Review") ──
+    // Snapshot de dados por jugador al final de cada ronda, para el gráfico
+    // del resumen final. Se llena en _recordRoundSnapshot().
+    this.roundHistory = []; // [{ round, dice: [{ id, n }] }]
+    this.rematchRequests = []; // nombres de quienes pidieron revancha (post-partida)
+    this.turnDeadline = null; // epoch ms del fin del turno actual (lo fija index.js)
+
     const host = this._makePlayer(hostName, hostSocketId, true);
     this.players.push(host);
     this.seatOrder.push(host.id);
     this.hostId = host.id;
+  }
+
+  // Estadísticas individuales de la partida (para el resumen final).
+  _freshStats() {
+    return {
+      bids: 0,          // apuestas realizadas
+      doubtsWon: 0,     // dudas acertadas (incluye dudar pasos)
+      doubtsLost: 0,    // dudas falladas
+      calzasWon: 0,     // calzas exactas
+      calzasLost: 0,    // calzas falladas
+      passes: 0,        // veces que pasó
+      passesSurvived: 0,// pasos dudados con mano válida
+      passesCaught: 0,  // faroles de paso pillados
+      diceLost: 0,      // dados perdidos en total
+      diceGained: 0,    // dados recuperados del centro
+    };
   }
 
   _makePlayer(name, socketId, isHost = false) {
@@ -112,6 +135,7 @@ class Game {
       passedThisRound: false, // "Pasar" se permite una vez por ronda por persona
       chatCount: 0, // mensajes enviados en el turno actual (límite anti-spam)
       chatToken: null, // token del turno para el que cuenta chatCount
+      stats: this._freshStats(), // resumen de la partida
     };
   }
 
@@ -217,15 +241,31 @@ class Game {
     this.round = 0;
     this.pendingObligaIds = [];
     this.blockObligaNextRound = false;
+    this.eliminationOrder = [];
+    this.winnerId = null;
+    this.eloResults = null;
+    this.roundHistory = [];
+    this.rematchRequests = [];
     this.players.forEach((p) => {
       p.diceCount = this.settings.dicePerPlayer;
       p.eliminated = false;
       p.obligaUsed = false;
       p.passedThisRound = false;
+      p.stats = this._freshStats();
     });
     this._addLog('¡Comienza la partida!');
+    this._recordRoundSnapshot(); // punto de partida del gráfico (ronda 0)
     this._startRound(this.hostId);
     return { ok: true };
+  }
+
+  // Guarda cuántos dados tiene cada jugador (para el gráfico del resumen).
+  _recordRoundSnapshot() {
+    this.roundHistory.push({
+      round: this.round,
+      dice: this.players.map((p) => ({ id: p.id, n: p.eliminated ? 0 : p.diceCount })),
+    });
+    if (this.roundHistory.length > 300) this.roundHistory.shift();
   }
 
   // ---------------------------------------------------------------------------
@@ -404,6 +444,7 @@ class Game {
         esta: true,
         playerId,
       };
+      this.getPlayer(playerId).stats.bids += 1;
       this._addLog(`${this.getPlayer(playerId).name} apuesta ${q} de esta.`);
       this._advanceTurn();
       return { ok: true };
@@ -432,6 +473,7 @@ class Game {
     if (this.falsa) this.falsa = null;
 
     this.currentBid = { ...next, playerId };
+    this.getPlayer(playerId).stats.bids += 1;
     this._addLog(`${this.getPlayer(playerId).name} apuesta ${formatBid(this.currentBid)}.`);
     this._advanceTurn();
     return { ok: true };
@@ -528,6 +570,7 @@ class Game {
     // especial sin que se valide aquí. Si el siguiente duda el paso y la mano NO
     // era válida, el que pasó pierde un dado (ver doubtPass).
     player.passedThisRound = true;
+    player.stats.passes += 1;
     this.pendingPass = { passerId: playerId };
     this._addLog(`${player.name} PASA. La apuesta sigue en ${this.currentBid ? formatBid(this.currentBid) : '—'}.`);
     this._advanceTurn();
@@ -556,6 +599,14 @@ class Game {
     this.phase = 'reveal';
     loser.diceCount -= 1;
     this.centerPool += 1;
+    loser.stats.diceLost += 1;
+    if (valid) {
+      passer.stats.passesSurvived += 1;
+      challenger.stats.doubtsLost += 1;
+    } else {
+      passer.stats.passesCaught += 1;
+      challenger.stats.doubtsWon += 1;
+    }
     if (loser.diceCount <= 0) {
       loser.eliminated = true;
       loser.diceCount = 0;
@@ -564,6 +615,7 @@ class Game {
     }
 
     this._queueObligaTriggers();
+    this._recordRoundSnapshot();
 
     this.lastResult = {
       type: 'pass-doubt',
@@ -621,6 +673,7 @@ class Game {
         const remove = Math.min(lost, p.diceCount);
         p.diceCount -= remove;
         this.centerPool += remove;
+        p.stats.diceLost += remove;
         losses.push({ id: p.id, lost: remove });
         if (p.diceCount <= 0) {
           p.diceCount = 0;
@@ -649,6 +702,7 @@ class Game {
 
     // Detectar nuevos jugadores que quedaron en 1 dado por el Kamikaze.
     this._queueObligaTriggers();
+    this._recordRoundSnapshot();
 
     if (this._finishIfWon()) return { ok: true, resolved: true, finished: true };
 
@@ -671,10 +725,23 @@ class Game {
     const wasObliga = !!this.obliga;
     const obligadoId = this.obliga?.playerId || null;
 
+    // ── Estadísticas del resumen ──
+    const challengerStats = this.getPlayer(challengerId)?.stats;
+    if (challengerStats) {
+      if (type === 'doubt') {
+        if (loserId === challengerId) challengerStats.doubtsLost += 1;
+        else challengerStats.doubtsWon += 1;
+      } else if (type === 'calzar') {
+        if (gainerId) challengerStats.calzasWon += 1;
+        else challengerStats.calzasLost += 1;
+      }
+    }
+
     if (loserId) {
       const loser = this.getPlayer(loserId);
       loser.diceCount -= 1;
       this.centerPool += 1;
+      loser.stats.diceLost += 1;
       if (loser.diceCount <= 0) {
         loser.eliminated = true;
         loser.diceCount = 0;
@@ -688,6 +755,7 @@ class Game {
       if (this.centerPool > 0 && gainer.diceCount < this.settings.dicePerPlayer) {
         gainer.diceCount += 1;
         this.centerPool -= 1;
+        gainer.stats.diceGained += 1;
       } else {
         this._addLog(`No hay dados en el centro para recuperar: ${gainer.name} no recibe ninguno.`);
       }
@@ -695,6 +763,7 @@ class Game {
 
     // Nuevos jugadores en 1 dado → cola de Obliga (si no la han usado).
     this._queueObligaTriggers();
+    this._recordRoundSnapshot();
 
     this.lastResult = {
       type,
@@ -749,6 +818,89 @@ class Game {
     if (this.status !== 'playing') return { ok: false };
     this._startRound(starterId);
     return { ok: true };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rendirse / abandono — el jugador queda eliminado formalmente y la partida
+  // sigue. Sus dados van al centro y la ronda se reinicia (todos vuelven a
+  // tirar) para no dejar apuestas o turnos huérfanos.
+  // ---------------------------------------------------------------------------
+
+  resign(playerId, auto = false) {
+    if (this.status !== 'playing') return { error: 'La partida no está en curso.' };
+    const player = this.getPlayer(playerId);
+    if (!player) return { error: 'Jugador no encontrado.' };
+    if (player.eliminated) return { error: 'Ya estás eliminado.' };
+
+    this.centerPool += player.diceCount;
+    player.diceCount = 0;
+    player.eliminated = true;
+    player.dice = [];
+    this.pendingObligaIds = this.pendingObligaIds.filter((id) => id !== playerId);
+    if (!this.eliminationOrder.includes(player.id)) this.eliminationOrder.push(player.id);
+    this._addLog(auto
+      ? `${player.name} no volvió a conectarse y abandona la partida.`
+      : `${player.name} se rinde.`);
+    this._recordRoundSnapshot();
+
+    if (this._finishIfWon()) return { ok: true, finished: true };
+
+    // Reiniciar la ronda en curso desde el siguiente jugador activo.
+    const nextStarterId = this._leftOf(playerId);
+    this._startRound(nextStarterId);
+    return { ok: true, finished: false };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Revancha — reinicia la sala con los jugadores conectados.
+  // El anfitrión la inicia; el resto puede "pedirla" (queda registrado y el
+  // anfitrión lo ve en la pantalla final).
+  // ---------------------------------------------------------------------------
+
+  rematch(byPlayerId) {
+    if (this.status !== 'finished') return { error: 'La partida aún no termina.' };
+    const requester = this.getPlayer(byPlayerId);
+    if (!requester) return { error: 'Jugador no encontrado.' };
+
+    const hostP = this.getPlayer(this.hostId);
+    const hostConnected = !!(hostP && hostP.connected);
+
+    // No-anfitrión con anfitrión presente: registrar la petición.
+    if (byPlayerId !== this.hostId && hostConnected) {
+      if (!this.rematchRequests.includes(requester.name)) {
+        this.rematchRequests.push(requester.name);
+        this._addLog(`${requester.name} pide revancha.`);
+      }
+      return { ok: true, requested: true };
+    }
+
+    // Si el anfitrión se fue, quien pide la revancha hereda el rol.
+    if (!hostConnected) {
+      if (hostP) hostP.isHost = false;
+      requester.isHost = true;
+      this.hostId = requester.id;
+    }
+
+    // Solo siguen los jugadores conectados.
+    this.players = this.players.filter((p) => p.connected);
+    this.seatOrder = this.seatOrder.filter((id) => this.players.some((p) => p.id === id));
+    if (this.players.length < 2) {
+      return { error: 'Se necesitan al menos 2 jugadores conectados para la revancha.' };
+    }
+
+    this.status = 'lobby';
+    this.phase = 'lobby';
+    this.winnerId = null;
+    this.lastResult = null;
+    this.currentBid = null;
+    this.obliga = null;
+    this.pendingPass = null;
+    this.falsa = null;
+    this.eloResults = null;
+    this.chat = [];
+    this.log = [];
+    this._addLog('¡Revancha!');
+    return this.start(this.hostId); // arranca de inmediato, mismo código de sala
   }
 
   // Posiciones finales: ganador primero, luego en orden inverso de eliminación.
@@ -823,6 +975,8 @@ class Game {
         isYou: p.id === forPlayerId,
         cosmetic: p.cosmetic || null,
         obligaUsed: p.obligaUsed,
+        hasAccount: !!p.userId, // permite abrir su perfil público desde la mesa
+        stats: p.stats || null,
         dice,
       };
     }).filter(Boolean);
@@ -897,6 +1051,11 @@ class Game {
       canPasarNow,
       lastResult: this.lastResult,
       winnerId: this.winnerId,
+      // Fin de turno (epoch ms) si la sala tiene reloj — para el anillo de tiempo.
+      turnDeadline: this.phase === 'bidding' ? this.turnDeadline : null,
+      // Datos del resumen final (solo al terminar, para no inflar cada estado).
+      roundHistory: this.status === 'finished' ? this.roundHistory : undefined,
+      rematchRequests: this.status === 'finished' ? this.rematchRequests : undefined,
       players,
       log: this.log.slice(-25),
       chat: this.chat.slice(-30),

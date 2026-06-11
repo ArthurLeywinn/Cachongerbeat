@@ -179,6 +179,36 @@ const io = new Server(server, {
 const manager = new GameManager();
 const revealTimers = new Map();
 const turnTimers = new Map();
+// Abandono: si un jugador no se reconecta en este tiempo durante una partida,
+// se le aplica una rendición automática para que la mesa no quede colgada.
+const DISCONNECT_GRACE_MS = 60000;
+const disconnectTimers = new Map(); // `code:playerId` -> timer
+
+function cancelDisconnectTimer(code, playerId) {
+  const key = `${code}:${playerId}`;
+  clearTimeout(disconnectTimers.get(key));
+  disconnectTimers.delete(key);
+}
+
+function armDisconnectTimer(game, player) {
+  const key = `${game.code}:${player.id}`;
+  clearTimeout(disconnectTimers.get(key));
+  disconnectTimers.set(key, setTimeout(() => {
+    disconnectTimers.delete(key);
+    const g = manager.getRoom(game.code);
+    if (!g || g.status !== 'playing') return;
+    const p = g.getPlayer(player.id);
+    if (!p || p.connected || p.eliminated) return;
+    // Cancelar timers de ronda pendientes: resign reinicia la ronda al tiro.
+    clearTimeout(revealTimers.get(g.code)); revealTimers.delete(g.code);
+    clearTimeout(turnTimers.get(g.code)); turnTimers.delete(g.code);
+    const result = g.resign(p.id, true);
+    if (result.ok) {
+      broadcastState(g);
+      if (result.finished) applyRankedElo(g);
+    }
+  }, DISCONNECT_GRACE_MS));
+}
 
 // ---------------------------------------------------------------------------
 // Presencia de usuarios (sistema de amigos)
@@ -364,21 +394,24 @@ app.post('/friends/accept', requireAuth, async (req, res) => {
 // ---------------------------------------------------------------------------
 
 function broadcastState(game) {
+  // Armar el reloj ANTES de serializar para que el estado lleve turnDeadline.
+  armTurnTimer(game);
   for (const player of game.players) {
     if (player.connected && player.socketId) {
       io.to(player.socketId).emit('state', game.serialize(player.id));
     }
   }
-  armTurnTimer(game);
 }
 
 function armTurnTimer(game) {
   clearTimeout(turnTimers.get(game.code));
   turnTimers.delete(game.code);
+  game.turnDeadline = null;
 
   const seconds = game.settings?.turnSeconds;
   if (!seconds || game.status !== 'playing' || game.phase !== 'bidding') return;
 
+  game.turnDeadline = Date.now() + seconds * 1000;
   const turnAtArm = game.currentTurnId;
   const timer = setTimeout(() => {
     turnTimers.delete(game.code);
@@ -660,6 +693,7 @@ io.on('connection', (socket) => {
     if (!game) return cb?.({ ok: false, error: 'La sala ya no existe.' });
     const result = game.reconnect(playerId, socket.id);
     if (result.error) return cb?.({ ok: false, error: result.error });
+    cancelDisconnectTimer(game.code, playerId);
     // Re-asociar userId si llegó con token.
     const auth = verifySocketToken(token);
     if (auth) result.player.userId = auth.userId;
@@ -757,6 +791,39 @@ io.on('connection', (socket) => {
     if (result.finished) applyRankedElo(ctx.game);
   });
 
+  // Rendirse ----------------------------------------------------------------
+  socket.on('game:resign', (_payload, cb) => {
+    const ctx = locate(socket.id);
+    if (!ctx) return cb?.({ ok: false, error: 'No estás en una sala.' });
+    // resign reinicia la ronda: limpiar timers de revelación/turno pendientes.
+    clearTimeout(revealTimers.get(ctx.game.code)); revealTimers.delete(ctx.game.code);
+    clearTimeout(turnTimers.get(ctx.game.code)); turnTimers.delete(ctx.game.code);
+    const result = ctx.game.resign(ctx.player.id);
+    if (result.error) return cb?.({ ok: false, error: result.error });
+    cb?.({ ok: true });
+    broadcastState(ctx.game);
+    if (result.finished) applyRankedElo(ctx.game);
+  });
+
+  // Revancha ----------------------------------------------------------------
+  socket.on('game:rematch', (_payload, cb) => {
+    const ctx = locate(socket.id);
+    if (!ctx) return cb?.({ ok: false, error: 'No estás en una sala.' });
+    const result = ctx.game.rematch(ctx.player.id);
+    if (result.error) return cb?.({ ok: false, error: result.error });
+    cb?.({ ok: true, requested: !!result.requested });
+    if (!result.requested) {
+      // La revancha arrancó: presencia "en partida" para quienes tienen cuenta.
+      for (const p of ctx.game.players) {
+        if (p.userId) {
+          const existing = presence.get(p.userId);
+          setUserPresence(p.userId, existing?.username || p.name, p.socketId, 'playing', ctx.game.code);
+        }
+      }
+    }
+    broadcastState(ctx.game);
+  });
+
   // Chat -------------------------------------------------------------------
   socket.on('game:chat', ({ text }, cb) => {
     const ctx = locate(socket.id);
@@ -800,6 +867,10 @@ io.on('connection', (socket) => {
     const ctx = locate(socket.id);
     if (!ctx) return;
     ctx.game.markDisconnected(socket.id);
+    // Si estaba jugando, se rinde automáticamente si no vuelve a tiempo.
+    if (ctx.game.status === 'playing' && !ctx.player.eliminated) {
+      armDisconnectTimer(ctx.game, ctx.player);
+    }
     broadcastState(ctx.game);
     setTimeout(() => manager.cleanupEmptyRooms(), 30000);
   });
