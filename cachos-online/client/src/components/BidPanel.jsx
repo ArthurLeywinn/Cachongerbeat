@@ -108,20 +108,20 @@ export default function BidPanel() {
       {/* El que abre elige la dirección de juego de la ronda */}
       {state.youChooseDirection && (
         <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-[11px] text-bone/40 uppercase tracking-widest">¿A quién le pasas el turno?</span>
-          <button
-            onClick={() => setDirection('right')}
-            className={['hud-dir-btn', direction === 'right' ? 'hud-dir-btn--active' : ''].join(' ')}
-            title="Jugar hacia la derecha de la mesa"
-          >
-            ← Derecha
-          </button>
+          <span className="text-[11px] text-bone/40 uppercase tracking-widest">¿Hacia dónde corre el juego?</span>
           <button
             onClick={() => setDirection('left')}
             className={['hud-dir-btn', direction === 'left' ? 'hud-dir-btn--active' : ''].join(' ')}
-            title="Jugar hacia la izquierda de la mesa"
+            title="El turno pasa al jugador de tu izquierda"
           >
-            Izquierda →
+            ← Izquierda
+          </button>
+          <button
+            onClick={() => setDirection('right')}
+            className={['hud-dir-btn', direction === 'right' ? 'hud-dir-btn--active' : ''].join(' ')}
+            title="El turno pasa al jugador de tu derecha"
+          >
+            Derecha →
           </button>
         </div>
       )}
