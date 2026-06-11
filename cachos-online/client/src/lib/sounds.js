@@ -74,6 +74,17 @@ export const sounds = {
     noise({ dur: 0.12, vol: 0.12, freq: 1100, delay: 0.1 });
     noise({ dur: 0.18, vol: 0.1, freq: 650, delay: 0.22 });
   },
+  // Comienzo de ronda — agitar el cacho (traqueteo rápido) y soltar los dados.
+  shake() {
+    // Traqueteo dentro del cacho: golpecitos cortos y agudos.
+    [0, 0.07, 0.13, 0.2, 0.27].forEach((d, i) => {
+      noise({ dur: 0.05, vol: 0.1, freq: 1600 + (i % 2) * 500, delay: d });
+    });
+    // Dados cayendo sobre la mesa: golpes más graves y espaciados.
+    noise({ dur: 0.14, vol: 0.16, freq: 750, delay: 0.42 });
+    noise({ dur: 0.12, vol: 0.12, freq: 950, delay: 0.54 });
+    noise({ dur: 0.2, vol: 0.1, freq: 550, delay: 0.65 });
+  },
   // Perdiste un dado — caída descendente.
   loseDie() { tone(440, { dur: 0.3, type: 'sawtooth', vol: 0.08, slideTo: 160 }); },
   // Ganaste un dado (calza exacta) — arpegio ascendente.
