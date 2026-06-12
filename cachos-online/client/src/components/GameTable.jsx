@@ -80,7 +80,7 @@ function useSpeechBubbles(chat) {
 
 // Hook: dispara los efectos de sonido según los cambios de estado del juego.
 function useGameSounds(state, playerId) {
-  const prev = useRef({ turnId: null, phase: null, bidKey: null, status: null });
+  const prev = useRef({ turnId: null, phase: null, bidKey: null, status: null, round: null });
   useEffect(() => {
     if (!state) return;
     const p = prev.current;
@@ -102,13 +102,15 @@ function useGameSounds(state, playerId) {
         setTimeout(() => sounds.loseDie(), 600);
       }
     } else if (state.phase === 'bidding') {
+      // Ronda nueva: todos agitan el cacho y tiran los dados.
+      if (state.status === 'playing' && state.round !== p.round) sounds.shake();
       // Apuesta nueva de otro jugador.
       if (bidKey && bidKey !== p.bidKey && state.currentBid.playerId !== playerId) sounds.bid();
       // Me toca a mí.
       if (state.currentTurnId === playerId && p.turnId !== playerId) sounds.myTurn();
     }
 
-    prev.current = { turnId: state.currentTurnId, phase: state.phase, bidKey, status: state.status };
+    prev.current = { turnId: state.currentTurnId, phase: state.phase, bidKey, status: state.status, round: state.round };
   }, [state, playerId]);
 }
 
@@ -122,7 +124,15 @@ export default function GameTable() {
   if (!state) return null;
 
   const me = state.players.find((p) => p.id === playerId);
-  const others = state.players.filter((p) => p.id !== playerId);
+  // Oponentes rotados según el orden de turnos: el jugador que sigue después
+  // de mí (+1 en seatOrder) se sienta en el extremo IZQUIERDO de la mesa, el
+  // que juega justo antes que yo, en el DERECHO. Así "jugar a la izquierda"
+  // corre visualmente hacia la izquierda para todos (antes estaba al revés
+  // porque los asientos seguían el orden de llegada, no el de turnos).
+  const meIdx = state.players.findIndex((p) => p.id === playerId);
+  const others = meIdx >= 0
+    ? [...state.players.slice(meIdx + 1), ...state.players.slice(0, meIdx)]
+    : state.players.filter((p) => p.id !== playerId);
   const finished = state.status === 'finished';
   const winner = finished ? state.players.find((p) => p.id === state.winnerId) : null;
   const totalDice = state.players.reduce((sum, p) => sum + (p.eliminated ? 0 : p.diceCount), 0);
@@ -158,7 +168,7 @@ export default function GameTable() {
               {' · '}Ronda {state.round}
               {state.status === 'playing' && (
                 <span title={state.roundDirection === -1 ? 'Jugando hacia la derecha' : 'Jugando hacia la izquierda'}>
-                  {' '}{state.roundDirection === -1 ? '↻' : '↺'}
+                  {' '}{state.roundDirection === -1 ? '→ derecha' : '← izquierda'}
                 </span>
               )}
             </p>

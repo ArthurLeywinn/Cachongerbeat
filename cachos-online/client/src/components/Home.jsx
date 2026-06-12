@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import Rules from './Rules.jsx';
 import Leaderboard from './Leaderboard.jsx';
 import Customizer from './Customizer.jsx';
-import History from './History.jsx';
+import ProfilePanel from './ProfilePanel.jsx';
 import RankedQueue from './RankedQueue.jsx';
 import FriendsBar from './FriendsBar.jsx';
 import { CupMark, HeroScene } from './MenuArt.jsx';
@@ -58,14 +58,23 @@ const IconLock = () => (
 );
 
 // ─── Botón de auth fijo arriba a la izquierda ─────────────────────────────────
-function AuthCornerButton({ user, logout, onOpenAuth }) {
+function AuthCornerButton({ user, logout, onOpenAuth, onOpenProfile }) {
   if (user) {
     return (
       <div className="fixed top-3 left-3 z-50 flex items-center gap-2 bg-black/40 backdrop-blur-sm border border-bone/10 rounded-lg px-3 py-2">
-        <IconUser />
-        <span className="text-xs text-amber-glow font-semibold">{user.username}</span>
-        <span className="text-bone/30 text-xs">·</span>
-        <span className="text-xs text-bone/50">ELO {user.elo ?? 1000}</span>
+        {/* Clic en tu nombre → Mi perfil (estadísticas + historial) */}
+        <button
+          onClick={onOpenProfile}
+          className="flex items-center gap-2 hover:brightness-110 transition"
+          title="Ver mi perfil e historial"
+        >
+          <IconUser />
+          <span className="text-xs text-amber-glow font-semibold underline decoration-dotted decoration-amber-glow/40 underline-offset-2">
+            {user.username}
+          </span>
+          <span className="text-bone/30 text-xs">·</span>
+          <span className="text-xs text-bone/50">ELO {user.elo ?? 1000}</span>
+        </button>
         <button
           onClick={logout}
           className="ml-1 flex items-center gap-1 text-xs text-bone/30 hover:text-bone/60 transition"
@@ -222,15 +231,66 @@ export default function Home() {
 
   if (view === 'rules') return <Rules onBack={() => setView('menu')} theme={MENU_THEME} />;
   if (view === 'leaderboard') return <Leaderboard onBack={() => setView('menu')} />;
-  if (view === 'history') return <History onBack={() => setView('menu')} />;
-  if (view === 'rankedQueue') return <RankedQueue onBack={() => setView('menu')} />;
+  if (view === 'profile') return <ProfilePanel onBack={() => setView('menu')} />;
+  if (view === 'rankedQueue') return <RankedQueue onBack={() => setView('play')} />;
   if (view === 'auth') return <AuthPanel onBack={() => setView('menu')} initialMode={authInitialMode} />;
+
+  // ════════════════ JUGAR — submenú ════════════════
+  // El menú principal queda limpio; todas las formas de jugar viven aquí.
+  if (view === 'play') {
+    return (
+      <div className="clean-bg">
+        <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} onOpenProfile={() => setView('profile')} />
+        <FriendsBar />
+        <div className="clean-card" style={{ maxWidth: 380 }}>
+          <button onClick={() => setView('menu')} className="clean-back">← Volver</button>
+          <h2 className="font-display text-2xl font-black text-amber-glow mb-1">Jugar</h2>
+          <p className="text-bone/40 text-xs mb-6 tracking-widest uppercase">Elige cómo quieres jugar</p>
+
+          <div className="clean-actions">
+            <button className="clean-btn clean-btn--primary" onClick={() => { setMode('create'); setRanked(false); setView('form'); }}>
+              <IconUsers /> Crear sala
+            </button>
+            <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
+              <IconEnter /> Unirse con código
+            </button>
+
+            {/* Ranked — bloqueado para invitados */}
+            <div className="relative">
+              <button
+                className="clean-btn w-full"
+                style={user
+                  ? { borderColor: 'rgba(251,191,36,0.4)', color: '#fbbf24' }
+                  : { borderColor: 'rgba(251,191,36,0.15)', color: 'rgba(251,191,36,0.3)', cursor: 'default' }
+                }
+                onClick={handleRankedClick}
+              >
+                {user ? <IconTrophy /> : <IconLock />}
+                Buscar partida ranked
+                {!user && <span className="text-[10px] ml-1 opacity-50">· requiere cuenta</span>}
+              </button>
+              {rankedHint && (
+                <div className="absolute left-0 right-0 -bottom-9 bg-black/80 border border-amber-glow/20 rounded-lg px-3 py-2 text-[11px] text-amber-glow/80 text-center z-10">
+                  <button onClick={() => openAuth('register')} className="underline hover:text-amber-glow transition">Crea una cuenta</button>
+                  {' '}o{' '}
+                  <button onClick={() => openAuth('login')} className="underline hover:text-amber-glow transition">inicia sesión</button>
+                  {' '}para jugar ranked
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p className="clean-foot">Para jugar con amigos: crea la sala e invítalos desde ahí</p>
+        </div>
+      </div>
+    );
+  }
 
   // ════════════════ MENÚ ════════════════
   if (view === 'menu') {
     return (
       <div className="clean-bg">
-        <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} />
+        <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} onOpenProfile={() => setView('profile')} />
         <FriendsBar />
         {showCustomizer && <Customizer onClose={() => setShowCustomizer(false)} />}
 
@@ -244,43 +304,10 @@ export default function Home() {
             <p className="clean-tagline">Bluffea · <strong>Duda</strong> · Calza</p>
 
             <div className="clean-actions">
-              <button className="clean-btn clean-btn--primary" onClick={() => { setMode('create'); setRanked(false); setView('form'); }}>
-                <IconUsers /> Crear sala
+              {/* Menú principal minimalista: 4 acciones, lo demás vive adentro. */}
+              <button className="clean-btn clean-btn--primary" onClick={() => setView('play')}>
+                <IconUsers /> Jugar
               </button>
-              <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
-                <IconEnter /> Unirse a sala
-              </button>
-
-              {/* Ranked — bloqueado para invitados */}
-              <div className="relative">
-                <button
-                  className="clean-btn w-full"
-                  style={user
-                    ? { borderColor: 'rgba(251,191,36,0.4)', color: '#fbbf24' }
-                    : { borderColor: 'rgba(251,191,36,0.15)', color: 'rgba(251,191,36,0.3)', cursor: 'default' }
-                  }
-                  onClick={handleRankedClick}
-                >
-                  {user ? <IconTrophy /> : <IconLock />}
-                  Buscar partida ranked
-                  {!user && <span className="text-[10px] ml-1 opacity-50">· requiere cuenta</span>}
-                </button>
-                {rankedHint && (
-                  <div className="absolute left-0 right-0 -bottom-9 bg-black/80 border border-amber-glow/20 rounded-lg px-3 py-2 text-[11px] text-amber-glow/80 text-center z-10">
-                    <button onClick={() => openAuth('register')} className="underline hover:text-amber-glow transition">Crea una cuenta</button>
-                    {' '}o{' '}
-                    <button onClick={() => openAuth('login')} className="underline hover:text-amber-glow transition">inicia sesión</button>
-                    {' '}para jugar ranked
-                  </div>
-                )}
-              </div>
-
-              {user && (
-                <button className="clean-btn" onClick={() => setView('history')}>
-                  <IconHistory /> Mi historial
-                </button>
-              )}
-
               <button className="clean-btn" onClick={() => setShowCustomizer(true)}>
                 <IconUser /> Personalizar personaje
               </button>
@@ -310,10 +337,10 @@ export default function Home() {
 
   return (
     <div className={wrapClass}>
-      <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} />
+      <AuthCornerButton user={user} logout={logout} onOpenAuth={() => openAuth('login')} onOpenProfile={() => setView('profile')} />
       <FriendsBar />
       <div className={cardClass}>
-        <button onClick={() => setView('menu')} className={backClass}>← Volver</button>
+        <button onClick={() => setView('play')} className={backClass}>← Volver</button>
 
         <h2 className="font-display text-2xl font-black text-amber-glow mb-4">
           {mode === 'create' ? 'Crear sala' : 'Unirse a una sala'}

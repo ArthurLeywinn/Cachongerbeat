@@ -179,13 +179,8 @@ export default function FriendsBar() {
                   <span className="text-sm font-semibold truncate">{f.username}</span>
                 </span>
                 <span className="flex items-center gap-2 shrink-0">
-                  {f.status === 'lobby' && f.code ? (
-                    <button className="friends-mini-btn friends-mini-btn--ok" onClick={() => joinFriendLobby(f.code)}>
-                      Unirse
-                    </button>
-                  ) : (
-                    <span className="text-[11px] text-bone/40">{meta.label}</span>
-                  )}
+                  {/* Se entra a salas SOLO por invitación (campana); aquí solo se ve el estado. */}
+                  <span className="text-[11px] text-bone/40">{meta.label}</span>
                 </span>
               </div>
             );
