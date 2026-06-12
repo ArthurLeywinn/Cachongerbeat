@@ -32,6 +32,8 @@ const OBLIGA_MODES = ['kamikaze', 'abierto', 'cerradoA', 'cerradoB'];
 const MAX_PLAYERS = 6;
 
 // Normaliza y acota las reglas personalizadas elegidas al crear la sala.
+const TABLE_THEMES = ['clasico', 'nocturno', 'burdeo', 'whisky'];
+
 function normalizeSettings(s = {}) {
   const dice = Number(s.dicePerPlayer);
   return {
@@ -39,6 +41,8 @@ function normalizeSettings(s = {}) {
     turnSeconds: [15, 30, 60].includes(Number(s.turnSeconds)) ? Number(s.turnSeconds) : null, // null = sin límite
     calzoInfinito: !!s.calzoInfinito, // por defecto OFF (regla normal: al menos la mitad)
     pasarEnabled: !!s.pasarEnabled,
+    // Tema visual de la mesa/fondo elegido al crear la sala.
+    tableTheme: TABLE_THEMES.includes(s.tableTheme) ? s.tableTheme : 'clasico',
   };
 }
 
@@ -294,7 +298,10 @@ class Game {
     this.falsa = null;
     this.falsaUsedThisRound = false;
     this.roundDirection = 1;
-    this.log = []; // el historial se reinicia en cada ronda (no se acumula)
+    // El historial PERSISTE entre rondas (con tope en _addLog): así, cuando
+    // alguien se rinde o abandona y la ronda se reinicia, el aviso sigue
+    // visible en vez de borrarse al instante.
+    this._addLog(`— Ronda ${this.round} —`);
     this.players.forEach((p) => { p.passedThisRound = false; });
 
     // ¿Esta ronda puede ser de Obliga? No, si la anterior ya lo fue (no encadenar).
@@ -795,6 +802,12 @@ class Game {
 
   // Añade a la cola a quien haya quedado con exactamente 1 dado y no use Obliga.
   _queueObligaTriggers() {
+    // El Obliga pierde el sentido en duelos: con solo 2 jugadores activos no
+    // se gatilla (y se limpian los pendientes si la mesa quedó en 2).
+    if (this.activePlayers().length <= 2) {
+      this.pendingObligaIds = [];
+      return;
+    }
     this.activePlayers().forEach((p) => {
       if (p.diceCount === 1 && !p.obligaUsed && !this.pendingObligaIds.includes(p.id)) {
         this.pendingObligaIds.push(p.id);
