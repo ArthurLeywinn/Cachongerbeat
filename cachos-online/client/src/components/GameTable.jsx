@@ -44,12 +44,73 @@ function tableRimTopPct(xPct) {
   return cy - ry * Math.sqrt(k); // % de la altura del área de juego
 }
 
-// ── Objetos decorativos sobre el fieltro (ambiente de partida de cachos) ──
+// ── Objetos decorativos sobre el fieltro: ambiente de mesa de juego real ──
+// Cartas y fichas de póker repartidas con posiciones y rotaciones variadas
+// (decorativas, no interactivas), más cenicero, trago y maní.
+
+// Carta boca abajo con dorso clásico rojo y trama de rombos.
+function CardBack({ rotate = 0 }) {
+  return (
+    <g transform={`rotate(${rotate} 13 18)`}>
+      <rect x="0" y="0" width="26" height="36" rx="3" fill="#f6efe1" stroke="#c9bda1" strokeWidth="1.4" />
+      <rect x="3" y="3" width="20" height="30" rx="2" fill="#b23b2e" />
+      <path d="M3 9 L23 3 M3 16 L23 10 M3 23 L23 17 M3 30 L23 24" stroke="rgba(255,255,255,0.45)" strokeWidth="1.1" />
+      <path d="M23 9 L3 3 M23 16 L3 10 M23 23 L3 17 M23 30 L3 24" stroke="rgba(255,255,255,0.45)" strokeWidth="1.1" />
+      <rect x="5.5" y="5.5" width="15" height="25" rx="1.5" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1" />
+    </g>
+  );
+}
+
+// Ficha de póker vista en perspectiva (cara superior con ribete y muescas).
+function Chip({ x = 0, y = 0, color = '#c0392b', dark = '#8f271d' }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <ellipse cx="12" cy="3" rx="12" ry="5" fill={dark} />
+      <ellipse cx="12" cy="0" rx="12" ry="5" fill={color} />
+      <ellipse cx="12" cy="0" rx="7" ry="2.9" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.2" />
+      <path d="M1 -1 l3 1 M23 -1 l-3 1 M12 -5 l0 2 M5 -3.6 l2 1.2 M19 -3.6 l-2 1.2" stroke="#f3ecdf" strokeWidth="1.6" strokeLinecap="round" />
+    </g>
+  );
+}
+
+// Pila de fichas (las de abajo solo asoman su canto).
+function ChipStack({ color, dark, count = 3 }) {
+  return (
+    <g>
+      <ellipse cx="12" cy={count * 4 + 3} rx="13" ry="5" fill="rgba(0,0,0,0.3)" />
+      {Array.from({ length: count }).map((_, i) => (
+        <Chip key={i} y={(count - 1 - i) * 4} color={color} dark={dark} />
+      ))}
+    </g>
+  );
+}
+
 function TableProps() {
   return (
     <div className="table-props" aria-hidden="true">
+      {/* Par de cartas en abanico */}
+      <svg className="prop" style={{ left: '30%', top: '48%' }} width="56" height="48" viewBox="-6 -4 56 48">
+        <g transform="rotate(-9 20 22)">
+          <CardBack rotate={-7} />
+          <g transform="translate(11 1)"><CardBack rotate={13} /></g>
+        </g>
+      </svg>
+      {/* Carta suelta, girada distinto para que se vea natural */}
+      <svg className="prop" style={{ left: '58%', top: '67%' }} width="42" height="44" viewBox="-8 -4 42 44">
+        <CardBack rotate={21} />
+      </svg>
+      {/* Fichas: pila roja + pila azul + ficha negra suelta */}
+      <svg className="prop" style={{ left: '36%', top: '61%' }} width="74" height="40" viewBox="0 0 74 40">
+        <g transform="translate(2 12)"><ChipStack color="#c0392b" dark="#8f271d" count={3} /></g>
+        <g transform="translate(32 16) rotate(-4)"><ChipStack color="#2d6db5" dark="#1d4a80" count={2} /></g>
+        <g transform="translate(56 24) rotate(6)"><Chip color="#2b2d33" dark="#15161a" /></g>
+      </svg>
+      {/* Fichas verdes junto a la carta suelta */}
+      <svg className="prop" style={{ left: '64%', top: '70%' }} width="34" height="32" viewBox="0 0 34 32">
+        <g transform="translate(4 10) rotate(3)"><ChipStack color="#2e8b57" dark="#1d5c39" count={2} /></g>
+      </svg>
       {/* Cenicero */}
-      <svg className="prop" style={{ left: '33%', top: '57%' }} width="52" height="30" viewBox="0 0 52 30">
+      <svg className="prop" style={{ left: '64%', top: '60%' }} width="52" height="30" viewBox="0 0 52 30">
         <ellipse cx="26" cy="17" rx="23" ry="11" fill="#565e66" />
         <ellipse cx="26" cy="14" rx="23" ry="11" fill="#7b848d" />
         <ellipse cx="26" cy="14" rx="15" ry="6.5" fill="#3c4248" />
@@ -57,7 +118,7 @@ function TableProps() {
         <ellipse cx="22" cy="13" rx="4" ry="1.6" fill="#8e979f" opacity="0.7" />
       </svg>
       {/* Vaso bajo con pisco + posavasos */}
-      <svg className="prop" style={{ left: '66%', top: '54%' }} width="40" height="46" viewBox="0 0 40 46">
+      <svg className="prop" style={{ left: '68%', top: '47%' }} width="40" height="46" viewBox="0 0 40 46">
         <ellipse cx="20" cy="40" rx="17" ry="5" fill="#6e4a2b" opacity="0.9" />
         <ellipse cx="20" cy="38.5" rx="17" ry="5" fill="#8a5f38" />
         <path d="M8 8 L11 36 Q20 40 29 36 L32 8 Z" fill="rgba(220,235,245,0.28)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
@@ -66,21 +127,13 @@ function TableProps() {
         <path d="M11 10 L12.5 30" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" />
       </svg>
       {/* Platito de maní */}
-      <svg className="prop" style={{ left: '59%', top: '66%' }} width="48" height="26" viewBox="0 0 48 26">
+      <svg className="prop" style={{ left: '45%', top: '69%' }} width="48" height="26" viewBox="0 0 48 26">
         <ellipse cx="24" cy="16" rx="21" ry="8.5" fill="#9a8c74" />
         <ellipse cx="24" cy="13.5" rx="21" ry="8.5" fill="#cfc2a6" />
         <ellipse cx="24" cy="13.5" rx="16" ry="6" fill="#b3a384" />
         {[[15,12],[22,10],[29,12],[18,15],[26,15],[33,13],[22,13]].map(([x, y], i) => (
           <ellipse key={i} cx={x} cy={y} rx="3.4" ry="2.3" fill="#caa05c" stroke="#9c7335" strokeWidth="0.8" transform={`rotate(${i * 37} ${x} ${y})`} />
         ))}
-      </svg>
-      {/* Segundo vaso (cerveza pequeña), lado izquierdo */}
-      <svg className="prop" style={{ left: '40%', top: '66%' }} width="32" height="42" viewBox="0 0 32 42">
-        <ellipse cx="16" cy="37" rx="12" ry="3.6" fill="rgba(0,0,0,0.28)" />
-        <path d="M6 6 L8 34 Q16 37.5 24 34 L26 6 Z" fill="rgba(220,235,245,0.25)" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" />
-        <path d="M7.5 12 L9 33 Q16 36 23 33 L24.5 12 Q16 15 7.5 12 Z" fill="#d8a23a" opacity="0.85" />
-        <ellipse cx="16" cy="11.5" rx="8.6" ry="3" fill="#f3e3c0" />
-        <path d="M8.5 8 L9.5 28" stroke="rgba(255,255,255,0.5)" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     </div>
   );
@@ -198,9 +251,10 @@ export default function GameTable() {
   };
 
   const theme = state.settings?.tableTheme || 'clasico';
+  const room = state.settings?.roomTheme || 'salon';
 
   return (
-    <div className={`table-scene theme-${theme}`}>
+    <div className={`table-scene theme-${theme} room-${room}`}>
       {/* ── Barra superior ── */}
       <header className="table-header">
         <div className="flex items-center gap-3">
@@ -322,7 +376,7 @@ export default function GameTable() {
 
         {/* Mis dados — sobre la mesa, centrados frente a mí (con mi burbuja) */}
         {me && !me.eliminated && (
-          <div className="my-dice-row">
+          <div className={['my-dice-row', state.youChooseDirection ? 'my-dice-row--raised' : ''].join(' ')}>
             {myBubble && <div className="speech-bubble speech-bubble--mine">{myBubble}</div>}
             {me.dice
               ? me.dice.map((v, i) => (

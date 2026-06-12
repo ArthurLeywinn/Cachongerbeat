@@ -38,6 +38,18 @@ const TABLE_THEMES = [
   { id: 'nocturno', name: 'Nocturno', felt: '#244e74', glow: '#8cbeff' },
   { id: 'burdeo', name: 'Burdeo', felt: '#722637', glow: '#ffb096' },
   { id: 'whisky', name: 'Whisky', felt: '#6e5328', glow: '#ffcd78' },
+  { id: 'negro', name: 'Negro', felt: '#383d44', glow: '#dce1eb' },
+];
+
+// Temas de ambiente de la sala: cambian el fondo y la luz del entorno.
+// Se combinan libremente con cualquier color de mesa.
+const ROOM_THEMES = [
+  { id: 'salon', icon: '🪵', name: 'Salón', colors: ['#0d1412', '#1c2a22'] },
+  { id: 'oeste', icon: '🤠', name: 'Viejo Oeste', colors: ['#2e1810', '#8a4f22'] },
+  { id: 'espacio', icon: '🚀', name: 'Espacio', colors: ['#0a0620', '#2b1d63'] },
+  { id: 'infierno', icon: '🔥', name: 'Infierno', colors: ['#2a0808', '#b3361a'] },
+  { id: 'cielo', icon: '☁️', name: 'Cielo', colors: ['#4a6b8c', '#8fb3d4'] },
+  { id: 'jungla', icon: '🌴', name: 'Jungla', colors: ['#0a1f10', '#1d6b35'] },
 ];
 
 const IconUsers = () => (
@@ -197,13 +209,14 @@ export default function Home() {
   const [rankedHint, setRankedHint] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [gameMode, setGameMode] = useState('clasico');
+  const [showAmbiente, setShowAmbiente] = useState(false);
   const set = (patch) => setSettings((s) => ({ ...s, ...patch }));
 
   const pickMode = (m) => {
     setGameMode(m.id);
     if (m.settings) {
-      // El tema de mesa elegido se conserva al cambiar de modo.
-      setSettings((s) => ({ ...m.settings, tableTheme: s.tableTheme || 'clasico' }));
+      // El ambiente elegido (mesa + sala) se conserva al cambiar de modo.
+      setSettings((s) => ({ ...m.settings, tableTheme: s.tableTheme || 'clasico', roomTheme: s.roomTheme || 'salon' }));
       setShowRules(false);
     } else {
       setShowRules(true); // Personalizado: abrir el panel de reglas
@@ -393,35 +406,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* ── Tema de la mesa (fieltro + fondo a juego) ── */}
-            <label className="block text-xs uppercase tracking-wide text-bone/50 mb-2">Mesa</label>
-            <div className="flex items-center gap-3 mb-4">
-              {TABLE_THEMES.map((t) => {
-                const active = (settings.tableTheme || 'clasico') === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => set({ tableTheme: t.id })}
-                    className="flex flex-col items-center gap-1 group"
-                    title={`Mesa ${t.name}`}
-                  >
-                    <span
-                      className={[
-                        'w-9 h-9 rounded-full transition border-2',
-                        active ? 'border-amber-glow scale-110' : 'border-white/15 group-hover:border-white/40',
-                      ].join(' ')}
-                      style={{
-                        background: `radial-gradient(circle at 35% 30%, ${t.glow}33 0%, transparent 55%), radial-gradient(circle at 50% 45%, ${t.felt} 30%, ${t.felt}99 100%)`,
-                        boxShadow: active ? `0 0 12px ${t.glow}55` : 'none',
-                      }}
-                    />
-                    <span className={['text-[10px] transition', active ? 'text-amber-glow font-bold' : 'text-bone/40'].join(' ')}>
-                      {t.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
           </>
         )}
 
@@ -462,6 +446,74 @@ export default function Home() {
                   <button onClick={() => set({ pasarEnabled: !settings.pasarEnabled })} className={['w-12 h-7 rounded-full transition relative', settings.pasarEnabled ? 'bg-amber-glow' : 'bg-black/40'].join(' ')}>
                     <span className={['absolute top-1 w-5 h-5 rounded-full bg-bone transition-all', settings.pasarEnabled ? 'left-6' : 'left-1'].join(' ')} />
                   </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Ambiente: color de mesa + tema de la sala (solo al crear) ── */}
+        {mode === 'create' && (
+          <div className="mb-4 rounded-xl border border-bone/15 overflow-hidden">
+            <button
+              onClick={() => setShowAmbiente((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-bone/80 hover:bg-white/5 transition"
+            >
+              <span className="flex items-center gap-2">
+                🎨 Ambiente
+                <span className="text-[10px] font-normal text-bone/40">
+                  {TABLE_THEMES.find((t) => t.id === (settings.tableTheme || 'clasico'))?.name}
+                  {' · '}
+                  {ROOM_THEMES.find((r) => r.id === (settings.roomTheme || 'salon'))?.name}
+                </span>
+              </span>
+              <span className="text-bone/40">{showAmbiente ? '▲' : '▼'}</span>
+            </button>
+
+            {showAmbiente && (
+              <div className="px-4 pb-4 pt-1 border-t border-bone/10">
+                {/* Color de la mesa */}
+                <label className="block text-[10px] uppercase tracking-wide text-bone/50 mb-2">Color de mesa</label>
+                <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+                  {TABLE_THEMES.map((t) => {
+                    const active = (settings.tableTheme || 'clasico') === t.id;
+                    return (
+                      <button key={t.id} onClick={() => set({ tableTheme: t.id })} className="flex flex-col items-center gap-1 group" title={`Mesa ${t.name}`}>
+                        <span
+                          className={['w-8 h-8 rounded-full transition border-2', active ? 'border-amber-glow scale-110' : 'border-white/15 group-hover:border-white/40'].join(' ')}
+                          style={{
+                            background: `radial-gradient(circle at 35% 30%, ${t.glow}33 0%, transparent 55%), radial-gradient(circle at 50% 45%, ${t.felt} 30%, ${t.felt}99 100%)`,
+                            boxShadow: active ? `0 0 10px ${t.glow}55` : 'none',
+                          }}
+                        />
+                        <span className={['text-[9px] transition', active ? 'text-amber-glow font-bold' : 'text-bone/40'].join(' ')}>{t.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Tema de la sala */}
+                <label className="block text-[10px] uppercase tracking-wide text-bone/50 mb-2">Tema de la sala</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {ROOM_THEMES.map((r) => {
+                    const active = (settings.roomTheme || 'salon') === r.id;
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => set({ roomTheme: r.id })}
+                        className={['rounded-lg px-2 py-2 border text-center transition', active ? 'border-amber-glow/70 bg-amber-glow/10' : 'border-bone/10 hover:border-bone/30'].join(' ')}
+                        title={r.name}
+                      >
+                        <span
+                          className="block w-full h-5 rounded mb-1"
+                          style={{ background: `linear-gradient(135deg, ${r.colors[0]} 0%, ${r.colors[1]} 100%)` }}
+                        />
+                        <span className={['text-[10px] leading-tight block', active ? 'text-amber-glow font-bold' : 'text-bone/50'].join(' ')}>
+                          {r.icon} {r.name}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -263,8 +263,9 @@ export default function GameOver() {
           <button
             onClick={leave}
             className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-bone font-bold hover:bg-white/15 transition"
+            title="Volver al menú principal"
           >
-            Nueva partida
+            Salir
           </button>
         </div>
         {!isHost && !rematchAsked && (
