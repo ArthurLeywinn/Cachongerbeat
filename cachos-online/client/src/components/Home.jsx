@@ -32,6 +32,14 @@ const GAME_MODES = [
   { id: 'custom', icon: '🛠️', name: 'Personalizado', desc: 'Elige cada regla', settings: null },
 ];
 
+// Temas visuales de la mesa (fieltro + fondo a juego). Se aplican en la partida.
+const TABLE_THEMES = [
+  { id: 'clasico', name: 'Clásico', felt: '#226744', glow: '#f4b840' },
+  { id: 'nocturno', name: 'Nocturno', felt: '#244e74', glow: '#8cbeff' },
+  { id: 'burdeo', name: 'Burdeo', felt: '#722637', glow: '#ffb096' },
+  { id: 'whisky', name: 'Whisky', felt: '#6e5328', glow: '#ffcd78' },
+];
+
 const IconUsers = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 );
@@ -194,7 +202,8 @@ export default function Home() {
   const pickMode = (m) => {
     setGameMode(m.id);
     if (m.settings) {
-      setSettings(m.settings);
+      // El tema de mesa elegido se conserva al cambiar de modo.
+      setSettings((s) => ({ ...m.settings, tableTheme: s.tableTheme || 'clasico' }));
       setShowRules(false);
     } else {
       setShowRules(true); // Personalizado: abrir el panel de reglas
@@ -382,6 +391,36 @@ export default function Home() {
                   <p className="text-[10px] text-bone/40 mt-0.5 leading-tight">{m.desc}</p>
                 </button>
               ))}
+            </div>
+
+            {/* ── Tema de la mesa (fieltro + fondo a juego) ── */}
+            <label className="block text-xs uppercase tracking-wide text-bone/50 mb-2">Mesa</label>
+            <div className="flex items-center gap-3 mb-4">
+              {TABLE_THEMES.map((t) => {
+                const active = (settings.tableTheme || 'clasico') === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => set({ tableTheme: t.id })}
+                    className="flex flex-col items-center gap-1 group"
+                    title={`Mesa ${t.name}`}
+                  >
+                    <span
+                      className={[
+                        'w-9 h-9 rounded-full transition border-2',
+                        active ? 'border-amber-glow scale-110' : 'border-white/15 group-hover:border-white/40',
+                      ].join(' ')}
+                      style={{
+                        background: `radial-gradient(circle at 35% 30%, ${t.glow}33 0%, transparent 55%), radial-gradient(circle at 50% 45%, ${t.felt} 30%, ${t.felt}99 100%)`,
+                        boxShadow: active ? `0 0 12px ${t.glow}55` : 'none',
+                      }}
+                    />
+                    <span className={['text-[10px] transition', active ? 'text-amber-glow font-bold' : 'text-bone/40'].join(' ')}>
+                      {t.name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </>
         )}

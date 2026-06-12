@@ -313,13 +313,14 @@ function Hat({ idx, hoodColor, hoodDark }) {
           <circle cx="77" cy="28" r="3.5" fill="#f0d169" /><circle cx="100" cy="24" r="4" fill="#f0d169" /><circle cx="123" cy="28" r="3.5" fill="#f0d169" />
         </g>
       );
-    case 2: // Sombrero de mago (cono inclinado + hebilla)
+    case 2: // Sombrero de mago: cono centrado con punta doblada + banda y hebilla
       return (
         <g stroke="#1f2c40" strokeWidth="3.5" strokeLinejoin="round">
           <ellipse cx="100" cy="58" rx="52" ry="10" fill="#2f3e57" />
-          <path d="M74 58 Q86 2 150 16 Q116 40 126 58 Q100 52 74 58 Z" fill="#34465f" />
-          <rect x="80" y="50" width="40" height="9" rx="2" fill="#1f2c40" />
-          <rect x="95" y="48" width="11" height="11" rx="2" fill="#d7b24a" stroke="#9c7d20" strokeWidth="2" />
+          <path d="M72 58 Q80 14 106 4 Q124 12 118 22 Q108 30 126 58 Q100 50 72 58 Z" fill="#34465f" />
+          <path d="M106 4 Q124 12 118 22" fill="none" stroke="#1f2c40" strokeWidth="3" />
+          <path d="M74 52 Q100 60 126 52 L126 58 Q100 64 74 58 Z" fill="#1f2c40" stroke="none" />
+          <rect x="94" y="48" width="12" height="12" rx="2" fill="#d7b24a" stroke="#9c7d20" strokeWidth="2" />
         </g>
       );
     case 3: // Sombrero vaquero
@@ -330,22 +331,43 @@ function Hat({ idx, hoodColor, hoodDark }) {
           <path d="M74 50 Q100 56 126 50" fill="none" stroke="#3a2412" strokeWidth="3" />
         </g>
       );
-    case 4: // Sombrero pirata (bicornio + calavera)
+    case 4: // Sombrero pirata: bicornio sólido apoyado en la cabeza, con calavera
       return (
-        <g stroke="#0d0d10" strokeWidth="3.5" strokeLinejoin="round">
-          <path d="M56 54 Q100 18 144 54 Q150 40 100 34 Q50 40 56 54 Z" fill="#1c1d22" />
-          <circle cx="100" cy="44" r="7" fill="#efe7d6" />
-          <circle cx="97" cy="43" r="1.4" fill="#1c1d22" /><circle cx="103" cy="43" r="1.4" fill="#1c1d22" />
-          <path d="M94 50 L106 50" stroke="#efe7d6" strokeWidth="3" />
+        <g strokeLinejoin="round">
+          <path d="M48 62 Q100 4 152 62 Q128 48 100 48 Q72 48 48 62 Z" fill="#1c1d22" stroke="#0d0d10" strokeWidth="3.5" />
+          {/* Ribete dorado del ala */}
+          <path d="M56 54 Q100 12 144 54" fill="none" stroke="#d7b24a" strokeWidth="2.5" opacity="0.85" />
+          {/* Tibias cruzadas */}
+          <path d="M91 30 L109 44 M109 30 L91 44" stroke="#efe7d6" strokeWidth="3.5" strokeLinecap="round" />
+          {/* Calavera */}
+          <circle cx="100" cy="35" r="7.5" fill="#efe7d6" stroke="#cbbfa4" strokeWidth="1.5" />
+          <circle cx="97" cy="34" r="1.6" fill="#1c1d22" />
+          <circle cx="103" cy="34" r="1.6" fill="#1c1d22" />
+          <path d="M97 40 L103 40" stroke="#1c1d22" strokeWidth="2" strokeLinecap="round" />
         </g>
       );
-    case 5: // Casco de caballero
+    case 5: // Casco medieval: yelmo pulido que sigue la cabeza, con abertura facial
       return (
-        <g fill="#b3bac1" stroke="#5d646b" strokeWidth="3.5" strokeLinejoin="round">
-          <path d="M62 96 C58 44 142 44 138 96 L132 96 C134 56 66 56 68 96 Z" />
-          <rect x="74" y="84" width="52" height="7" rx="2" fill="#2b2f33" stroke="none" />
-          <rect x="74" y="98" width="52" height="7" rx="2" fill="#2b2f33" stroke="none" />
-          <path d="M98 50 q2 -16 4 0" fill="#c0392b" stroke="#8f271d" strokeWidth="2" />
+        <g strokeLinejoin="round">
+          {/* Penacho */}
+          <path d="M100 14 C90 22 88 34 100 42 C112 34 110 22 100 14 Z" fill="#c0392b" stroke="#8f271d" strokeWidth="3" />
+          {/* Casquete con hueco para la cara (sigue la silueta de la cabeza) */}
+          <path
+            d="M58 96 C52 36 148 36 142 96 C142 126 126 140 100 140 C74 140 58 126 58 96 Z
+               M72 92 a28 34 0 1 0 56 0 a28 34 0 1 0 -56 0 Z"
+            fillRule="evenodd"
+            fill="#aeb6bf"
+            stroke="#5d646b"
+            strokeWidth="4"
+          />
+          {/* Cresta central y remaches */}
+          <path d="M100 38 L100 56" stroke="#5d646b" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="66" cy="84" r="2.4" fill="#5d646b" />
+          <circle cx="134" cy="84" r="2.4" fill="#5d646b" />
+          <circle cx="73" cy="116" r="2.4" fill="#5d646b" />
+          <circle cx="127" cy="116" r="2.4" fill="#5d646b" />
+          {/* Brillo del metal */}
+          <path d="M68 62 Q76 48 92 43" stroke="#dde2e7" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.8" />
         </g>
       );
     case 6: // Gorro de detective (deerstalker)
@@ -441,12 +463,22 @@ function Accessory({ idx }) {
       return (
         <path d="M66 104 Q100 116 134 104 L132 124 Q100 140 68 124 Z" fill="#b23b2e" stroke="#7f2820" strokeWidth="2.5" strokeLinejoin="round" />
       );
-    case 5: // Katana al hombro (mango asomando)
+    case 5: // Katana al cinto: funda cruzada en la cadera, empuñadura hacia arriba
       return (
-        <g strokeLinejoin="round">
-          <path d="M150 150 L120 96" stroke="#7a6a4a" strokeWidth="5" strokeLinecap="round" />
-          <path d="M122 100 L108 86" stroke="#2b2b2b" strokeWidth="6" strokeLinecap="round" />
-          <rect x="118" y="88" width="14" height="6" rx="2" transform="rotate(40 125 91)" fill="#d7b24a" stroke="#9c7d20" strokeWidth="1.5" />
+        <g strokeLinecap="round" strokeLinejoin="round">
+          {/* Funda (saya) cruzada al cinto */}
+          <path d="M44 202 L126 188" stroke="#23252c" strokeWidth="11" />
+          <path d="M44 202 L126 188" stroke="#3d404b" strokeWidth="3.5" />
+          {/* Casquillo dorado de la punta (kojiri) */}
+          <path d="M40 197 L46 208" stroke="#d7b24a" strokeWidth="5" />
+          {/* Guarda (tsuba) dorada */}
+          <circle cx="132" cy="187" r="7.5" fill="#d7b24a" stroke="#9c7d20" strokeWidth="2.5" />
+          {/* Empuñadura (tsuka) apuntando arriba-derecha */}
+          <path d="M139 185 L165 172" stroke="#1d1e24" strokeWidth="10" />
+          {/* Trenzado rojo del mango */}
+          <path d="M145 178 l3.5 6.5 M152 174.5 l3.5 6.5 M158 171 l3.5 6.5" stroke="#c8463a" strokeWidth="3" />
+          {/* Pomo dorado */}
+          <circle cx="168" cy="170.5" r="4.2" fill="#d7b24a" stroke="#9c7d20" strokeWidth="2" />
         </g>
       );
     default:

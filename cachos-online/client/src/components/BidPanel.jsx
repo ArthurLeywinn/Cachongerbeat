@@ -107,22 +107,24 @@ export default function BidPanel() {
 
       {/* El que abre elige la dirección de juego de la ronda */}
       {state.youChooseDirection && (
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-[11px] text-bone/40 uppercase tracking-widest">¿Hacia dónde corre el juego?</span>
-          <button
-            onClick={() => setDirection('left')}
-            className={['hud-dir-btn', direction === 'left' ? 'hud-dir-btn--active' : ''].join(' ')}
-            title="El turno pasa al jugador de tu izquierda"
-          >
-            ← Izquierda
-          </button>
-          <button
-            onClick={() => setDirection('right')}
-            className={['hud-dir-btn', direction === 'right' ? 'hud-dir-btn--active' : ''].join(' ')}
-            title="El turno pasa al jugador de tu derecha"
-          >
-            Derecha →
-          </button>
+        <div className="dir-float">
+          <span className="text-[10px] text-bone/40 uppercase tracking-widest">¿Hacia dónde corre el juego?</span>
+          <div className="dir-float__row">
+            <button
+              onClick={() => setDirection('left')}
+              className={['hud-dir-btn', direction === 'left' ? 'hud-dir-btn--active' : ''].join(' ')}
+              title="El turno pasa al jugador de tu izquierda"
+            >
+              ← Izquierda
+            </button>
+            <button
+              onClick={() => setDirection('right')}
+              className={['hud-dir-btn', direction === 'right' ? 'hud-dir-btn--active' : ''].join(' ')}
+              title="El turno pasa al jugador de tu derecha"
+            >
+              Derecha →
+            </button>
+          </div>
         </div>
       )}
 

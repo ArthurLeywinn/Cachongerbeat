@@ -29,7 +29,7 @@ function seatXPercents(total) {
 // Escala del asiento según cuántos oponentes hay: en 1v1 el rival es grande
 // (protagonismo de duelo); con la mesa llena se achican para no amontonarse.
 function seatScale(opponents) {
-  const scales = { 1: 1.32, 2: 1.14, 3: 1.0, 4: 0.85, 5: 0.72 };
+  const scales = { 1: 1.5, 2: 1.3, 3: 1.12, 4: 0.95, 5: 0.8 };
   return scales[Math.min(Math.max(opponents, 1), 5)] || 1;
 }
 
@@ -37,11 +37,53 @@ function seatScale(opponents) {
 // al 50%. Calculamos la altura (%) del borde superior del óvalo en una posición
 // horizontal dada, para "sentar" a cada jugador justo sobre la curva.
 function tableRimTopPct(xPct) {
-  // Mesa nueva: top 32%, ancho 128%, alto 134% → centro (50, 99), radios (64, 67).
-  const cx = 50, cy = 99, rx = 64, ry = 67; // mismos números que el CSS
+  // Mesa: top 34%, ancho 118%, alto 124% → centro (50, 96), radios (59, 62).
+  const cx = 50, cy = 96, rx = 59, ry = 62; // mismos números que el CSS
   const nx = (xPct - cx) / rx;
   const k = Math.max(0, 1 - nx * nx);
   return cy - ry * Math.sqrt(k); // % de la altura del área de juego
+}
+
+// ── Objetos decorativos sobre el fieltro (ambiente de partida de cachos) ──
+function TableProps() {
+  return (
+    <div className="table-props" aria-hidden="true">
+      {/* Cenicero */}
+      <svg className="prop" style={{ left: '33%', top: '57%' }} width="52" height="30" viewBox="0 0 52 30">
+        <ellipse cx="26" cy="17" rx="23" ry="11" fill="#565e66" />
+        <ellipse cx="26" cy="14" rx="23" ry="11" fill="#7b848d" />
+        <ellipse cx="26" cy="14" rx="15" ry="6.5" fill="#3c4248" />
+        <path d="M9 9 l6 3 M43 9 l-6 3 M26 3.5 l0 5" stroke="#565e66" strokeWidth="3.5" strokeLinecap="round" />
+        <ellipse cx="22" cy="13" rx="4" ry="1.6" fill="#8e979f" opacity="0.7" />
+      </svg>
+      {/* Vaso bajo con pisco + posavasos */}
+      <svg className="prop" style={{ left: '66%', top: '54%' }} width="40" height="46" viewBox="0 0 40 46">
+        <ellipse cx="20" cy="40" rx="17" ry="5" fill="#6e4a2b" opacity="0.9" />
+        <ellipse cx="20" cy="38.5" rx="17" ry="5" fill="#8a5f38" />
+        <path d="M8 8 L11 36 Q20 40 29 36 L32 8 Z" fill="rgba(220,235,245,0.28)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
+        <path d="M10 18 L12 35 Q20 38.5 28 35 L30 18 Q20 22 10 18 Z" fill="#c98a2e" opacity="0.85" />
+        <ellipse cx="20" cy="18.5" rx="10" ry="3" fill="#e8ab4a" opacity="0.9" />
+        <path d="M11 10 L12.5 30" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+      {/* Platito de maní */}
+      <svg className="prop" style={{ left: '59%', top: '66%' }} width="48" height="26" viewBox="0 0 48 26">
+        <ellipse cx="24" cy="16" rx="21" ry="8.5" fill="#9a8c74" />
+        <ellipse cx="24" cy="13.5" rx="21" ry="8.5" fill="#cfc2a6" />
+        <ellipse cx="24" cy="13.5" rx="16" ry="6" fill="#b3a384" />
+        {[[15,12],[22,10],[29,12],[18,15],[26,15],[33,13],[22,13]].map(([x, y], i) => (
+          <ellipse key={i} cx={x} cy={y} rx="3.4" ry="2.3" fill="#caa05c" stroke="#9c7335" strokeWidth="0.8" transform={`rotate(${i * 37} ${x} ${y})`} />
+        ))}
+      </svg>
+      {/* Segundo vaso (cerveza pequeña), lado izquierdo */}
+      <svg className="prop" style={{ left: '40%', top: '66%' }} width="32" height="42" viewBox="0 0 32 42">
+        <ellipse cx="16" cy="37" rx="12" ry="3.6" fill="rgba(0,0,0,0.28)" />
+        <path d="M6 6 L8 34 Q16 37.5 24 34 L26 6 Z" fill="rgba(220,235,245,0.25)" stroke="rgba(255,255,255,0.45)" strokeWidth="1.4" />
+        <path d="M7.5 12 L9 33 Q16 36 23 33 L24.5 12 Q16 15 7.5 12 Z" fill="#d8a23a" opacity="0.85" />
+        <ellipse cx="16" cy="11.5" rx="8.6" ry="3" fill="#f3e3c0" />
+        <path d="M8.5 8 L9.5 28" stroke="rgba(255,255,255,0.5)" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
 }
 
 // Hook: convierte los mensajes de chat nuevos en burbujas que duran 5s.
@@ -138,7 +180,7 @@ export default function GameTable() {
   const totalDice = state.players.reduce((sum, p) => sum + (p.eliminated ? 0 : p.diceCount), 0);
   const xs = seatXPercents(others.length);
   const scale = seatScale(others.length);
-  const myDieSize = others.length === 1 ? 58 : others.length >= 4 ? 42 : 48;
+  const myDieSize = others.length === 1 ? 62 : others.length >= 4 ? 44 : 52;
   const myBubble = bubbles[playerId]?.text || null;
   const bidderName = state.currentBid
     ? state.players.find((p) => p.id === state.currentBid.playerId)?.name
@@ -155,8 +197,10 @@ export default function GameTable() {
     await resign();
   };
 
+  const theme = state.settings?.tableTheme || 'clasico';
+
   return (
-    <div className="table-scene">
+    <div className={`table-scene theme-${theme}`}>
       {/* ── Barra superior ── */}
       <header className="table-header">
         <div className="flex items-center gap-3">
@@ -214,6 +258,7 @@ export default function GameTable() {
       <div className="play-area">
         <div className="big-table" aria-hidden="true" />
         <div className="table-stitch" aria-hidden="true" />
+        <TableProps />
 
         {/* Placa central con la apuesta vigente (sobre el fieltro) */}
         {state.status === 'playing' && (
