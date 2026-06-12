@@ -32,7 +32,8 @@ const OBLIGA_MODES = ['kamikaze', 'abierto', 'cerradoA', 'cerradoB'];
 const MAX_PLAYERS = 6;
 
 // Normaliza y acota las reglas personalizadas elegidas al crear la sala.
-const TABLE_THEMES = ['clasico', 'nocturno', 'burdeo', 'whisky'];
+const TABLE_THEMES = ['clasico', 'nocturno', 'burdeo', 'whisky', 'negro'];
+const ROOM_THEMES = ['salon', 'oeste', 'espacio', 'infierno', 'cielo', 'jungla'];
 
 function normalizeSettings(s = {}) {
   const dice = Number(s.dicePerPlayer);
@@ -41,8 +42,9 @@ function normalizeSettings(s = {}) {
     turnSeconds: [15, 30, 60].includes(Number(s.turnSeconds)) ? Number(s.turnSeconds) : null, // null = sin límite
     calzoInfinito: !!s.calzoInfinito, // por defecto OFF (regla normal: al menos la mitad)
     pasarEnabled: !!s.pasarEnabled,
-    // Tema visual de la mesa/fondo elegido al crear la sala.
+    // Ambiente visual elegido al crear la sala: color de mesa + tema de fondo.
     tableTheme: TABLE_THEMES.includes(s.tableTheme) ? s.tableTheme : 'clasico',
+    roomTheme: ROOM_THEMES.includes(s.roomTheme) ? s.roomTheme : 'salon',
   };
 }
 
