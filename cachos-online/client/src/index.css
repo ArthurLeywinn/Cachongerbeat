@@ -77,6 +77,58 @@ body::before {
     linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
 }
 
+/* ── Temas de AMBIENTE de la sala (fondo completo, se eligen al crear) ──
+   Cada uno redefine el fondo de la escena; el fieltro lo pone el tema de mesa. */
+
+/* 🤠 Viejo Oeste: atardecer del desierto, horizonte cálido */
+.room-oeste {
+  background:
+    radial-gradient(ellipse 75% 50% at 50% 64%, rgba(255, 176, 92, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 140% 60% at 50% 118%, #6e3a1a 0%, rgba(110, 58, 26, 0) 60%),
+    radial-gradient(ellipse 120% 45% at 50% 112%, #8a4f22 0%, transparent 55%),
+    linear-gradient(180deg, #1a0f0a 0%, #2e1810 38%, #4a2614 72%, #5e3018 100%);
+}
+/* 🚀 Espacio: noche estrellada profunda */
+.room-espacio {
+  background:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 99%, transparent), radial-gradient(1px 1px at 78% 12%, #cfe4ff 99%, transparent),
+    radial-gradient(1.5px 1.5px at 88% 34%, #fff 99%, transparent), radial-gradient(1px 1px at 28% 8%, #fff 99%, transparent),
+    radial-gradient(2px 2px at 64% 22%, #ffe9c0 99%, transparent), radial-gradient(1px 1px at 42% 14%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 8% 42%, #cfe4ff 99%, transparent), radial-gradient(1.5px 1.5px at 94% 58%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 52% 30%, #fff 99%, transparent), radial-gradient(1px 1px at 22% 30%, #ffd9f0 99%, transparent),
+    radial-gradient(ellipse 70% 45% at 50% 62%, rgba(150, 130, 255, 0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 90% 60% at 78% 0%, #1b1340 0%, transparent 55%),
+    linear-gradient(180deg, #060312 0%, #0a0620 50%, #040208 100%);
+}
+/* 🔥 Infierno: brasas y resplandor desde abajo */
+.room-infierno {
+  background:
+    radial-gradient(2px 2px at 18% 78%, #ffae3c 99%, transparent), radial-gradient(1.5px 1.5px at 76% 84%, #ff7b2e 99%, transparent),
+    radial-gradient(1.5px 1.5px at 36% 90%, #ffd06a 99%, transparent), radial-gradient(2px 2px at 88% 72%, #ff9a3c 99%, transparent),
+    radial-gradient(ellipse 80% 50% at 50% 62%, rgba(255, 96, 40, 0.16) 0%, transparent 65%),
+    radial-gradient(ellipse 140% 55% at 50% 116%, #b3361a 0%, rgba(179, 54, 26, 0) 62%),
+    radial-gradient(ellipse 110% 40% at 50% 110%, #ff6a2a 0%, transparent 50%),
+    linear-gradient(180deg, #140404 0%, #2a0808 45%, #4a0f0a 100%);
+}
+/* ☁️ Cielo: nubes suaves y luz dorada */
+.room-cielo {
+  background:
+    radial-gradient(ellipse 34% 12% at 22% 22%, rgba(255, 255, 255, 0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 14% at 76% 14%, rgba(255, 255, 255, 0.13) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 10% at 58% 32%, rgba(255, 255, 255, 0.1) 0%, transparent 70%),
+    radial-gradient(ellipse 75% 50% at 50% 62%, rgba(255, 232, 170, 0.18) 0%, transparent 65%),
+    linear-gradient(180deg, #35506e 0%, #4a6b8c 45%, #5f83a6 100%);
+}
+/* 🌴 Jungla: verde profundo con follaje insinuado */
+.room-jungla {
+  background:
+    radial-gradient(ellipse 40% 26% at 8% 6%, #0d3a22 0%, transparent 65%),
+    radial-gradient(ellipse 44% 30% at 94% 4%, #0e421f 0%, transparent 65%),
+    radial-gradient(ellipse 30% 18% at 50% 0%, #11522a 0%, transparent 70%),
+    radial-gradient(ellipse 75% 50% at 50% 64%, rgba(170, 255, 150, 0.10) 0%, transparent 65%),
+    linear-gradient(180deg, #07150c 0%, #0a1f10 45%, #061108 100%);
+}
+
 /* ── Temas de mesa (se eligen al crear la sala) ── */
 .theme-nocturno {
   --felt-hi: #2f6390; --felt-1: #244e74; --felt-2: #173653; --felt-3: #0e2237;
@@ -85,6 +137,10 @@ body::before {
 .theme-burdeo {
   --felt-hi: #8e3548; --felt-1: #722637; --felt-2: #501823; --felt-3: #360e16;
   --glow: 255, 176, 150; --bg-1: #140d0e; --bg-2: #100a0b; --bg-3: #0b0707; --bg-tint: #2a1118;
+}
+.theme-negro {
+  --felt-hi: #4a4f56; --felt-1: #383d44; --felt-2: #25292f; --felt-3: #16191d;
+  --glow: 220, 225, 235; --bg-1: #0e0f11; --bg-2: #0a0b0d; --bg-3: #060708; --bg-tint: #1a1d22;
 }
 .theme-whisky {
   --felt-hi: #8a6a3a; --felt-1: #6e5328; --felt-2: #4d3a1b; --felt-3: #332610;
@@ -390,6 +446,7 @@ body::before {
   position: absolute;
   left: 50%;
   bottom: 140px;
+  transition: bottom 0.25s ease;
   transform: translateX(-50%);
   display: flex;
   gap: 12px;
@@ -401,6 +458,9 @@ body::before {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 12px 26px -12px rgba(0, 0, 0, 0.6);
   z-index: 6;
 }
+/* Mientras el que abre elige la dirección, sus dados suben para dejar espacio
+   a la píldora de Izquierda/Derecha entre los dados y el panel de pintas. */
+.my-dice-row--raised { bottom: 212px; }
 
 /* ═══════════════════════════════════════════
    HUD — PANEL DE APUESTA
@@ -1190,36 +1250,28 @@ body::before {
    DIRECCIÓN DE JUEGO (el que abre elige)
 ═══════════════════════════════════════════ */
 
-/* Píldora flotante del selector de dirección: anclada ARRIBA-DERECHA del HUD,
-   fuera del camino de la fila de dados (que va centrada). */
+/* Píldora del selector de dirección: centrada ENTRE la fila de mis dados
+   (que sube mientras se elige) y el panel de apuesta con las pintas. */
 .dir-float {
   position: absolute;
-  right: 14px;
-  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 10px);
   z-index: 11;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  padding: 8px 10px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(212, 175, 96, 0.25);
   backdrop-filter: blur(4px);
   box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
 }
 .dir-float__row { display: flex; gap: 6px; }
 @media (max-width: 640px) {
-  /* En pantallas chicas la fila de dados ocupa casi todo el ancho: la píldora
-     sube por encima de los dados, centrada. */
-  .dir-float {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    bottom: calc(100% + 86px);
-    flex-direction: row;
-    align-items: center;
-  }
+  .dir-float { flex-direction: column; gap: 6px; white-space: normal; }
 }
 
 .hud-dir-btn {
