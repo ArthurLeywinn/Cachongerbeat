@@ -53,17 +53,42 @@ body::before {
 
 /* Contenedor raíz: columna flex, pantalla completa */
 .table-scene {
+  /* ── Tema "Clásico" (verde) por defecto; los demás solo cambian variables ── */
+  --felt-hi: #2d7a56;   /* punto de luz del fieltro */
+  --felt-1: #226744;    /* fieltro centro */
+  --felt-2: #174a2e;    /* fieltro medio */
+  --felt-3: #0f3120;    /* fieltro borde */
+  --glow: 244, 184, 64; /* color de la lámpara (RGB) */
+  --bg-1: #0d1412;      /* fondo arriba */
+  --bg-2: #0a100e;      /* fondo medio */
+  --bg-3: #070c0a;      /* fondo abajo */
+  --bg-tint: #11231b;   /* tinte inferior acorde a la mesa */
+
   display: flex;
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
   position: relative;
-  /* Fondo limpio con profundidad: lámpara cálida sobre la mesa, base carbón
-     azulada y viñeta suave en los bordes (estilo sala de juego iluminada). */
+  /* Fondo limpio con profundidad: lámpara cálida sobre la mesa, base oscura
+     teñida del color de la mesa y viñeta suave en los bordes. */
   background:
-    radial-gradient(ellipse 75% 52% at 50% 62%, rgba(244, 184, 64, 0.10) 0%, rgba(244, 184, 64, 0.03) 42%, transparent 70%),
-    radial-gradient(ellipse 120% 90% at 50% 110%, #11231b 0%, transparent 60%),
-    linear-gradient(180deg, #0d1412 0%, #0a100e 45%, #070c0a 100%);
+    radial-gradient(ellipse 75% 52% at 50% 62%, rgba(var(--glow), 0.10) 0%, rgba(var(--glow), 0.03) 42%, transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 110%, var(--bg-tint) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
+}
+
+/* ── Temas de mesa (se eligen al crear la sala) ── */
+.theme-nocturno {
+  --felt-hi: #2f6390; --felt-1: #244e74; --felt-2: #173653; --felt-3: #0e2237;
+  --glow: 140, 190, 255; --bg-1: #0c1016; --bg-2: #090d13; --bg-3: #06090e; --bg-tint: #102036;
+}
+.theme-burdeo {
+  --felt-hi: #8e3548; --felt-1: #722637; --felt-2: #501823; --felt-3: #360e16;
+  --glow: 255, 176, 150; --bg-1: #140d0e; --bg-2: #100a0b; --bg-3: #0b0707; --bg-tint: #2a1118;
+}
+.theme-whisky {
+  --felt-hi: #8a6a3a; --felt-1: #6e5328; --felt-2: #4d3a1b; --felt-3: #332610;
+  --glow: 255, 205, 120; --bg-1: #12100b; --bg-2: #0e0c08; --bg-3: #090806; --bg-tint: #271d0f;
 }
 /* Viñeta perimetral, sin tocar el contenido */
 .table-scene::before {
@@ -101,14 +126,14 @@ body::before {
 .big-table {
   position: absolute;
   left: 50%;
-  top: 32%;
+  top: 34%;
   transform: translateX(-50%);
-  width: 128%;
-  height: 134%;
-  /* Fieltro con punto de luz de lámpara y caída hacia los bordes */
+  width: 118%;
+  height: 124%;
+  /* Fieltro con punto de luz de lámpara y caída hacia los bordes (tematizable) */
   background:
     radial-gradient(ellipse 55% 32% at 50% 22%, rgba(255, 235, 190, 0.10) 0%, transparent 60%),
-    radial-gradient(ellipse at 50% 28%, #2d7a56 0%, #226744 38%, #174a2e 70%, #0f3120 100%);
+    radial-gradient(ellipse at 50% 28%, var(--felt-hi) 0%, var(--felt-1) 38%, var(--felt-2) 70%, var(--felt-3) 100%);
   border-radius: 50%;
   /* Borde de madera con veta (anillo exterior) */
   border: 12px solid transparent;
@@ -152,10 +177,10 @@ body::before {
 .table-stitch {
   position: absolute;
   left: 50%;
-  top: 32%;
+  top: 34%;
   transform: translateX(-50%);
-  width: 128%;
-  height: 134%;
+  width: 118%;
+  height: 124%;
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
@@ -166,6 +191,20 @@ body::before {
   inset: 34px;
   border-radius: 50%;
   border: 2px dashed rgba(243, 236, 223, 0.12);
+}
+
+/* Objetos decorativos sobre el fieltro (cenicero, vasos, maní) */
+.table-props {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.table-props .prop {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.35));
+  opacity: 0.95;
 }
 
 /* Placa central de la apuesta vigente — cuero oscuro con ribete dorado */
@@ -1150,6 +1189,38 @@ body::before {
 /* ═══════════════════════════════════════════
    DIRECCIÓN DE JUEGO (el que abre elige)
 ═══════════════════════════════════════════ */
+
+/* Píldora flotante del selector de dirección: anclada ARRIBA-DERECHA del HUD,
+   fuera del camino de la fila de dados (que va centrada). */
+.dir-float {
+  position: absolute;
+  right: 14px;
+  bottom: calc(100% + 12px);
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(212, 175, 96, 0.25);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.7);
+}
+.dir-float__row { display: flex; gap: 6px; }
+@media (max-width: 640px) {
+  /* En pantallas chicas la fila de dados ocupa casi todo el ancho: la píldora
+     sube por encima de los dados, centrada. */
+  .dir-float {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(100% + 86px);
+    flex-direction: row;
+    align-items: center;
+  }
+}
 
 .hud-dir-btn {
   padding: 4px 12px;
