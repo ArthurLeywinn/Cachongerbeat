@@ -78,55 +78,52 @@ body::before {
 }
 
 /* ── Temas de AMBIENTE de la sala (fondo completo, se eligen al crear) ──
-   Cada uno redefine el fondo de la escena; el fieltro lo pone el tema de mesa. */
+   Cada ambiente usa una ILUSTRACIÓN de fondo a pantalla completa
+   (client/public/rooms/*.png). Encima va un degradado oscuro que aclara la
+   parte alta (donde se sientan los rivales) y oscurece la baja (donde está la
+   mesa y el HUD) para que todo siga legible. El fieltro lo pone el tema de
+   mesa, sobre esta escena. */
+.table-scene[class*="room-"] {
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
 
-/* 🤠 Viejo Oeste: atardecer del desierto, horizonte cálido */
+/* 🎩 Salón (casino): por defecto */
+.room-salon {
+  background:
+    linear-gradient(180deg, rgba(8, 14, 10, 0.35) 0%, rgba(8, 14, 10, 0.12) 26%, rgba(6, 10, 8, 0.42) 66%, rgba(4, 7, 5, 0.82) 100%),
+    url('/rooms/salon.png');
+}
+/* 🤠 Viejo Oeste */
 .room-oeste {
   background:
-    radial-gradient(ellipse 75% 50% at 50% 64%, rgba(255, 176, 92, 0.14) 0%, transparent 65%),
-    radial-gradient(ellipse 140% 60% at 50% 118%, #6e3a1a 0%, rgba(110, 58, 26, 0) 60%),
-    radial-gradient(ellipse 120% 45% at 50% 112%, #8a4f22 0%, transparent 55%),
-    linear-gradient(180deg, #1a0f0a 0%, #2e1810 38%, #4a2614 72%, #5e3018 100%);
+    linear-gradient(180deg, rgba(26, 15, 10, 0.32) 0%, rgba(26, 15, 10, 0.1) 28%, rgba(20, 10, 6, 0.4) 64%, rgba(12, 6, 3, 0.82) 100%),
+    url('/rooms/oeste.png');
 }
-/* 🚀 Espacio: noche estrellada profunda */
+/* 🚀 Espacio */
 .room-espacio {
   background:
-    radial-gradient(1.5px 1.5px at 12% 18%, #fff 99%, transparent), radial-gradient(1px 1px at 78% 12%, #cfe4ff 99%, transparent),
-    radial-gradient(1.5px 1.5px at 88% 34%, #fff 99%, transparent), radial-gradient(1px 1px at 28% 8%, #fff 99%, transparent),
-    radial-gradient(2px 2px at 64% 22%, #ffe9c0 99%, transparent), radial-gradient(1px 1px at 42% 14%, #fff 99%, transparent),
-    radial-gradient(1px 1px at 8% 42%, #cfe4ff 99%, transparent), radial-gradient(1.5px 1.5px at 94% 58%, #fff 99%, transparent),
-    radial-gradient(1px 1px at 52% 30%, #fff 99%, transparent), radial-gradient(1px 1px at 22% 30%, #ffd9f0 99%, transparent),
-    radial-gradient(ellipse 70% 45% at 50% 62%, rgba(150, 130, 255, 0.12) 0%, transparent 65%),
-    radial-gradient(ellipse 90% 60% at 78% 0%, #1b1340 0%, transparent 55%),
-    linear-gradient(180deg, #060312 0%, #0a0620 50%, #040208 100%);
+    linear-gradient(180deg, rgba(6, 3, 18, 0.3) 0%, rgba(6, 3, 18, 0.08) 30%, rgba(5, 3, 14, 0.45) 66%, rgba(2, 1, 6, 0.85) 100%),
+    url('/rooms/espacio.png');
 }
-/* 🔥 Infierno: brasas y resplandor desde abajo */
+/* 🔥 Infierno */
 .room-infierno {
   background:
-    radial-gradient(2px 2px at 18% 78%, #ffae3c 99%, transparent), radial-gradient(1.5px 1.5px at 76% 84%, #ff7b2e 99%, transparent),
-    radial-gradient(1.5px 1.5px at 36% 90%, #ffd06a 99%, transparent), radial-gradient(2px 2px at 88% 72%, #ff9a3c 99%, transparent),
-    radial-gradient(ellipse 80% 50% at 50% 62%, rgba(255, 96, 40, 0.16) 0%, transparent 65%),
-    radial-gradient(ellipse 140% 55% at 50% 116%, #b3361a 0%, rgba(179, 54, 26, 0) 62%),
-    radial-gradient(ellipse 110% 40% at 50% 110%, #ff6a2a 0%, transparent 50%),
-    linear-gradient(180deg, #140404 0%, #2a0808 45%, #4a0f0a 100%);
+    linear-gradient(180deg, rgba(20, 4, 4, 0.34) 0%, rgba(20, 4, 4, 0.12) 28%, rgba(16, 3, 3, 0.42) 64%, rgba(10, 2, 2, 0.82) 100%),
+    url('/rooms/infierno.png');
 }
-/* ☁️ Cielo: nubes suaves y luz dorada */
+/* ☁️ Cielo */
 .room-cielo {
   background:
-    radial-gradient(ellipse 34% 12% at 22% 22%, rgba(255, 255, 255, 0.16) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 14% at 76% 14%, rgba(255, 255, 255, 0.13) 0%, transparent 70%),
-    radial-gradient(ellipse 30% 10% at 58% 32%, rgba(255, 255, 255, 0.1) 0%, transparent 70%),
-    radial-gradient(ellipse 75% 50% at 50% 62%, rgba(255, 232, 170, 0.18) 0%, transparent 65%),
-    linear-gradient(180deg, #35506e 0%, #4a6b8c 45%, #5f83a6 100%);
+    linear-gradient(180deg, rgba(20, 30, 45, 0.18) 0%, rgba(20, 30, 45, 0.05) 30%, rgba(14, 22, 36, 0.34) 68%, rgba(8, 14, 26, 0.74) 100%),
+    url('/rooms/cielo.png');
 }
-/* 🌴 Jungla: verde profundo con follaje insinuado */
+/* 🌴 Jungla */
 .room-jungla {
   background:
-    radial-gradient(ellipse 40% 26% at 8% 6%, #0d3a22 0%, transparent 65%),
-    radial-gradient(ellipse 44% 30% at 94% 4%, #0e421f 0%, transparent 65%),
-    radial-gradient(ellipse 30% 18% at 50% 0%, #11522a 0%, transparent 70%),
-    radial-gradient(ellipse 75% 50% at 50% 64%, rgba(170, 255, 150, 0.10) 0%, transparent 65%),
-    linear-gradient(180deg, #07150c 0%, #0a1f10 45%, #061108 100%);
+    linear-gradient(180deg, rgba(7, 21, 12, 0.32) 0%, rgba(7, 21, 12, 0.1) 28%, rgba(5, 16, 9, 0.42) 64%, rgba(3, 10, 6, 0.82) 100%),
+    url('/rooms/jungla.png');
 }
 
 /* ── Temas de mesa (se eligen al crear la sala) ── */
