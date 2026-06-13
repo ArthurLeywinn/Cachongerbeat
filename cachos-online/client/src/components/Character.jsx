@@ -529,34 +529,11 @@ export default function Character({ hood, variant = 0, face = 0, thinking = fals
       {/* Cuerpo / disfraz */}
       <Body idx={bi} hoodColor={v.hood} hoodDark={v.dark} clip={sclip} />
 
-      {/* Brazos apoyados en la mesa: del hombro bajan al codo y el antebrazo
-          queda casi horizontal sobre el fieltro, terminando junto al cacho que
-          el personaje sostiene (las manos del propio Cup se superponen encima).
-          Todo queda DENTRO del lienzo (antes colgaban fuera y se veían flotando
-          y desconectados). Una sombra de contacto los asienta sobre la mesa. */}
-      {arms && (() => {
-        const [aFill, aDark] = ARM_COLORS[bi] || [v.hood, v.dark];
-        const L = 'M58 178 C44 186 38 197 40 207 C42 214 60 217 86 214';
-        const R = 'M142 178 C156 186 162 197 160 207 C158 214 140 217 114 214';
-        return (
-          <g>
-            {/* Sombra: los antebrazos descansan sobre el fieltro */}
-            <ellipse cx="100" cy="220" rx="62" ry="8" fill="rgba(0,0,0,0.25)" stroke="none" />
-            {/* Hombro → codo → antebrazo (contorno + manga) */}
-            <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d={L} stroke={aDark} strokeWidth="22" />
-              <path d={R} stroke={aDark} strokeWidth="22" />
-              <path d={L} stroke={aFill} strokeWidth="15" />
-              <path d={R} stroke={aFill} strokeWidth="15" />
-            </g>
-            {/* Manos apoyadas junto al cacho (quedan en parte tras él) */}
-            <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5">
-              <ellipse cx="88" cy="212" rx="9" ry="7.5" />
-              <ellipse cx="112" cy="212" rx="9" ry="7.5" />
-            </g>
-          </g>
-        );
-      })()}
+      {/* Sin brazos: el personaje se ve limpio (solo torso + cabeza) y las
+          ÚNICAS manos visibles son las del propio cacho (componente Cup), que
+          lo sostienen al frente. La prop `arms` se mantiene por compatibilidad
+          pero ya no dibuja brazos largos (se veían mal y desalineados). */}
+
 
       {/* Cabeza base: SIEMPRE pelada (la capucha es ahora un accesorio de cabeza) */}
       <ellipse cx="61" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />

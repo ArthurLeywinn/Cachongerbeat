@@ -39,7 +39,7 @@ function cosmeticFor(player) {
   };
 }
 
-export default function PlayerSeat({ player, compact = false, bubble = null, onShowProfile = null }) {
+export default function PlayerSeat({ player, compact = false, bubble = null, onShowProfile = null, tilt = 0 }) {
   const { state } = useGame();
   const isTurn = state.currentTurnId === player.id && state.phase === 'bidding';
   const isObligado = state.obliga?.playerId === player.id;
@@ -102,22 +102,29 @@ export default function PlayerSeat({ player, compact = false, bubble = null, onS
           </p>
         )}
 
-        {/* Personaje (+ anillo de tiempo si es su turno y la sala tiene reloj) */}
-        <div className="seat__char" style={{ position: 'relative' }}>
-          {isTurn && state.turnDeadline && (
-            <TurnRing deadline={state.turnDeadline} totalSeconds={state.settings?.turnSeconds} size={108} />
-          )}
-          <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} arms />
-        </div>
-
-        {/* Cacho boca abajo, apoyado en la mesa frente al personaje (sus 2 manos
-            vienen en el componente Cup). Al dudar se desliza al costado sin
-            voltearse (animación de revelado). */}
-        {!player.eliminated && (
-          <div className={['seat__cup', reveal ? 'seat__cup--away' : ''].join(' ')}>
-            <Cup size={46} revealed={false} style={cos.cup} />
+        {/* Personaje + cacho inclinados JUNTOS según el lugar en la mesa
+            (pivote en la base, el punto donde el cacho toca el fieltro). El
+            nombre y los dados quedan fuera de esta rotación → siempre derechos.
+            Solo se ven las manos del cacho sosteniéndolo (el personaje no tiene
+            brazos), más limpio e integrado a la mesa. */}
+        <div className="seat__pose" style={{ transform: `rotate(${tilt}deg)` }}>
+          {/* Personaje (+ anillo de tiempo si es su turno y la sala tiene reloj) */}
+          <div className="seat__char" style={{ position: 'relative' }}>
+            {isTurn && state.turnDeadline && (
+              <TurnRing deadline={state.turnDeadline} totalSeconds={state.settings?.turnSeconds} size={108} />
+            )}
+            <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} arms />
           </div>
-        )}
+
+          {/* Cacho boca abajo, apoyado en la mesa frente al personaje (sus 2 manos
+              vienen en el componente Cup). Al dudar se desliza al costado sin
+              voltearse (animación de revelado). */}
+          {!player.eliminated && (
+            <div className={['seat__cup', reveal ? 'seat__cup--away' : ''].join(' ')}>
+              <Cup size={46} revealed={false} style={cos.cup} />
+            </div>
+          )}
+        </div>
 
         {/* Badges */}
         <div className="seat__badges">

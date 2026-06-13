@@ -45,14 +45,15 @@ function tableRimTopPct(xPct) {
 }
 
 // Inclinación del asiento según su posición horizontal en la mesa ovalada.
-// Un jugador sentado a la IZQUIERDA del óvalo inclina la cabeza hacia el centro
-// (giro horario, +); el de la derecha hacia el centro también (giro antihorario,
-// -). El del medio queda recto. Así no quedan todos mirando al frente en línea
-// recta, sino orientados a la curva como en una mesa redonda real. Se acota a
-// ±16° para que se vea natural y no exagerado.
+// Los jugadores se sientan FORMANDO EL ANILLO: el cuerpo se orienta radialmente
+// (la cabeza hacia afuera, el cacho hacia el CENTRO de la mesa, que es donde se
+// juega). Así el de la izquierda inclina su cacho hacia la derecha (al centro)
+// y el de la derecha hacia la izquierda — como gente sentada alrededor de una
+// mesa redonda. Se acota a ±12° para que se vea natural. (Antes el signo estaba
+// invertido y parecían caerse hacia afuera con el cacho fuera de la mesa.)
 function seatTilt(xPct) {
-  const raw = (50 - xPct) * 0.4; // proporcional al desvío respecto del centro
-  return Math.max(-16, Math.min(16, raw));
+  const raw = (xPct - 50) * 0.32;
+  return Math.max(-12, Math.min(12, raw));
 }
 
 // ── Objetos decorativos sobre el fieltro: ambiente de mesa de juego real ──
@@ -370,15 +371,16 @@ export default function GameTable() {
                 top: `${rim}%`,
                 // El asiento crece hacia ARRIBA desde el borde: el cacho queda
                 // apoyado en la mesa. -50% centra horizontalmente; -86% sube el
-                // asiento dejando el cacho sobre la curva. La rotación inclina
-                // al jugador según su lugar en la mesa ovalada (pivote en el
-                // punto de contacto con el fieltro). La escala depende de
-                // cuántos rivales hay (1v1 grandes → mesa llena chicos).
-                transform: `translate(-50%, -86%) rotate(${tilt}deg) scale(${scale})`,
+                // asiento dejando el cacho sobre la curva. La escala depende de
+                // cuántos rivales hay (1v1 grandes → mesa llena chicos). La
+                // INCLINACIÓN ya no se aplica aquí: rota solo el personaje + el
+                // cacho (dentro de PlayerSeat), para que el nombre y los dados
+                // queden siempre derechos y legibles.
+                transform: `translate(-50%, -86%) scale(${scale})`,
                 animationDelay: `${i * 0.07}s`,
               }}
             >
-              <PlayerSeat player={p} compact bubble={bubbles[p.id]?.text || null} onShowProfile={setProfileOf} />
+              <PlayerSeat player={p} compact tilt={tilt} bubble={bubbles[p.id]?.text || null} onShowProfile={setProfileOf} />
             </div>
           );
         })}
