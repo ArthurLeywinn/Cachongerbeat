@@ -74,6 +74,12 @@ export const sounds = {
     noise({ dur: 0.12, vol: 0.12, freq: 1100, delay: 0.1 });
     noise({ dur: 0.18, vol: 0.1, freq: 650, delay: 0.22 });
   },
+  // Invitación de un amigo — campanita de dos tonos, amable y notoria.
+  invite() {
+    tone(740, { dur: 0.14, vol: 0.12 });
+    tone(988, { dur: 0.2, vol: 0.13, delay: 0.12 });
+    tone(1318, { dur: 0.22, vol: 0.1, delay: 0.26 });
+  },
   // Comienzo de ronda — agitar el cacho (traqueteo rápido) y soltar los dados.
   shake() {
     // Traqueteo dentro del cacho: golpecitos cortos y agudos.
