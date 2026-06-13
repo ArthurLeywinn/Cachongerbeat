@@ -660,6 +660,18 @@ body::before {
   filter: drop-shadow(0 0 14px rgba(244, 184, 64, 0.35));
 }
 
+/* Bloque personaje + cacho que se inclina según el asiento en la mesa.
+   Pivota en su BASE (donde el cacho toca el fieltro) para que el personaje
+   parezca sentado en ese punto de la curva. El nombre/dados quedan fuera. */
+.seat__pose {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: bottom center;
+  transition: transform 0.25s ease;
+  will-change: transform;
+}
+
 /* Mesa del jugador: contenedor donde el cacho tapa los dados y luego se desliza. */
 /* Dados del oponente — fila compacta ARRIBA del personaje (junto al nombre).
    Ocultos como "?" mientras juega; valores reales al revelar. */
