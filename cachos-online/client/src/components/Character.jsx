@@ -529,23 +529,31 @@ export default function Character({ hood, variant = 0, face = 0, thinking = fals
       {/* Cuerpo / disfraz */}
       <Body idx={bi} hoodColor={v.hood} hoodDark={v.dark} clip={sclip} />
 
-      {/* Brazos apoyados en la mesa: del hombro bajan hacia adelante y los
-          antebrazos quedan sobre el fieltro, terminando junto a las manos que
-          sujetan el cacho (vienen en el componente Cup). Así el personaje se
-          ve sentado a la mesa y no flotando. */}
+      {/* Brazos apoyados en la mesa: del hombro bajan al codo y el antebrazo
+          queda casi horizontal sobre el fieltro, terminando junto al cacho que
+          el personaje sostiene (las manos del propio Cup se superponen encima).
+          Todo queda DENTRO del lienzo (antes colgaban fuera y se veían flotando
+          y desconectados). Una sombra de contacto los asienta sobre la mesa. */}
       {arms && (() => {
         const [aFill, aDark] = ARM_COLORS[bi] || [v.hood, v.dark];
+        const L = 'M58 178 C44 186 38 197 40 207 C42 214 60 217 86 214';
+        const R = 'M142 178 C156 186 162 197 160 207 C158 214 140 217 114 214';
         return (
-          <g strokeLinecap="round" fill="none">
-            {/* Sombras de los antebrazos sobre la mesa */}
-            <ellipse cx="48" cy="248" rx="17" ry="4.5" fill="rgba(0,0,0,0.22)" stroke="none" />
-            <ellipse cx="152" cy="248" rx="17" ry="4.5" fill="rgba(0,0,0,0.22)" stroke="none" />
-            {/* Brazo izquierdo: contorno + manga */}
-            <path d="M50 176 C30 188 22 208 30 228 C36 240 48 246 64 245" stroke={aDark} strokeWidth="20" />
-            <path d="M50 176 C30 188 22 208 30 228 C36 240 48 246 64 245" stroke={aFill} strokeWidth="14" />
-            {/* Brazo derecho */}
-            <path d="M150 176 C170 188 178 208 170 228 C164 240 152 246 136 245" stroke={aDark} strokeWidth="20" />
-            <path d="M150 176 C170 188 178 208 170 228 C164 240 152 246 136 245" stroke={aFill} strokeWidth="14" />
+          <g>
+            {/* Sombra: los antebrazos descansan sobre el fieltro */}
+            <ellipse cx="100" cy="220" rx="62" ry="8" fill="rgba(0,0,0,0.25)" stroke="none" />
+            {/* Hombro → codo → antebrazo (contorno + manga) */}
+            <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path d={L} stroke={aDark} strokeWidth="22" />
+              <path d={R} stroke={aDark} strokeWidth="22" />
+              <path d={L} stroke={aFill} strokeWidth="15" />
+              <path d={R} stroke={aFill} strokeWidth="15" />
+            </g>
+            {/* Manos apoyadas junto al cacho (quedan en parte tras él) */}
+            <g fill={SKIN} stroke={SKIN_D} strokeWidth="2.5">
+              <ellipse cx="88" cy="212" rx="9" ry="7.5" />
+              <ellipse cx="112" cy="212" rx="9" ry="7.5" />
+            </g>
           </g>
         );
       })()}

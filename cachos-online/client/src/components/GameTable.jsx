@@ -44,6 +44,17 @@ function tableRimTopPct(xPct) {
   return cy - ry * Math.sqrt(k); // % de la altura del área de juego
 }
 
+// Inclinación del asiento según su posición horizontal en la mesa ovalada.
+// Un jugador sentado a la IZQUIERDA del óvalo inclina la cabeza hacia el centro
+// (giro horario, +); el de la derecha hacia el centro también (giro antihorario,
+// -). El del medio queda recto. Así no quedan todos mirando al frente en línea
+// recta, sino orientados a la curva como en una mesa redonda real. Se acota a
+// ±16° para que se vea natural y no exagerado.
+function seatTilt(xPct) {
+  const raw = (50 - xPct) * 0.4; // proporcional al desvío respecto del centro
+  return Math.max(-16, Math.min(16, raw));
+}
+
 // ── Objetos decorativos sobre el fieltro: ambiente de mesa de juego real ──
 // Cartas y fichas de póker repartidas con posiciones y rotaciones variadas
 // (decorativas, no interactivas), más cenicero, trago y maní.
@@ -349,6 +360,7 @@ export default function GameTable() {
         {others.map((p, i) => {
           const x = xs[i];
           const rim = tableRimTopPct(x); // % donde está el borde de la mesa en esa x
+          const tilt = seatTilt(x);      // inclinación según la curva del óvalo
           return (
             <div
               key={p.id}
@@ -358,9 +370,11 @@ export default function GameTable() {
                 top: `${rim}%`,
                 // El asiento crece hacia ARRIBA desde el borde: el cacho queda
                 // apoyado en la mesa. -50% centra horizontalmente; -86% sube el
-                // asiento dejando el cacho sobre la curva. La escala depende de
+                // asiento dejando el cacho sobre la curva. La rotación inclina
+                // al jugador según su lugar en la mesa ovalada (pivote en el
+                // punto de contacto con el fieltro). La escala depende de
                 // cuántos rivales hay (1v1 grandes → mesa llena chicos).
-                transform: `translate(-50%, -86%) scale(${scale})`,
+                transform: `translate(-50%, -86%) rotate(${tilt}deg) scale(${scale})`,
                 animationDelay: `${i * 0.07}s`,
               }}
             >
