@@ -385,6 +385,47 @@ body::before {
 .turn-ring__fg { stroke: #f4b840; transition: stroke-dashoffset 0.2s linear, stroke 0.3s; }
 .turn-ring__fg--low { stroke: #ef4444; }
 
+/* ── Invitaciones estilo LoL (arriba a la derecha, en cualquier pantalla) ── */
+.invite-stack {
+  position: fixed;
+  top: 58px; /* bajo la campana de amigos */
+  right: 12px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(290px, calc(100vw - 24px));
+}
+.invite-toast {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 14px 14px;
+  border-radius: 14px;
+  background: rgba(12, 18, 14, 0.92);
+  border: 1px solid rgba(212, 175, 96, 0.45);
+  box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  animation: inviteIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+@keyframes inviteIn {
+  from { opacity: 0; transform: translateX(28px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+/* Barra de tiempo restante (se vacía hasta expirar) */
+.invite-toast__bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #f4b840, #d7912a);
+  transform-origin: left;
+  animation-name: inviteBar;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes inviteBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
 /* Nombre de jugador clicable (abre su perfil público) */
 .seat__name--link {
   cursor: pointer;
@@ -640,7 +681,11 @@ body::before {
 /* Cacho boca abajo, apoyado en la mesa frente al personaje (se solapa con él).
    Sigue el flujo de la columna; al revelar se desliza al lado sin voltearse. */
 .seat__cup {
-  margin-top: -20px;
+  /* El cacho queda ENTRE los antebrazos apoyados (los brazos vienen del
+     personaje y las manos del propio Cup): -34px lo tuca bajo las mangas. */
+  margin-top: -34px;
+  position: relative;
+  z-index: 1;
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45));
   transition: transform 0.55s cubic-bezier(0.22, 0.7, 0.18, 1);
 }

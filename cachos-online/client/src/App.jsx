@@ -5,6 +5,7 @@ import Home from './components/Home.jsx';
 import Lobby from './components/Lobby.jsx';
 import GameTable from './components/GameTable.jsx';
 import Toast from './components/Toast.jsx';
+import InviteToast from './components/InviteToast.jsx';
 
 export default function App() {
   const { state, connected, error, setError } = useGame();
@@ -37,6 +38,7 @@ export default function App() {
       )}
       {screen}
       <Toast message={error} />
+      <InviteToast />
     </div>
   );
 }
