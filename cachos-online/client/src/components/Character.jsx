@@ -495,7 +495,22 @@ function Accessory({ idx }) {
  * @param hat    gorro/casco (0..N). 0 = ninguno.
  * @param acc    accesorio (0..N). 0 = ninguno.
  */
-export default function Character({ hood, variant = 0, face = 0, thinking = false, body = 0, hat = 0, acc = 0, size = 120 }) {
+// Color de manga por cuerpo (para que los brazos hagan juego con el disfraz).
+const ARM_COLORS = {
+  1: ['#2f3a2a', '#1f281d'],   // Rey
+  2: ['#1c1d22', '#0d0d10'],   // Ninja
+  3: ['#2f3e57', '#1f2c40'],   // Mago
+  4: ['#6e4a2b', '#4a2f18'],   // Vaquero
+  5: ['#e6e3da', '#2b2b2b'],   // Pirata
+  6: ['#9aa1a8', '#5d646b'],   // Caballero
+  7: ['#5b4226', '#3a2916'],   // Monje
+  8: ['#8a6a44', '#5a4226'],   // Detective
+  9: ['#16171c', '#08080a'],   // Hacker
+  10: ['#2f8a3e', '#1c5a28'],  // Deportista
+  11: ['#a23a2c', '#6f231c'],  // Punk
+};
+
+export default function Character({ hood, variant = 0, face = 0, thinking = false, body = 0, hat = 0, acc = 0, size = 120, arms = false }) {
   const hi = ((hood == null ? variant : hood) % HOOD_COUNT + HOOD_COUNT) % HOOD_COUNT;
   const v = HOODS[hi];
   const fi = ((face % FACE_COUNT) + FACE_COUNT) % FACE_COUNT;
@@ -513,6 +528,27 @@ export default function Character({ hood, variant = 0, face = 0, thinking = fals
       <path d={SHOULDERS} fill={v.hood} stroke={v.dark} strokeWidth="4" strokeLinejoin="round" />
       {/* Cuerpo / disfraz */}
       <Body idx={bi} hoodColor={v.hood} hoodDark={v.dark} clip={sclip} />
+
+      {/* Brazos apoyados en la mesa: del hombro bajan hacia adelante y los
+          antebrazos quedan sobre el fieltro, terminando junto a las manos que
+          sujetan el cacho (vienen en el componente Cup). Así el personaje se
+          ve sentado a la mesa y no flotando. */}
+      {arms && (() => {
+        const [aFill, aDark] = ARM_COLORS[bi] || [v.hood, v.dark];
+        return (
+          <g strokeLinecap="round" fill="none">
+            {/* Sombras de los antebrazos sobre la mesa */}
+            <ellipse cx="48" cy="248" rx="17" ry="4.5" fill="rgba(0,0,0,0.22)" stroke="none" />
+            <ellipse cx="152" cy="248" rx="17" ry="4.5" fill="rgba(0,0,0,0.22)" stroke="none" />
+            {/* Brazo izquierdo: contorno + manga */}
+            <path d="M50 176 C30 188 22 208 30 228 C36 240 48 246 64 245" stroke={aDark} strokeWidth="20" />
+            <path d="M50 176 C30 188 22 208 30 228 C36 240 48 246 64 245" stroke={aFill} strokeWidth="14" />
+            {/* Brazo derecho */}
+            <path d="M150 176 C170 188 178 208 170 228 C164 240 152 246 136 245" stroke={aDark} strokeWidth="20" />
+            <path d="M150 176 C170 188 178 208 170 228 C164 240 152 246 136 245" stroke={aFill} strokeWidth="14" />
+          </g>
+        );
+      })()}
 
       {/* Cabeza base: SIEMPRE pelada (la capucha es ahora un accesorio de cabeza) */}
       <ellipse cx="61" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />

@@ -107,7 +107,7 @@ export default function PlayerSeat({ player, compact = false, bubble = null, onS
           {isTurn && state.turnDeadline && (
             <TurnRing deadline={state.turnDeadline} totalSeconds={state.settings?.turnSeconds} size={108} />
           )}
-          <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} />
+          <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} arms />
         </div>
 
         {/* Cacho boca abajo, apoyado en la mesa frente al personaje (sus 2 manos
