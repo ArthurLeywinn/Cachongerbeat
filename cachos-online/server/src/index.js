@@ -129,7 +129,7 @@ app.get('/history', requireAuth, async (req, res) => {
       .select('game_id, place, delta, elo_before, elo_after, created_at')
       .eq('user_id', req.user.userId)
       .order('created_at', { ascending: false })
-      .limit(15);
+      .limit(20);
 
     if (!error && mine && mine.length > 0) {
       const ids = mine.map((r) => r.game_id);
@@ -473,15 +473,16 @@ async function applyRankedElo(game) {
   // (primero en ser eliminado = índice 0). El ganador no está en el array.
   const order = game.eliminationOrder || [];
 
-  // Obtener ELO actuales de Supabase.
+  // Obtener ELO y estadísticas actuales de Supabase.
   const userIds = activePlayers.map((p) => p.userId);
   const { data: dbUsers } = await supabase
     .from('users')
-    .select('id, elo')
+    .select('id, elo, games_played, games_won')
     .in('id', userIds);
 
   if (!dbUsers || dbUsers.length === 0) return;
 
+  const statsMap = Object.fromEntries(dbUsers.map((u) => [u.id, u]));
   const eloMap = Object.fromEntries(dbUsers.map((u) => [u.id, u.elo]));
 
   const results = activePlayers.map((p) => {
@@ -498,57 +499,69 @@ async function applyRankedElo(game) {
     return { playerId: player?.id || null, userId, delta, newElo };
   });
 
-  // Actualizar cada usuario en Supabase.
   const isWinner = (userId) => game.winnerId === activePlayers.find((p) => p.userId === userId)?.id;
 
+  // ── 1) PERSISTIR EL HISTORIAL PRIMERO ──────────────────────────────────────
+  // Esto es lo que hace que el historial sobreviva al cierre del juego, así que
+  // se guarda ANTES (y de forma independiente) de actualizar las estadísticas:
+  // si algo fallaba al actualizar stats, antes la partida nunca llegaba a
+  // registrarse y el historial quedaba vacío.
+  try {
+    const eloChangesJson = Object.fromEntries(eloChanges.map(({ userId, delta }) => [userId, delta]));
+    const { data: rankedGame, error: rgErr } = await supabase
+      .from('ranked_games')
+      .insert({
+        winner_id: activePlayers.find((p) => p.id === game.winnerId)?.userId || null,
+        player_count: activePlayers.length,
+        elo_changes: eloChangesJson,
+      })
+      .select('id')
+      .single();
+
+    if (rgErr) {
+      console.error('[ranked] No se pudo registrar ranked_games:', rgErr.message);
+    } else if (rankedGame?.id) {
+      // Historial por jugador (tabla ranked_game_players):
+      // user_id, game_id, place (1 = ganador), elo_before, elo_after, delta.
+      const rows = eloChanges.map(({ userId, delta, newElo }) => {
+        const r = results.find((x) => x.userId === userId);
+        // r.place: ganador = N, primero en caer = 1 → posición visible: 1 = ganador.
+        const place = activePlayers.length - (r?.place ?? 1) + 1;
+        return {
+          game_id: rankedGame.id,
+          user_id: userId,
+          place,
+          elo_before: newElo - delta,
+          elo_after: newElo,
+          delta,
+        };
+      });
+      const { error: rgpErr } = await supabase.from('ranked_game_players').insert(rows);
+      if (rgpErr) console.error('[ranked] No se pudo registrar ranked_game_players:', rgpErr.message);
+    }
+  } catch (e) {
+    console.error('[ranked] Error al guardar el historial de la partida:', e.message);
+  }
+
+  // ── 2) ACTUALIZAR ELO + ESTADÍSTICAS DE CADA JUGADOR ────────────────────────
+  // Actualización directa (no depende de una función RPC `increment_stats` que
+  // podía no existir en la base; cuando no existía, el guardado del historial
+  // de arriba nunca llegaba a ejecutarse). Cada fallo se registra pero no
+  // interrumpe al resto.
   await Promise.all(
-    eloChanges.map(({ userId, newElo, delta }) =>
-      supabase
+    eloChanges.map(async ({ userId, newElo }) => {
+      const prev = statsMap[userId] || { games_played: 0, games_won: 0 };
+      const { error } = await supabase
         .from('users')
         .update({
           elo: newElo,
-          games_played: supabase.rpc ? undefined : undefined, // se hace con increment abajo
+          games_played: (prev.games_played || 0) + 1,
+          games_won: (prev.games_won || 0) + (isWinner(userId) ? 1 : 0),
         })
-        .eq('id', userId)
-        // Incremento atómico de games_played y games_won
-        .then(() =>
-          supabase.rpc('increment_stats', {
-            p_user_id: userId,
-            p_won: isWinner(userId) ? 1 : 0,
-          })
-        )
-    )
-  );
-
-  // Guardar historial de la partida.
-  const eloChangesJson = Object.fromEntries(eloChanges.map(({ userId, delta }) => [userId, delta]));
-  const { data: rankedGame } = await supabase
-    .from('ranked_games')
-    .insert({
-      winner_id: activePlayers.find((p) => p.id === game.winnerId)?.userId || null,
-      player_count: activePlayers.length,
-      elo_changes: eloChangesJson,
+        .eq('id', userId);
+      if (error) console.error(`[ranked] No se pudieron actualizar las stats de ${userId}:`, error.message);
     })
-    .select('id')
-    .single();
-
-  // Historial por jugador (tabla ranked_game_players).
-  if (rankedGame?.id) {
-    const rows = eloChanges.map(({ userId, delta, newElo }) => {
-      const r = results.find((x) => x.userId === userId);
-      // r.place: ganador = N, primero en caer = 1 → posición visible: 1 = ganador.
-      const place = activePlayers.length - (r?.place ?? 1) + 1;
-      return {
-        game_id: rankedGame.id,
-        user_id: userId,
-        place,
-        elo_before: newElo - delta,
-        elo_after: newElo,
-        delta,
-      };
-    });
-    await supabase.from('ranked_game_players').insert(rows);
-  }
+  );
 
   // Emitir ELO actualizado a cada jugador conectado.
   for (const { userId, delta, newElo } of eloChanges) {
