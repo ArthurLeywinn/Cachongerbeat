@@ -6,6 +6,7 @@ import Leaderboard from './Leaderboard.jsx';
 import Customizer from './Customizer.jsx';
 import ProfilePanel from './ProfilePanel.jsx';
 import RankedQueue from './RankedQueue.jsx';
+import MatchBrowser from './MatchBrowser.jsx';
 import FriendsBar from './FriendsBar.jsx';
 import { CupMark, HeroScene } from './MenuArt.jsx';
 
@@ -246,6 +247,7 @@ export default function Home() {
   if (view === 'leaderboard') return <Leaderboard onBack={() => setView('menu')} />;
   if (view === 'profile') return <ProfilePanel onBack={() => setView('menu')} />;
   if (view === 'rankedQueue') return <RankedQueue onBack={() => setView('play')} />;
+  if (view === 'matchBrowser') return <MatchBrowser onBack={() => setView('play')} />;
   if (view === 'auth') return <AuthPanel onBack={() => setView('menu')} initialMode={authInitialMode} />;
 
   // ════════════════ JUGAR — submenú ════════════════
@@ -261,14 +263,12 @@ export default function Home() {
           <p className="text-bone/40 text-xs mb-6 tracking-widest uppercase">Elige cómo quieres jugar</p>
 
           <div className="clean-actions">
-            <button className="clean-btn clean-btn--primary" onClick={() => { setMode('create'); setRanked(false); setView('form'); }}>
-              <IconUsers /> Crear sala
-            </button>
-            <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
-              <IconEnter /> Unirse con código
+            {/* Buscar partida (casual) — navegador de salas públicas por modo */}
+            <button className="clean-btn clean-btn--primary" onClick={() => setView('matchBrowser')}>
+              <IconUsers /> Buscar partida
             </button>
 
-            {/* Ranked — bloqueado para invitados */}
+            {/* Partida clasificatoria (antes "ranked") — bloqueada para invitados */}
             <div className="relative">
               <button
                 className="clean-btn w-full"
@@ -279,7 +279,7 @@ export default function Home() {
                 onClick={handleRankedClick}
               >
                 {user ? <IconTrophy /> : <IconLock />}
-                Buscar partida ranked
+                Partida clasificatoria
                 {!user && <span className="text-[10px] ml-1 opacity-50">· requiere cuenta</span>}
               </button>
               {rankedHint && (
@@ -287,13 +287,22 @@ export default function Home() {
                   <button onClick={() => openAuth('register')} className="underline hover:text-amber-glow transition">Crea una cuenta</button>
                   {' '}o{' '}
                   <button onClick={() => openAuth('login')} className="underline hover:text-amber-glow transition">inicia sesión</button>
-                  {' '}para jugar ranked
+                  {' '}para jugar la clasificatoria
                 </div>
               )}
             </div>
+
+            <button className="clean-btn" onClick={() => { setMode('join'); setView('form'); }}>
+              <IconEnter /> Unirse con código
+            </button>
+
+            {/* Sala privada para jugar con amigos (invitándolos desde dentro) */}
+            <button className="clean-btn" onClick={() => { setMode('create'); setRanked(false); setView('form'); }}>
+              <IconUsers /> Crear sala privada
+            </button>
           </div>
 
-          <p className="clean-foot">Para jugar con amigos: crea la sala e invítalos desde ahí</p>
+          <p className="clean-foot">Buscar partida: casual, no afecta el ranking · Crea una sala privada para jugar con amigos</p>
         </div>
       </div>
     );
@@ -356,7 +365,7 @@ export default function Home() {
         <button onClick={() => setView('play')} className={backClass}>← Volver</button>
 
         <h2 className="font-display text-2xl font-black text-amber-glow mb-4">
-          {mode === 'create' ? 'Crear sala' : 'Unirse a una sala'}
+          {mode === 'create' ? 'Crear sala privada' : 'Unirse a una sala'}
           {ranked && mode === 'create' && (
             <span className="ml-2 text-sm font-normal text-amber-glow/70 border border-amber-glow/30 rounded-md px-2 py-0.5">Ranked</span>
           )}

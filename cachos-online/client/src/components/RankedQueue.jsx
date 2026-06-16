@@ -31,7 +31,7 @@ export default function RankedQueue({ onBack }) {
         <div className="clean-card text-center" style={{ maxWidth: 440 }}>
           <button onClick={onBack} className="clean-back mb-2" style={{ alignSelf: 'flex-start' }}>← Volver</button>
           <h2 className="font-display text-2xl font-black text-amber-glow mb-1">
-            Buscar partida ranked
+            Partida clasificatoria
           </h2>
           <p className="text-bone/40 text-xs uppercase tracking-widest mb-6">
             ¿De cuántos jugadores quieres la partida?
@@ -58,9 +58,9 @@ export default function RankedQueue({ onBack }) {
             Solo emparejas con jugadores que buscan partida de <span className="text-amber-glow font-bold">{size}</span>.
           </p>
 
-          {/* Reglas fijas de ranked */}
+          {/* Reglas fijas de la clasificatoria */}
           <div className="bg-black/25 rounded-xl px-4 py-3 text-left mb-6">
-            <p className="text-[10px] text-bone/40 uppercase tracking-widest mb-2">Reglas fijas de ranked</p>
+            <p className="text-[10px] text-bone/40 uppercase tracking-widest mb-2">Reglas fijas de la clasificatoria</p>
             <ul className="text-xs text-bone/60 space-y-1">
               <li>🎲 5 dados por jugador</li>
               <li>⏱ 60 segundos por turno</li>

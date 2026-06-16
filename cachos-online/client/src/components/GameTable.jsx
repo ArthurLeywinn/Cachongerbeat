@@ -36,6 +36,12 @@ function seatScale(opponents) {
 // La mesa (.big-table) es un óvalo: top 26%, ancho 150%, alto 150%, redondeado
 // al 50%. Calculamos la altura (%) del borde superior del óvalo en una posición
 // horizontal dada, para "sentar" a cada jugador justo sobre la curva.
+// Cuánto BAJA (en % del alto del área de juego) la base del cacho por dentro
+// del borde superior de la mesa, para que descanse sobre el fieltro (pasado el
+// canto de madera) en vez de flotar sobre el borde. Sube/baja a todos los
+// jugadores a la vez. Si los ves un pelín altos o hundidos, este es el número.
+const SEAT_FELT_INSET = 5;
+
 function tableRimTopPct(xPct) {
   // Mesa: top 34%, ancho 118%, alto 124% → centro (50, 96), radios (59, 62).
   const cx = 50, cy = 96, rx = 59, ry = 62; // mismos números que el CSS
@@ -367,18 +373,16 @@ export default function GameTable() {
               className="seat-slot"
               style={{
                 left: `${x}%`,
-                top: `${rim}%`,
-                // El asiento se ancla por su BASE (el cacho, que ahora es el
-                // elemento más bajo del asiento). translate(-50%, -97%) deja el
-                // cacho apoyado justo sobre la superficie del fieltro, en el
-                // borde de la mesa, con el cuerpo casi tocando el canto exterior
-                // y los brazos encima — como gente sentada alrededor de la mesa.
-                // (-50% centra en horizontal; el -97% sube el asiento dejando
-                // que solo la base del cacho quede sobre la curva.) La escala
-                // depende de cuántos rivales hay. La INCLINACIÓN se aplica dentro
-                // de PlayerSeat (cuerpo + cacho), no aquí, para que el nombre y
-                // los dados queden siempre derechos y legibles.
-                transform: `translate(-50%, -97%) scale(${scale})`,
+                // El asiento se ancla por su BASE = la base del cacho (el cacho es
+                // el elemento más bajo del asiento). Con translate(-50%, -100%) la
+                // BASE del cacho queda EXACTAMENTE en `top`, sin importar la altura
+                // del asiento (dados, nombre, etc.) → posicionamiento robusto.
+                // Bajamos ese punto SEAT_FELT_INSET% por dentro del borde para que
+                // el cacho descanse SOBRE el fieltro (pasado el canto de madera) y
+                // el cuerpo quede casi tocando el borde exterior, con las manos y
+                // el vaso apoyados encima de la mesa.
+                top: `${rim + SEAT_FELT_INSET}%`,
+                transform: `translate(-50%, -100%) scale(${scale})`,
                 animationDelay: `${i * 0.07}s`,
               }}
             >
