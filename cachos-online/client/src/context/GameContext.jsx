@@ -183,6 +183,31 @@ export function GameProvider({ children }) {
     return res;
   }
 
+  // ── Matchmaking CASUAL (salas públicas por modo, no afecta el ranking) ──
+  // Lista las salas públicas abiertas para el navegador de lobbys.
+  async function listMatches(mode) {
+    const res = await emitAck('match:list', { mode });
+    return res?.ok ? res.lobbies : [];
+  }
+  // Buscar partida: une a una sala pública abierta de ese modo/tamaño o crea una.
+  async function quickMatch(mode, size, name) {
+    setError(null);
+    const res = await emitAck('match:quick', { mode, size, name, token, cosmetic: getLocalCosmetic() });
+    if (res.ok) {
+      setCode(res.code); setPlayerId(res.playerId); setState(res.state); saveSession(res.code, res.playerId);
+    } else setError(res.error || 'No se pudo buscar partida.');
+    return res;
+  }
+  // Unirse a una sala pública concreta elegida en la lista.
+  async function joinPublicLobby(joinCode, name) {
+    setError(null);
+    const res = await emitAck('match:join', { code: joinCode, name, token, cosmetic: getLocalCosmetic() });
+    if (res.ok) {
+      setCode(res.code); setPlayerId(res.playerId); setState(res.state); saveSession(res.code, res.playerId);
+    } else setError(res.error || 'No se pudo unir a la sala.');
+    return res;
+  }
+
   function leave() {
     clearSession();
     setState(null);
@@ -196,6 +221,7 @@ export function GameProvider({ children }) {
     createRoom, joinRoom, startGame, bid, doubt, calzar,
     chooseObliga, pasar, doubtPass, sendChat, leave, resign, rematch,
     queue, joinQueue, leaveQueue,
+    listMatches, quickMatch, joinPublicLobby,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
