@@ -102,18 +102,31 @@ export default function PlayerSeat({ player, compact = false, bubble = null, onS
           </p>
         )}
 
+        {/* Badges (TURNO / Obliga) — ARRIBA del personaje, junto al nombre, para
+            que NO ocupen espacio bajo el cacho: así el cacho es el elemento más
+            bajo del asiento y queda apoyado en la superficie de la mesa. */}
+        <div className="seat__badges">
+          {isTurn && <span className="badge badge--turn">TURNO</span>}
+          {isObligado && (
+            <span className="badge badge--obligado">
+              {OBLIGA_LABELS[state.obliga?.mode] || 'Obliga'}
+            </span>
+          )}
+        </div>
+
         {/* Personaje + cacho inclinados JUNTOS según el lugar en la mesa
             (pivote en la base, el punto donde el cacho toca el fieltro). El
             nombre y los dados quedan fuera de esta rotación → siempre derechos.
-            Solo se ven las manos del cacho sosteniéndolo (el personaje no tiene
-            brazos), más limpio e integrado a la mesa. */}
+            La CABEZA tampoco se inclina: el componente Character la contrarrota
+            (prop `tilt`) para dejarla perfectamente recta; solo el cuerpo, los
+            brazos y el cacho siguen la curvatura de la mesa. */}
         <div className="seat__pose" style={{ transform: `rotate(${tilt}deg)` }}>
           {/* Personaje (+ anillo de tiempo si es su turno y la sala tiene reloj) */}
           <div className="seat__char" style={{ position: 'relative' }}>
             {isTurn && state.turnDeadline && (
               <TurnRing deadline={state.turnDeadline} totalSeconds={state.settings?.turnSeconds} size={108} />
             )}
-            <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} arms />
+            <Character hood={cos.hood} face={cos.face} body={cos.body} hat={cos.hat} acc={cos.acc} thinking={isTurn} size={92} arms tilt={tilt} />
           </div>
 
           {/* Cacho boca abajo, apoyado en la mesa frente al personaje (sus 2 manos
@@ -123,16 +136,6 @@ export default function PlayerSeat({ player, compact = false, bubble = null, onS
             <div className={['seat__cup', reveal ? 'seat__cup--away' : ''].join(' ')}>
               <Cup size={46} revealed={false} style={cos.cup} />
             </div>
-          )}
-        </div>
-
-        {/* Badges */}
-        <div className="seat__badges">
-          {isTurn && <span className="badge badge--turn">TURNO</span>}
-          {isObligado && (
-            <span className="badge badge--obligado">
-              {OBLIGA_LABELS[state.obliga?.mode] || 'Obliga'}
-            </span>
           )}
         </div>
       </div>

@@ -32,24 +32,15 @@ const GAME_MODES = [
   { id: 'custom', icon: '🛠️', name: 'Personalizado', desc: 'Elige cada regla', settings: null },
 ];
 
-// Temas visuales de la mesa (fieltro + fondo a juego). Se aplican en la partida.
+// Temas visuales de la mesa (solo color de fieltro + luz a juego). El fondo de
+// la sala es siempre el mismo (ambiente por defecto): los temas de sala
+// (Salón, Oeste, Espacio, etc.) se eliminaron.
 const TABLE_THEMES = [
   { id: 'clasico', name: 'Clásico', felt: '#226744', glow: '#f4b840' },
   { id: 'nocturno', name: 'Nocturno', felt: '#244e74', glow: '#8cbeff' },
   { id: 'burdeo', name: 'Burdeo', felt: '#722637', glow: '#ffb096' },
   { id: 'whisky', name: 'Whisky', felt: '#6e5328', glow: '#ffcd78' },
   { id: 'negro', name: 'Negro', felt: '#383d44', glow: '#dce1eb' },
-];
-
-// Temas de ambiente de la sala: cambian el fondo y la luz del entorno.
-// Se combinan libremente con cualquier color de mesa.
-const ROOM_THEMES = [
-  { id: 'salon', icon: '🪵', name: 'Salón', colors: ['#0d1412', '#1c2a22'] },
-  { id: 'oeste', icon: '🤠', name: 'Viejo Oeste', colors: ['#2e1810', '#8a4f22'] },
-  { id: 'espacio', icon: '🚀', name: 'Espacio', colors: ['#0a0620', '#2b1d63'] },
-  { id: 'infierno', icon: '🔥', name: 'Infierno', colors: ['#2a0808', '#b3361a'] },
-  { id: 'cielo', icon: '☁️', name: 'Cielo', colors: ['#4a6b8c', '#8fb3d4'] },
-  { id: 'jungla', icon: '🌴', name: 'Jungla', colors: ['#0a1f10', '#1d6b35'] },
 ];
 
 const IconUsers = () => (
@@ -216,7 +207,7 @@ export default function Home() {
     setGameMode(m.id);
     if (m.settings) {
       // El ambiente elegido (mesa + sala) se conserva al cambiar de modo.
-      setSettings((s) => ({ ...m.settings, tableTheme: s.tableTheme || 'clasico', roomTheme: s.roomTheme || 'salon' }));
+      setSettings((s) => ({ ...m.settings, tableTheme: s.tableTheme || 'clasico' }));
       setShowRules(false);
     } else {
       setShowRules(true); // Personalizado: abrir el panel de reglas
@@ -452,7 +443,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Ambiente: color de mesa + tema de la sala (solo al crear) ── */}
+        {/* ── Ambiente: solo color de mesa (los temas de sala se eliminaron) ── */}
         {mode === 'create' && (
           <div className="mb-4 rounded-xl border border-bone/15 overflow-hidden">
             <button
@@ -460,11 +451,9 @@ export default function Home() {
               className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-bone/80 hover:bg-white/5 transition"
             >
               <span className="flex items-center gap-2">
-                🎨 Ambiente
+                🎨 Color de mesa
                 <span className="text-[10px] font-normal text-bone/40">
                   {TABLE_THEMES.find((t) => t.id === (settings.tableTheme || 'clasico'))?.name}
-                  {' · '}
-                  {ROOM_THEMES.find((r) => r.id === (settings.roomTheme || 'salon'))?.name}
                 </span>
               </span>
               <span className="text-bone/40">{showAmbiente ? '▲' : '▼'}</span>
@@ -474,7 +463,7 @@ export default function Home() {
               <div className="px-4 pb-4 pt-1 border-t border-bone/10">
                 {/* Color de la mesa */}
                 <label className="block text-[10px] uppercase tracking-wide text-bone/50 mb-2">Color de mesa</label>
-                <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+                <div className="flex items-center gap-2.5 flex-wrap">
                   {TABLE_THEMES.map((t) => {
                     const active = (settings.tableTheme || 'clasico') === t.id;
                     return (
@@ -487,30 +476,6 @@ export default function Home() {
                           }}
                         />
                         <span className={['text-[9px] transition', active ? 'text-amber-glow font-bold' : 'text-bone/40'].join(' ')}>{t.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Tema de la sala */}
-                <label className="block text-[10px] uppercase tracking-wide text-bone/50 mb-2">Tema de la sala</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {ROOM_THEMES.map((r) => {
-                    const active = (settings.roomTheme || 'salon') === r.id;
-                    return (
-                      <button
-                        key={r.id}
-                        onClick={() => set({ roomTheme: r.id })}
-                        className={['rounded-lg px-2 py-2 border text-center transition', active ? 'border-amber-glow/70 bg-amber-glow/10' : 'border-bone/10 hover:border-bone/30'].join(' ')}
-                        title={r.name}
-                      >
-                        <span
-                          className="block w-full h-5 rounded mb-1"
-                          style={{ background: `linear-gradient(135deg, ${r.colors[0]} 0%, ${r.colors[1]} 100%)` }}
-                        />
-                        <span className={['text-[10px] leading-tight block', active ? 'text-amber-glow font-bold' : 'text-bone/50'].join(' ')}>
-                          {r.icon} {r.name}
-                        </span>
                       </button>
                     );
                   })}

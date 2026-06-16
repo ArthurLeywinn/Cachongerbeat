@@ -510,7 +510,7 @@ const ARM_COLORS = {
   11: ['#a23a2c', '#6f231c'],  // Punk
 };
 
-export default function Character({ hood, variant = 0, face = 0, thinking = false, body = 0, hat = 0, acc = 0, size = 120, arms = false }) {
+export default function Character({ hood, variant = 0, face = 0, thinking = false, body = 0, hat = 0, acc = 0, size = 120, arms = false, tilt = 0 }) {
   const hi = ((hood == null ? variant : hood) % HOOD_COUNT + HOOD_COUNT) % HOOD_COUNT;
   const v = HOODS[hi];
   const fi = ((face % FACE_COUNT) + FACE_COUNT) % FACE_COUNT;
@@ -520,34 +520,51 @@ export default function Character({ hood, variant = 0, face = 0, thinking = fals
   const uid = useId().replace(/:/g, '');
   const sclip = `sh-${uid}`;
 
+  // ── Cabeza SIEMPRE recta ──────────────────────────────────────────────────
+  // El asiento (seat__pose) inclina TODO el personaje `tilt` grados para seguir
+  // la curva de la mesa. La cabeza no debe inclinarse: la contrarrotamos -tilt
+  // alrededor de la base del cuello (100,138), de modo que el torso, los brazos
+  // y el cacho quedan inclinados con el cuerpo, pero la cabeza queda vertical
+  // (sin ninguna rotación neta), como alguien que se inclina sobre la mesa.
+  const headUpright = tilt ? `rotate(${-tilt} 100 138)` : undefined;
+  // La katana va al cinto (cintura) → es parte del CUERPO y se inclina con él.
+  // El resto de accesorios (lentes, parche, pipa, pañuelo) van en la CARA y por
+  // lo tanto acompañan a la cabeza recta.
+  const isKatana = accI === 5;
+
   return (
     <svg width={size} height={size * 1.12} viewBox="0 0 200 224" style={{ overflow: 'visible' }}>
       <defs><clipPath id={sclip}><path d={SHOULDERS} /></clipPath></defs>
 
+      {/* ── CUERPO (torso/brazos): se inclina con la mesa vía seat__pose ── */}
       {/* Hombros base (color de capucha) */}
       <path d={SHOULDERS} fill={v.hood} stroke={v.dark} strokeWidth="4" strokeLinejoin="round" />
       {/* Cuerpo / disfraz */}
       <Body idx={bi} hoodColor={v.hood} hoodDark={v.dark} clip={sclip} />
+      {/* Accesorio del cuerpo (katana al cinto): acompaña la inclinación del torso */}
+      {isKatana && <Accessory idx={5} />}
 
       {/* Sin brazos: el personaje se ve limpio (solo torso + cabeza) y las
           ÚNICAS manos visibles son las del propio cacho (componente Cup), que
           lo sostienen al frente. La prop `arms` se mantiene por compatibilidad
           pero ya no dibuja brazos largos (se veían mal y desalineados). */}
 
+      {/* ── CABEZA: contrarrotada -tilt para quedar SIEMPRE perfectamente recta ── */}
+      <g transform={headUpright}>
+        {/* Cabeza base: SIEMPRE pelada (la capucha es ahora un accesorio de cabeza) */}
+        <ellipse cx="61" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
+        <ellipse cx="139" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
+        <ellipse cx="100" cy="92" rx="39" ry="46" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
+        <path d="M68 64 Q100 48 132 64" fill="none" stroke={SKIN_D} strokeWidth="2" opacity="0.45" />
 
-      {/* Cabeza base: SIEMPRE pelada (la capucha es ahora un accesorio de cabeza) */}
-      <ellipse cx="61" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
-      <ellipse cx="139" cy="98" rx="8" ry="11" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
-      <ellipse cx="100" cy="92" rx="39" ry="46" fill={SKIN} stroke={SKIN_D} strokeWidth="3" />
-      <path d="M68 64 Q100 48 132 64" fill="none" stroke={SKIN_D} strokeWidth="2" opacity="0.45" />
+        {/* Expresión */}
+        <Face idx={fi} />
 
-      {/* Expresión */}
-      <Face idx={fi} />
-
-      {/* Gorro/casco encima de la cabeza */}
-      <Hat idx={hatI} hoodColor={v.hood} hoodDark={v.dark} />
-      {/* Accesorio sobre la cara */}
-      <Accessory idx={accI} />
+        {/* Gorro/casco encima de la cabeza */}
+        <Hat idx={hatI} hoodColor={v.hood} hoodDark={v.dark} />
+        {/* Accesorios de la cara (no la katana, que va con el cuerpo) */}
+        {!isKatana && <Accessory idx={accI} />}
+      </g>
     </svg>
   );
 }

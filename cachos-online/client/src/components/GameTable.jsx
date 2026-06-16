@@ -263,10 +263,9 @@ export default function GameTable() {
   };
 
   const theme = state.settings?.tableTheme || 'clasico';
-  const room = state.settings?.roomTheme || 'salon';
 
   return (
-    <div className={`table-scene theme-${theme} room-${room}`}>
+    <div className={`table-scene theme-${theme}`}>
       {/* ── Barra superior ── */}
       <header className="table-header">
         <div className="flex items-center gap-3">
@@ -369,14 +368,17 @@ export default function GameTable() {
               style={{
                 left: `${x}%`,
                 top: `${rim}%`,
-                // El asiento crece hacia ARRIBA desde el borde: el cacho queda
-                // apoyado en la mesa. -50% centra horizontalmente; -86% sube el
-                // asiento dejando el cacho sobre la curva. La escala depende de
-                // cuántos rivales hay (1v1 grandes → mesa llena chicos). La
-                // INCLINACIÓN ya no se aplica aquí: rota solo el personaje + el
-                // cacho (dentro de PlayerSeat), para que el nombre y los dados
-                // queden siempre derechos y legibles.
-                transform: `translate(-50%, -86%) scale(${scale})`,
+                // El asiento se ancla por su BASE (el cacho, que ahora es el
+                // elemento más bajo del asiento). translate(-50%, -97%) deja el
+                // cacho apoyado justo sobre la superficie del fieltro, en el
+                // borde de la mesa, con el cuerpo casi tocando el canto exterior
+                // y los brazos encima — como gente sentada alrededor de la mesa.
+                // (-50% centra en horizontal; el -97% sube el asiento dejando
+                // que solo la base del cacho quede sobre la curva.) La escala
+                // depende de cuántos rivales hay. La INCLINACIÓN se aplica dentro
+                // de PlayerSeat (cuerpo + cacho), no aquí, para que el nombre y
+                // los dados queden siempre derechos y legibles.
+                transform: `translate(-50%, -97%) scale(${scale})`,
                 animationDelay: `${i * 0.07}s`,
               }}
             >
