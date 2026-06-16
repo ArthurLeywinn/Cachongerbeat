@@ -1035,7 +1035,11 @@ class Game {
       phase: this.phase,
       round: this.round,
       hostId: this.hostId,
-      maxPlayers: MAX_PLAYERS,
+      maxPlayers: this.targetSize || MAX_PLAYERS,
+      // Sala pública casual (matchmaking por modo): el lobby muestra /tamaño y
+      // arranca sola al llenarse. mode = clasico | rapido | relampago.
+      isPublic: !!this.isPublic,
+      mode: this.mode || null,
       settings: this.settings,
       currentTurnId: this.currentTurnId,
       roundStarterId: this.roundStarterId,

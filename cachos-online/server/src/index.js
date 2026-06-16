@@ -648,6 +648,57 @@ function formRankedMatch(size) {
 }
 
 // ---------------------------------------------------------------------------
+// Matchmaking CASUAL — salas públicas por modo (NO afectan el ranking)
+// ---------------------------------------------------------------------------
+// "Buscar partida" abre un navegador de salas públicas abiertas. Cada modo fija
+// las reglas (clásico/rápido/relámpago); el tamaño (3 a 6) define cuándo la sala
+// arranca sola al llenarse. Como ranked=false, no suma ni resta ELO.
+const CASUAL_MODES = {
+  clasico:   { dicePerPlayer: 5, turnSeconds: null, calzoInfinito: false, pasarEnabled: false },
+  rapido:    { dicePerPlayer: 5, turnSeconds: 30,   calzoInfinito: false, pasarEnabled: true  },
+  relampago: { dicePerPlayer: 5, turnSeconds: 15,   calzoInfinito: true,  pasarEnabled: true  },
+};
+const CASUAL_SIZES = [3, 4, 5, 6];
+
+// Lista de salas públicas ABIERTAS (en lobby, con cupo). Filtra por modo opcional.
+function listPublicLobbies(mode = null) {
+  const out = [];
+  for (const game of manager.rooms.values()) {
+    if (!game.isPublic || game.status !== 'lobby') continue;
+    const target = game.targetSize || 6;
+    if (game.players.length >= target) continue;       // ya llena → no se ofrece
+    if (mode && game.mode !== mode) continue;
+    const host = game.players.find((p) => p.id === game.hostId) || game.players[0];
+    out.push({
+      code: game.code,
+      mode: game.mode || 'clasico',
+      size: target,
+      count: game.players.length,
+      host: host ? host.name : '—',
+    });
+  }
+  out.sort((a, b) => b.count - a.count); // las más llenas primero (arrancan antes)
+  return out;
+}
+
+// Arranca sola la sala pública en cuanto alcanza su tamaño objetivo (como ranked).
+function maybeAutoStartPublic(game) {
+  if (!game || !game.isPublic || game.status !== 'lobby') return false;
+  const target = game.targetSize || 6;
+  if (game.players.length < target) return false;
+  const res = game.start(game.hostId);
+  if (res.error) return false;
+  for (const p of game.players) {
+    if (p.userId) {
+      const existing = presence.get(p.userId);
+      setUserPresence(p.userId, existing?.username || p.name, p.socketId, 'playing', game.code);
+    }
+  }
+  broadcastState(game);
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Conexiones Socket.io
 // ---------------------------------------------------------------------------
 
@@ -898,6 +949,73 @@ io.on('connection', (socket) => {
   socket.on('queue:leave', (_payload, cb) => {
     removeFromQueues(socket.id);
     cb?.({ ok: true });
+  });
+
+  // Matchmaking casual — navegador de salas públicas por modo -----------------
+  // Listar las salas públicas abiertas (para el menú de lobbys disponibles).
+  socket.on('match:list', (payload, cb) => {
+    const mode = payload && CASUAL_MODES[payload.mode] ? payload.mode : null;
+    cb?.({ ok: true, lobbies: listPublicLobbies(mode) });
+  });
+
+  // Buscar partida: entra a una sala pública abierta del mismo modo y tamaño,
+  // o crea una nueva si no hay ninguna. Al llenarse arranca sola.
+  socket.on('match:quick', ({ name, token, cosmetic, mode, size }, cb) => {
+    const m = CASUAL_MODES[mode] ? mode : 'clasico';
+    const n = CASUAL_SIZES.includes(Number(size)) ? Number(size) : 4;
+    const auth = verifySocketToken(token);
+    const displayName = auth ? auth.username : (name || 'Jugador');
+
+    // 1) ¿Hay una sala pública abierta del mismo modo y tamaño con cupo?
+    let game = null;
+    for (const g of manager.rooms.values()) {
+      if (g.isPublic && g.status === 'lobby' && g.mode === m &&
+          (g.targetSize || 6) === n && g.players.length < n) { game = g; break; }
+    }
+
+    if (game) {
+      const result = game.addPlayer(displayName, socket.id);
+      if (result.error) return cb?.({ ok: false, error: result.error });
+      if (auth) result.player.userId = auth.userId;
+      if (cosmetic) result.player.cosmetic = sanitizeCosmetic(cosmetic);
+      if (auth) setUserPresence(auth.userId, auth.username, socket.id, 'lobby', game.code);
+      socket.join(game.code);
+      cb?.({ ok: true, code: game.code, playerId: result.player.id, state: game.serialize(result.player.id) });
+      broadcastState(game);
+      maybeAutoStartPublic(game);
+    } else {
+      // 2) No hay → crear una sala pública nueva (casual, no ranked).
+      game = manager.createRoom(displayName, socket.id, CASUAL_MODES[m], false);
+      game.isPublic = true;
+      game.mode = m;
+      game.targetSize = n;
+      socket.join(game.code);
+      const player = game.players[0];
+      if (auth) player.userId = auth.userId;
+      if (cosmetic) player.cosmetic = sanitizeCosmetic(cosmetic);
+      if (auth) setUserPresence(auth.userId, auth.username, socket.id, 'lobby', game.code);
+      cb?.({ ok: true, code: game.code, playerId: player.id, state: game.serialize(player.id) });
+      broadcastState(game);
+    }
+  });
+
+  // Unirse a una sala pública concreta elegida en el navegador de lobbys.
+  socket.on('match:join', ({ code, name, token, cosmetic }, cb) => {
+    const game = manager.getRoom(code);
+    if (!game || !game.isPublic) return cb?.({ ok: false, error: 'Esa sala ya no está disponible.' });
+    if (game.status !== 'lobby') return cb?.({ ok: false, error: 'La partida ya comenzó.' });
+    if (game.players.length >= (game.targetSize || 6)) return cb?.({ ok: false, error: 'La sala está llena.' });
+    const auth = verifySocketToken(token);
+    const displayName = auth ? auth.username : (name || 'Jugador');
+    const result = game.addPlayer(displayName, socket.id);
+    if (result.error) return cb?.({ ok: false, error: result.error });
+    if (auth) result.player.userId = auth.userId;
+    if (cosmetic) result.player.cosmetic = sanitizeCosmetic(cosmetic);
+    if (auth) setUserPresence(auth.userId, auth.username, socket.id, 'lobby', game.code);
+    socket.join(game.code);
+    cb?.({ ok: true, code: game.code, playerId: result.player.id, state: game.serialize(result.player.id) });
+    broadcastState(game);
+    maybeAutoStartPublic(game);
   });
 
   // Desconexión ------------------------------------------------------------
