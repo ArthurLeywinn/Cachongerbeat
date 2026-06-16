@@ -77,54 +77,10 @@ body::before {
     linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
 }
 
-/* ── Temas de AMBIENTE de la sala (fondo completo, se eligen al crear) ──
-   Cada ambiente usa una ILUSTRACIÓN de fondo a pantalla completa
-   (client/public/rooms/*.png). Encima va un degradado oscuro que aclara la
-   parte alta (donde se sientan los rivales) y oscurece la baja (donde está la
-   mesa y el HUD) para que todo siga legible. El fieltro lo pone el tema de
-   mesa, sobre esta escena. */
-.table-scene[class*="room-"] {
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-}
-
-/* 🎩 Salón (casino): por defecto */
-.room-salon {
-  background:
-    linear-gradient(180deg, rgba(8, 14, 10, 0.35) 0%, rgba(8, 14, 10, 0.12) 26%, rgba(6, 10, 8, 0.42) 66%, rgba(4, 7, 5, 0.82) 100%),
-    url('/rooms/salon.png');
-}
-/* 🤠 Viejo Oeste */
-.room-oeste {
-  background:
-    linear-gradient(180deg, rgba(26, 15, 10, 0.32) 0%, rgba(26, 15, 10, 0.1) 28%, rgba(20, 10, 6, 0.4) 64%, rgba(12, 6, 3, 0.82) 100%),
-    url('/rooms/oeste.png');
-}
-/* 🚀 Espacio */
-.room-espacio {
-  background:
-    linear-gradient(180deg, rgba(6, 3, 18, 0.3) 0%, rgba(6, 3, 18, 0.08) 30%, rgba(5, 3, 14, 0.45) 66%, rgba(2, 1, 6, 0.85) 100%),
-    url('/rooms/espacio.png');
-}
-/* 🔥 Infierno */
-.room-infierno {
-  background:
-    linear-gradient(180deg, rgba(20, 4, 4, 0.34) 0%, rgba(20, 4, 4, 0.12) 28%, rgba(16, 3, 3, 0.42) 64%, rgba(10, 2, 2, 0.82) 100%),
-    url('/rooms/infierno.png');
-}
-/* ☁️ Cielo */
-.room-cielo {
-  background:
-    linear-gradient(180deg, rgba(20, 30, 45, 0.18) 0%, rgba(20, 30, 45, 0.05) 30%, rgba(14, 22, 36, 0.34) 68%, rgba(8, 14, 26, 0.74) 100%),
-    url('/rooms/cielo.png');
-}
-/* 🌴 Jungla */
-.room-jungla {
-  background:
-    linear-gradient(180deg, rgba(7, 21, 12, 0.32) 0%, rgba(7, 21, 12, 0.1) 28%, rgba(5, 16, 9, 0.42) 64%, rgba(3, 10, 6, 0.82) 100%),
-    url('/rooms/jungla.png');
-}
+/* Los temas de AMBIENTE de la sala (Salón, Oeste, Espacio, Infierno, Cielo,
+   Jungla) se eliminaron: el fondo es siempre el ambiente por defecto definido
+   en `.table-scene` (degradado + fieltro del tema de mesa elegido). Se mantiene
+   únicamente el cambio de COLOR de mesa (.theme-*). */
 
 /* ── Temas de mesa (se eligen al crear la sala) ── */
 .theme-nocturno {
