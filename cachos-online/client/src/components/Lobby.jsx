@@ -34,6 +34,10 @@ function InviteFriends({ full }) {
     );
   }
 
+  // Solo se muestran amigos CONECTADOS. Los offline se omiten (antes salían como
+  // una fila vacía sin nombre); a un amigo desconectado no se le puede invitar.
+  const onlineFriends = friends.filter((f) => f.status && f.status !== 'offline');
+
   const invite = async (f) => {
     const res = await emitAck('friends:invite', { token, toUserId: f.userId });
     setSent((s) => ({ ...s, [f.userId]: res.ok ? 'ok' : (res.error || 'Error') }));
@@ -42,34 +46,38 @@ function InviteFriends({ full }) {
   return (
     <div className="mb-6">
       <p className="text-xs uppercase tracking-wide text-bone/50 mb-2 text-center">Invitar amigos</p>
-      <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-        {friends.map((f) => {
-          const status = sent[f.userId];
-          const online = f.status && f.status !== 'offline';
-          return (
-            <div key={f.userId} className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-1.5">
-              <span className="flex items-center gap-2 min-w-0">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: STATUS_DOT[f.status] || STATUS_DOT.offline }} />
-                <span className="text-sm truncate">{f.username}</span>
-              </span>
-              {status === 'ok' ? (
-                <span className="text-[11px] text-emerald-400 shrink-0">Invitación enviada ✓</span>
-              ) : status ? (
-                <span className="text-[11px] text-red-400 shrink-0">{status}</span>
-              ) : (
-                <button
-                  onClick={() => invite(f)}
-                  disabled={!online}
-                  className="text-[11px] font-bold px-2.5 py-1 rounded-md bg-amber-glow/15 text-amber-glow border border-amber-glow/30 hover:bg-amber-glow/25 transition disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                  title={online ? 'Enviarle una invitación a esta sala' : 'Desconectado'}
-                >
-                  Invitar
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {onlineFriends.length === 0 ? (
+        <p className="text-center text-[11px] text-bone/30">
+          No hay amigos conectados ahora mismo.
+        </p>
+      ) : (
+        <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+          {onlineFriends.map((f) => {
+            const status = sent[f.userId];
+            return (
+              <div key={f.userId} className="flex items-center justify-between bg-black/20 rounded-lg px-3 py-1.5">
+                <span className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: STATUS_DOT[f.status] || STATUS_DOT.offline }} />
+                  <span className="text-sm truncate">{f.username}</span>
+                </span>
+                {status === 'ok' ? (
+                  <span className="text-[11px] text-emerald-400 shrink-0">Invitación enviada ✓</span>
+                ) : status ? (
+                  <span className="text-[11px] text-red-400 shrink-0">{status}</span>
+                ) : (
+                  <button
+                    onClick={() => invite(f)}
+                    className="text-[11px] font-bold px-2.5 py-1 rounded-md bg-amber-glow/15 text-amber-glow border border-amber-glow/30 hover:bg-amber-glow/25 transition shrink-0"
+                    title="Enviarle una invitación a esta sala"
+                  >
+                    Invitar
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
