@@ -33,15 +33,25 @@ const GAME_MODES = [
   { id: 'custom', icon: '🛠️', name: 'Personalizado', desc: 'Elige cada regla', settings: null },
 ];
 
-// Temas visuales de la mesa (solo color de fieltro + luz a juego). El fondo de
-// la sala es siempre el mismo (ambiente por defecto): los temas de sala
-// (Salón, Oeste, Espacio, etc.) se eliminaron.
+// Temas visuales de la mesa (color de fieltro + luz a juego).
 const TABLE_THEMES = [
   { id: 'clasico', name: 'Clásico', felt: '#226744', glow: '#f4b840' },
   { id: 'nocturno', name: 'Nocturno', felt: '#244e74', glow: '#8cbeff' },
   { id: 'burdeo', name: 'Burdeo', felt: '#722637', glow: '#ffb096' },
   { id: 'whisky', name: 'Whisky', felt: '#6e5328', glow: '#ffcd78' },
   { id: 'negro', name: 'Negro', felt: '#383d44', glow: '#dce1eb' },
+];
+
+// Ambientes de sala: fondo a pantalla completa con movimiento leve durante la
+// partida. 'none' = fondo por defecto (sin imagen). Las miniaturas usan la misma
+// imagen del fondo.
+const ROOM_THEMES = [
+  { id: 'none', icon: '○', name: 'Por defecto', img: null },
+  { id: 'jungla', icon: '🌴', name: 'Jungla', img: '/rooms/jungla.jpg' },
+  { id: 'infierno', icon: '🔥', name: 'Infierno', img: '/rooms/infierno.jpg' },
+  { id: 'cielo', icon: '☁️', name: 'Cielo', img: '/rooms/cielo.jpg' },
+  { id: 'oeste', icon: '🤠', name: 'Oeste', img: '/rooms/oeste.jpg' },
+  { id: 'espacio', icon: '🚀', name: 'Espacio', img: '/rooms/espacio.jpg' },
 ];
 
 const IconUsers = () => (
@@ -208,7 +218,7 @@ export default function Home() {
     setGameMode(m.id);
     if (m.settings) {
       // El ambiente elegido (mesa + sala) se conserva al cambiar de modo.
-      setSettings((s) => ({ ...m.settings, tableTheme: s.tableTheme || 'clasico' }));
+      setSettings((s) => ({ ...m.settings, tableTheme: s.tableTheme || 'clasico', roomTheme: s.roomTheme || 'none' }));
       setShowRules(false);
     } else {
       setShowRules(true); // Personalizado: abrir el panel de reglas
@@ -460,9 +470,11 @@ export default function Home() {
               className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-bone/80 hover:bg-white/5 transition"
             >
               <span className="flex items-center gap-2">
-                🎨 Color de mesa
+                🎨 Ambiente
                 <span className="text-[10px] font-normal text-bone/40">
                   {TABLE_THEMES.find((t) => t.id === (settings.tableTheme || 'clasico'))?.name}
+                  {' · '}
+                  {ROOM_THEMES.find((r) => r.id === (settings.roomTheme || 'none'))?.name}
                 </span>
               </span>
               <span className="text-bone/40">{showAmbiente ? '▲' : '▼'}</span>
@@ -472,7 +484,7 @@ export default function Home() {
               <div className="px-4 pb-4 pt-1 border-t border-bone/10">
                 {/* Color de la mesa */}
                 <label className="block text-[10px] uppercase tracking-wide text-bone/50 mb-2">Color de mesa</label>
-                <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex items-center gap-2.5 flex-wrap mb-4">
                   {TABLE_THEMES.map((t) => {
                     const active = (settings.tableTheme || 'clasico') === t.id;
                     return (
@@ -489,6 +501,37 @@ export default function Home() {
                     );
                   })}
                 </div>
+
+                {/* Ambiente de sala (fondo con movimiento leve durante la partida) */}
+                <label className="block text-[10px] uppercase tracking-wide text-bone/50 mb-2">Ambiente de sala</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {ROOM_THEMES.map((r) => {
+                    const active = (settings.roomTheme || 'none') === r.id;
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => set({ roomTheme: r.id })}
+                        className={['rounded-lg overflow-hidden border text-center transition', active ? 'border-amber-glow/70' : 'border-bone/10 hover:border-bone/30'].join(' ')}
+                        title={r.name}
+                      >
+                        <span
+                          className="flex items-center justify-center w-full h-10 bg-cover bg-center"
+                          style={r.img
+                            ? { backgroundImage: `url('${r.img}')` }
+                            : { background: 'repeating-linear-gradient(45deg,#1c2a22 0 6px,#162018 6px 12px)' }}
+                        >
+                          {!r.img && <span className="text-bone/40 text-base leading-none">{r.icon}</span>}
+                        </span>
+                        <span className={['text-[10px] leading-tight block py-1', active ? 'text-amber-glow font-bold' : 'text-bone/50'].join(' ')}>
+                          {r.img ? `${r.icon} ${r.name}` : r.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-bone/30 mt-2 leading-tight">
+                  El ambiente se ve de fondo durante la partida, con un movimiento leve.
+                </p>
               </div>
             )}
           </div>

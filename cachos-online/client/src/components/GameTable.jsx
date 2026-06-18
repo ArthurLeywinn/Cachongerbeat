@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext.jsx';
 import PlayerSeat from './PlayerSeat.jsx';
+import RoomAmbience from './RoomAmbience.jsx';
 import BidPanel from './BidPanel.jsx';
 import ActionLog from './ActionLog.jsx';
 import ChatPanel from './ChatPanel.jsx';
@@ -269,9 +270,15 @@ export default function GameTable() {
   };
 
   const theme = state.settings?.tableTheme || 'clasico';
+  const room = state.settings?.roomTheme || 'none';
 
   return (
     <div className={`table-scene theme-${theme}`}>
+      {/* Capa de ambiente con movimiento leve (solo si se eligió uno). Va detrás
+          de todo el contenido; si es 'none' queda el fondo default. */}
+      {room !== 'none' && <div className={`room-bg room-${room}`} aria-hidden="true" />}
+      {/* Partículas temáticas del ambiente (estrellas, brasas, luciérnagas…). */}
+      <RoomAmbience room={room} />
       {/* ── Barra superior ── */}
       <header className="table-header">
         <div className="flex items-center gap-3">
