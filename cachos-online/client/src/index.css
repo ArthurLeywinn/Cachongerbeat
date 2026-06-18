@@ -77,10 +77,163 @@ body::before {
     linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
 }
 
-/* Los temas de AMBIENTE de la sala (Salón, Oeste, Espacio, Infierno, Cielo,
-   Jungla) se eliminaron: el fondo es siempre el ambiente por defecto definido
-   en `.table-scene` (degradado + fieltro del tema de mesa elegido). Se mantiene
-   únicamente el cambio de COLOR de mesa (.theme-*). */
+/* ── Ambientes de sala (fondo animado) ──────────────────────────────────────
+   Capa de imagen a pantalla completa DETRÁS de todo el contenido (header, mesa,
+   HUD), con un "movimiento leve" tipo Ken Burns: zoom y paneo muy lentos. La
+   escala siempre se mantiene > 1 y el paneo es pequeño, así la imagen nunca
+   muestra bordes (y como `.table-scene` tiene overflow:hidden, no se desborda).
+   Las imágenes son de alta resolución (1672×941), así que no se ven estiradas.
+   Si no se elige ambiente, esta capa no se renderiza y queda el fondo default. */
+.room-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;            /* detrás de la viñeta (1), header (10) y mesa */
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center, center;
+  background-size: cover, cover;
+  transform-origin: center;
+  will-change: transform;
+  animation: roomDrift 34s ease-in-out infinite alternate;
+}
+@keyframes roomDrift {
+  from { transform: scale(1.04) translate(-0.6%, 0.4%); }
+  to   { transform: scale(1.08) translate(0.6%, -0.9%); }
+}
+/* Cada ambiente: capa oscura suave (arriba/abajo) para que el HUD siga legible
+   + la imagen. La capa oscura se define primero (queda encima de la imagen). */
+.room-jungla {
+  background-image:
+    linear-gradient(180deg, rgba(6,10,7,.55) 0%, transparent 22%, transparent 60%, rgba(6,10,7,.45) 100%),
+    url('/rooms/jungla.jpg');
+}
+.room-infierno {
+  background-image:
+    linear-gradient(180deg, rgba(12,4,4,.55) 0%, transparent 22%, transparent 60%, rgba(12,4,4,.5) 100%),
+    url('/rooms/infierno.jpg');
+}
+.room-cielo {
+  /* Cielo es claro: la capa oscura arriba es algo más fuerte para el header. */
+  background-image:
+    linear-gradient(180deg, rgba(20,30,45,.45) 0%, transparent 24%, transparent 62%, rgba(20,30,45,.30) 100%),
+    url('/rooms/cielo.jpg');
+}
+.room-oeste {
+  background-image:
+    linear-gradient(180deg, rgba(14,9,5,.55) 0%, transparent 22%, transparent 60%, rgba(14,9,5,.5) 100%),
+    url('/rooms/oeste.jpg');
+}
+.room-espacio {
+  background-image:
+    linear-gradient(180deg, rgba(6,5,16,.5) 0%, transparent 24%, transparent 62%, rgba(6,5,16,.55) 100%),
+    url('/rooms/espacio.jpg');
+}
+/* ── Movimiento temático de cada ambiente (capa de partículas) ──────────────
+   Va SOBRE la imagen y por DEBAJO de la mesa/HUD. Las partículas las genera el
+   componente RoomAmbience con posición/duración/retraso aleatorios. */
+.room-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.room-fx > span { position: absolute; display: block; }
+
+/* ESPACIO — estrellas titilando + estrellas fugaces */
+.fx-star {
+  border-radius: 50%;
+  background: #fff;
+  opacity: .25;
+  animation: fxTwinkle var(--d, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fxTwinkle { 0%,100% { opacity: .18; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.25); } }
+.fx-shoot {
+  width: 90px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.9));
+  border-radius: 2px; opacity: 0;
+  animation: fxShoot var(--d, 10s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fxShoot {
+  0% { opacity: 0; transform: translate(0,0) rotate(22deg); }
+  3% { opacity: .9; }
+  12% { opacity: 0; transform: translate(240px, 96px) rotate(22deg); }
+  100% { opacity: 0; transform: translate(240px, 96px) rotate(22deg); }
+}
+
+/* INFIERNO — brasas subiendo + resplandor de lava pulsando */
+.fx-ember {
+  bottom: -10px; border-radius: 50%;
+  background: #ff7a2a; box-shadow: 0 0 6px 1px rgba(255,90,26,.8);
+  opacity: 0;
+  animation: fxEmber var(--d, 7s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fxEmber {
+  0% { transform: translate(0,0); opacity: 0; }
+  10% { opacity: .9; }
+  85% { opacity: .5; }
+  100% { transform: translate(var(--dx, 10px), -82vh); opacity: 0; }
+}
+.fx-lava {
+  inset: auto 0 0 0; height: 45%;
+  background: radial-gradient(120% 100% at 50% 100%, rgba(255,80,20,.18), transparent 70%);
+  animation: fxPulse 4.5s ease-in-out infinite;
+}
+@keyframes fxPulse { 0%,100% { opacity: .45; } 50% { opacity: .85; } }
+
+/* JUNGLA — luciérnagas flotando y parpadeando */
+.fx-fly {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: #eaff7a; box-shadow: 0 0 8px 2px rgba(190,255,90,.55);
+  opacity: .2;
+  animation: fxFloat var(--d, 9s) ease-in-out infinite alternate,
+             fxBlink 2.6s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fxFloat { from { transform: translate(0,0); } to { transform: translate(var(--dx, 20px), var(--dy, -20px)); } }
+@keyframes fxBlink { 0%,100% { opacity: .12; } 50% { opacity: .95; } }
+
+/* CIELO — nubes/vapores a la deriva */
+.fx-wisp {
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,255,255,.55), transparent 70%);
+  filter: blur(6px);
+  left: -25%;
+  animation: fxDrift var(--d, 48s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fxDrift { from { transform: translateX(0); } to { transform: translateX(135vw); } }
+
+/* OESTE — polvo flotando + parpadeo cálido (faroles) */
+.fx-dust {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: rgba(255,220,150,.55); opacity: 0;
+  animation: fxDust var(--d, 12s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fxDust {
+  0% { transform: translate(0, 20px); opacity: 0; }
+  15% { opacity: .6; }
+  85% { opacity: .4; }
+  100% { transform: translate(var(--dx, 12px), -62vh); opacity: 0; }
+}
+.fx-flicker {
+  inset: 0;
+  background: radial-gradient(55% 45% at 38% 26%, rgba(255,170,70,.12), transparent 70%);
+  animation: fxFlicker 3.4s ease-in-out infinite;
+}
+@keyframes fxFlicker { 0%,100% { opacity: .5; } 30% { opacity: .9; } 45% { opacity: .35; } 70% { opacity: .75; } }
+
+/* Respeta la preferencia de menos movimiento: imagen fija y sin partículas. */
+@media (prefers-reduced-motion: reduce) {
+  .room-bg { animation: none; transform: scale(1.04); }
+  .room-fx { display: none; }
+}
+
+/* ── Temas de mesa (color del fieltro, se eligen al crear la sala) ── */
 
 /* ── Temas de mesa (se eligen al crear la sala) ── */
 .theme-nocturno {
