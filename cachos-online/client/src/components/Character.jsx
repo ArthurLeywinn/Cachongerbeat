@@ -196,7 +196,7 @@ export const MOHAWK_HAT = 11;
 // La capucha clásica ya NO es parte del personaje base: es un accesorio de
 // cabeza más (sección "Cabeza"), con el color de atuendo elegido.
 export const HOOD_HAT = 12;
-export const ACC_NAMES = ['Ninguno', 'Lentes', 'Parche', 'Pipa', 'Pañuelo', 'Katana'];
+export const ACC_NAMES = ['Ninguno', 'Lentes', 'Parche', 'Pipa', 'Pañuelo', 'Katana', 'Monóculo', 'Antifaz', 'Auriculares', 'Cigarro', 'Cadena'];
 export const BODY_COUNT = BODY_NAMES.length;
 export const HAT_COUNT = HAT_NAMES.length;
 export const ACC_COUNT = ACC_NAMES.length;
@@ -438,30 +438,111 @@ function Accessory({ idx }) {
   switch (idx) {
     case 1: // Lentes de sol
       return (
-        <g fill="#15171a" stroke="#000" strokeWidth="2">
-          <rect x="74" y="92" width="22" height="14" rx="4" />
-          <rect x="104" y="92" width="22" height="14" rx="4" />
-          <path d="M96 96 L104 96" stroke="#15171a" strokeWidth="3" />
+        <g>
+          {/* patillas */}
+          <path d="M73 95 L59 90" fill="none" stroke="#0c0c0e" strokeWidth="3" strokeLinecap="round" />
+          <path d="M127 95 L141 90" fill="none" stroke="#0c0c0e" strokeWidth="3" strokeLinecap="round" />
+          {/* lentes */}
+          <rect x="71" y="89" width="27" height="18" rx="7" fill="#16181c" stroke="#000" strokeWidth="2.5" />
+          <rect x="102" y="89" width="27" height="18" rx="7" fill="#16181c" stroke="#000" strokeWidth="2.5" />
+          {/* puente */}
+          <path d="M98 94 q2 -2 4 0" fill="none" stroke="#000" strokeWidth="3" />
+          {/* reflejo */}
+          <path d="M76 92 l7 0 -10 9 -3 0 z" fill="#9fd4ff" opacity="0.35" />
+          <path d="M107 92 l7 0 -10 9 -3 0 z" fill="#9fd4ff" opacity="0.35" />
         </g>
       );
     case 2: // Parche en el ojo
       return (
         <g>
-          <path d="M70 90 Q100 80 132 92" fill="none" stroke="#1a1a1a" strokeWidth="2.5" />
-          <ellipse cx="113" cy="99" rx="9" ry="11" fill="#1a1a1a" stroke="#000" strokeWidth="2" />
+          {/* correa alrededor de la cabeza */}
+          <path d="M63 85 Q100 73 139 92" fill="none" stroke="#141419" strokeWidth="3" strokeLinecap="round" />
+          {/* parche */}
+          <path d="M102 89 q11 -3 21 2 q4 9 -2 19 q-12 4 -21 -2 q-4 -9 2 -19 Z" fill="#17171c" stroke="#000" strokeWidth="2" />
+          {/* costura + brillo */}
+          <path d="M105 92 q9 -1 15 2" fill="none" stroke="#3a3a44" strokeWidth="1.4" opacity="0.85" />
+          <ellipse cx="109" cy="96" rx="3" ry="4" fill="#34343d" opacity="0.6" />
         </g>
       );
     case 3: // Pipa
       return (
-        <g stroke="#3a2916" strokeWidth="2.5" strokeLinejoin="round">
-          <path d="M108 122 L128 124" fill="none" strokeWidth="4" stroke="#5a4226" strokeLinecap="round" />
-          <path d="M126 120 q10 0 9 12 l-9 0 q-4 -6 0 -12 Z" fill="#3a2916" />
-          <path d="M133 116 q4 -6 9 -3" fill="none" stroke="#cfcfcf" strokeWidth="2" opacity="0.6" />
+        <g strokeLinecap="round" strokeLinejoin="round">
+          {/* caña */}
+          <path d="M103 121 L128 127" fill="none" stroke="#5a3f22" strokeWidth="5" />
+          <path d="M103 121 L127 126" fill="none" stroke="#7a5a32" strokeWidth="2" />
+          {/* cazoleta */}
+          <path d="M126 124 q12 -1 11 13 q-1 4 -6 4 q-7 0 -8 -8 q-1 -6 3 -9 Z" fill="#3a2916" stroke="#231809" strokeWidth="1.5" />
+          {/* brasa */}
+          <ellipse cx="131" cy="125" rx="4" ry="2.3" fill="#ff7a2a" />
+          {/* humo */}
+          <path d="M131 119 q-5 -5 0 -10 q5 -4 0 -9" fill="none" stroke="#dadada" strokeWidth="2" opacity="0.5" />
         </g>
       );
     case 4: // Pañuelo cubriendo la boca/nariz
       return (
-        <path d="M66 104 Q100 116 134 104 L132 124 Q100 140 68 124 Z" fill="#b23b2e" stroke="#7f2820" strokeWidth="2.5" strokeLinejoin="round" />
+        <g>
+          <path d="M64 102 Q100 114 136 102 L134 126 Q100 144 66 126 Z" fill="#b23b2e" stroke="#7f2820" strokeWidth="2.5" strokeLinejoin="round" />
+          {/* pliegues */}
+          <path d="M72 110 Q100 122 128 110" fill="none" stroke="#8c2c22" strokeWidth="2" opacity="0.7" />
+          <path d="M78 118 Q100 130 122 118" fill="none" stroke="#8c2c22" strokeWidth="1.8" opacity="0.6" />
+          {/* nudo lateral */}
+          <path d="M134 104 l13 -5 -5 12 z" fill="#9a3026" stroke="#7f2820" strokeWidth="1.5" strokeLinejoin="round" />
+          {/* puntitos */}
+          <circle cx="88" cy="116" r="1.5" fill="#e8d9c0" opacity="0.7" />
+          <circle cx="100" cy="120" r="1.5" fill="#e8d9c0" opacity="0.7" />
+          <circle cx="112" cy="116" r="1.5" fill="#e8d9c0" opacity="0.7" />
+        </g>
+      );
+    case 6: // Monóculo (ojo derecho) con cadenita
+      return (
+        <g>
+          <circle cx="113" cy="99" r="13" fill="#bfe8ff" opacity="0.16" />
+          <circle cx="113" cy="99" r="13" fill="none" stroke="#d7b24a" strokeWidth="2.5" />
+          <circle cx="113" cy="99" r="13" fill="none" stroke="#9c7d20" strokeWidth="0.8" />
+          <path d="M106 93 q4 -3 8 -1" fill="none" stroke="#fff" strokeWidth="2" opacity="0.5" />
+          <path d="M123 107 q7 11 1 23 q-4 8 -13 12" fill="none" stroke="#d7b24a" strokeWidth="1.6" strokeDasharray="0.5 3" strokeLinecap="round" />
+        </g>
+      );
+    case 7: // Antifaz (con huecos que dejan ver los ojos)
+      return (
+        <path fillRule="evenodd" fill="#1b1d24" stroke="#0a0b0f" strokeWidth="2"
+          d="M66 88 Q100 79 134 88 Q139 101 129 110 Q114 114 103 107 Q100 105 97 107 Q86 114 71 110 Q61 101 66 88 Z
+             M87 99 m-7,0 a7,6 0 1,0 14,0 a7,6 0 1,0 -14,0
+             M113 99 m-7,0 a7,6 0 1,0 14,0 a7,6 0 1,0 -14,0" />
+      );
+    case 8: // Auriculares
+      return (
+        <g>
+          {/* diadema */}
+          <path d="M58 92 Q60 46 100 44 Q140 46 142 92" fill="none" stroke="#23252c" strokeWidth="6" />
+          <path d="M58 90 Q60 46 100 44 Q140 46 142 90" fill="none" stroke="#3a3d47" strokeWidth="2" />
+          {/* cápsulas (orejas) */}
+          <rect x="49" y="88" width="18" height="26" rx="7" fill="#1d1f25" stroke="#0c0d11" strokeWidth="2" />
+          <rect x="133" y="88" width="18" height="26" rx="7" fill="#1d1f25" stroke="#0c0d11" strokeWidth="2" />
+          <rect x="53" y="93" width="10" height="16" rx="4" fill="#34373f" />
+          <rect x="137" y="93" width="10" height="16" rx="4" fill="#34373f" />
+          <circle cx="58" cy="101" r="1.6" fill="#7ad1ff" />
+          <circle cx="142" cy="101" r="1.6" fill="#7ad1ff" />
+        </g>
+      );
+    case 9: // Cigarro
+      return (
+        <g strokeLinecap="round">
+          <path d="M100 122 L132 128" fill="none" stroke="#caa86a" strokeWidth="6" />
+          <path d="M107 123 l1 6" stroke="#b5402f" strokeWidth="6" />
+          <circle cx="133" cy="128.5" r="3.2" fill="#ff6a1e" />
+          <circle cx="133" cy="128.5" r="1.3" fill="#ffd27a" />
+          <path d="M133 123 q-6 -6 0 -12 q5 -5 0 -10" fill="none" stroke="#dadada" strokeWidth="2" opacity="0.45" />
+        </g>
+      );
+    case 10: // Cadena de oro
+      return (
+        <g>
+          <path d="M74 138 Q100 162 126 138" fill="none" stroke="#e8c34a" strokeWidth="4" strokeLinecap="round" />
+          <path d="M74 138 Q100 162 126 138" fill="none" stroke="#b8922a" strokeWidth="4" strokeDasharray="1 4" strokeLinecap="round" />
+          <circle cx="100" cy="158" r="5.5" fill="#f4d460" stroke="#b8922a" strokeWidth="1.5" />
+          <circle cx="100" cy="158" r="2" fill="#b8922a" />
+        </g>
       );
     case 5: // Katana al cinto: funda cruzada en la cadera, empuñadura hacia arriba
       return (
