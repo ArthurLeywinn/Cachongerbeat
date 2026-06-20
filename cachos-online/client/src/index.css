@@ -144,88 +144,105 @@ body::before {
 .fx-star {
   border-radius: 50%;
   background: #fff;
-  opacity: .25;
+  box-shadow: 0 0 4px 1px rgba(255,255,255,.5);
+  opacity: .4;
   animation: fxTwinkle var(--d, 3s) ease-in-out infinite;
   animation-delay: var(--delay, 0s);
 }
-@keyframes fxTwinkle { 0%,100% { opacity: .18; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.25); } }
+@keyframes fxTwinkle { 0%,100% { opacity: .35; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.5); } }
 .fx-shoot {
-  width: 90px; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.9));
+  width: 140px; height: 2px;
+  background: linear-gradient(90deg, transparent, #fff);
+  box-shadow: 0 0 6px 1px rgba(255,255,255,.7);
   border-radius: 2px; opacity: 0;
   animation: fxShoot var(--d, 10s) linear infinite;
   animation-delay: var(--delay, 0s);
 }
 @keyframes fxShoot {
   0% { opacity: 0; transform: translate(0,0) rotate(22deg); }
-  3% { opacity: .9; }
-  12% { opacity: 0; transform: translate(240px, 96px) rotate(22deg); }
-  100% { opacity: 0; transform: translate(240px, 96px) rotate(22deg); }
+  2% { opacity: 1; }
+  10% { opacity: 0; transform: translate(320px, 128px) rotate(22deg); }
+  100% { opacity: 0; transform: translate(320px, 128px) rotate(22deg); }
 }
 
 /* INFIERNO — brasas subiendo + resplandor de lava pulsando */
 .fx-ember {
   bottom: -10px; border-radius: 50%;
-  background: #ff7a2a; box-shadow: 0 0 6px 1px rgba(255,90,26,.8);
+  background: #ff8a36; box-shadow: 0 0 10px 2px rgba(255,100,30,.95);
   opacity: 0;
   animation: fxEmber var(--d, 7s) linear infinite;
   animation-delay: var(--delay, 0s);
 }
 @keyframes fxEmber {
   0% { transform: translate(0,0); opacity: 0; }
-  10% { opacity: .9; }
-  85% { opacity: .5; }
-  100% { transform: translate(var(--dx, 10px), -82vh); opacity: 0; }
+  8% { opacity: 1; }
+  85% { opacity: .7; }
+  100% { transform: translate(var(--dx, 10px), -88vh); opacity: 0; }
 }
 .fx-lava {
-  inset: auto 0 0 0; height: 45%;
-  background: radial-gradient(120% 100% at 50% 100%, rgba(255,80,20,.18), transparent 70%);
-  animation: fxPulse 4.5s ease-in-out infinite;
+  inset: auto 0 0 0; height: 55%;
+  background: radial-gradient(120% 100% at 50% 100%, rgba(255,80,20,.32), transparent 72%);
+  animation: fxPulse 3.8s ease-in-out infinite;
 }
-@keyframes fxPulse { 0%,100% { opacity: .45; } 50% { opacity: .85; } }
+@keyframes fxPulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
 
 /* JUNGLA — luciérnagas flotando y parpadeando */
 .fx-fly {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: #eaff7a; box-shadow: 0 0 8px 2px rgba(190,255,90,.55);
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #f2ff8a; box-shadow: 0 0 12px 3px rgba(190,255,90,.75);
   opacity: .2;
   animation: fxFloat var(--d, 9s) ease-in-out infinite alternate,
-             fxBlink 2.6s ease-in-out infinite;
+             fxBlink 2.4s ease-in-out infinite;
   animation-delay: var(--delay, 0s);
 }
 @keyframes fxFloat { from { transform: translate(0,0); } to { transform: translate(var(--dx, 20px), var(--dy, -20px)); } }
-@keyframes fxBlink { 0%,100% { opacity: .12; } 50% { opacity: .95; } }
+@keyframes fxBlink { 0%,100% { opacity: .08; } 50% { opacity: 1; } }
 
-/* CIELO — nubes/vapores a la deriva */
+/* CIELO — nubes/vapores a la deriva + hojas cayendo */
 .fx-wisp {
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255,255,255,.55), transparent 70%);
-  filter: blur(6px);
+  background: radial-gradient(ellipse, rgba(255,255,255,.7), transparent 70%);
+  filter: blur(5px);
   left: -25%;
   animation: fxDrift var(--d, 48s) linear infinite;
   animation-delay: var(--delay, 0s);
 }
 @keyframes fxDrift { from { transform: translateX(0); } to { transform: translateX(135vw); } }
+.fx-leaf {
+  width: 8px; height: 8px; top: -6%;
+  border-radius: 0 60% 0 60%;
+  background: #8db84e; opacity: 0;
+  animation: fxLeaf var(--d, 12s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes fxLeaf {
+  0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+  10% { opacity: .9; }
+  88% { opacity: .8; }
+  100% { transform: translate(var(--dx, 30px), 112vh) rotate(340deg); opacity: 0; }
+}
 
 /* OESTE — polvo flotando + parpadeo cálido (faroles) */
 .fx-dust {
-  width: 3px; height: 3px; border-radius: 50%;
-  background: rgba(255,220,150,.55); opacity: 0;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(255,222,150,.75);
+  box-shadow: 0 0 4px 1px rgba(255,200,110,.4);
+  opacity: 0;
   animation: fxDust var(--d, 12s) linear infinite;
   animation-delay: var(--delay, 0s);
 }
 @keyframes fxDust {
   0% { transform: translate(0, 20px); opacity: 0; }
-  15% { opacity: .6; }
-  85% { opacity: .4; }
-  100% { transform: translate(var(--dx, 12px), -62vh); opacity: 0; }
+  15% { opacity: .8; }
+  85% { opacity: .55; }
+  100% { transform: translate(var(--dx, 12px), -66vh); opacity: 0; }
 }
 .fx-flicker {
   inset: 0;
-  background: radial-gradient(55% 45% at 38% 26%, rgba(255,170,70,.12), transparent 70%);
-  animation: fxFlicker 3.4s ease-in-out infinite;
+  background: radial-gradient(55% 45% at 38% 26%, rgba(255,170,70,.22), transparent 70%);
+  animation: fxFlicker 2.8s ease-in-out infinite;
 }
-@keyframes fxFlicker { 0%,100% { opacity: .5; } 30% { opacity: .9; } 45% { opacity: .35; } 70% { opacity: .75; } }
+@keyframes fxFlicker { 0%,100% { opacity: .5; } 25% { opacity: 1; } 45% { opacity: .3; } 70% { opacity: .85; } }
 
 /* Respeta la preferencia de menos movimiento: imagen fija y sin partículas. */
 @media (prefers-reduced-motion: reduce) {
